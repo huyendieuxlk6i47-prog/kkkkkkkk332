@@ -586,5 +586,203 @@ export async function walletRoutes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.log.info('Wallet routes registered (B1 + B2 + B3)');
+  // ========== B4: Smart Money Routes ==========
+
+  /**
+   * GET /api/wallets/:address/smart-profile
+   * Get wallet's smart money profile
+   */
+  fastify.get<{ Params: WalletParams; Querystring: { chain?: string } }>(
+    '/wallets/:address/smart-profile',
+    async (request, reply) => {
+      const { address } = request.params;
+      const chain = request.query.chain || 'Ethereum';
+      
+      try {
+        const profile = await smartMoneyEngine.getWalletProfile(address);
+        
+        if (!profile) {
+          return reply.send({
+            ok: true,
+            data: null,
+            message: 'Not enough data to calculate smart money profile',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: profile,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get smart money profile',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/wallets/:address/smart-profile/calculate
+   * Force recalculate smart money profile
+   */
+  fastify.post<{ Params: WalletParams; Body: { chain?: string } }>(
+    '/wallets/:address/smart-profile/calculate',
+    async (request, reply) => {
+      const { address } = request.params;
+      const { chain = 'Ethereum' } = request.body || {};
+      
+      try {
+        const profile = await smartMoneyEngine.calculateWalletProfile(address, chain);
+        
+        if (!profile) {
+          return reply.send({
+            ok: true,
+            data: null,
+            message: 'Not enough data to calculate smart money profile',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: profile,
+          message: 'Profile calculated',
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to calculate smart money profile',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/clusters/:id/smart-profile
+   * Get cluster's smart money profile
+   */
+  fastify.get<{ Params: ClusterParams }>(
+    '/clusters/:id/smart-profile',
+    async (request, reply) => {
+      const { id } = request.params;
+      
+      try {
+        const profile = await smartMoneyEngine.getClusterProfile(id);
+        
+        if (!profile) {
+          return reply.send({
+            ok: true,
+            data: null,
+            message: 'Cluster not found or not enough data',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: profile,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get cluster smart money profile',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/smart-money/top
+   * Get top smart money performers
+   */
+  fastify.get<{ Querystring: { limit?: string; minLabel?: string } }>(
+    '/smart-money/top',
+    async (request, reply) => {
+      const limit = parseInt(request.query.limit || '10');
+      const minLabel = (request.query.minLabel || 'proven') as SmartLabel;
+      
+      try {
+        const profiles = await smartMoneyEngine.getTopPerformers(limit, minLabel);
+        
+        return reply.send({
+          ok: true,
+          data: profiles,
+          count: profiles.length,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get top performers',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/smart-money/summary
+   * Get smart money summary for a list of wallets
+   */
+  fastify.post<{ Body: { addresses: string[] } }>(
+    '/smart-money/summary',
+    async (request, reply) => {
+      const { addresses } = request.body || {};
+      
+      if (!addresses || !Array.isArray(addresses)) {
+        return reply.status(400).send({
+          ok: false,
+          error: 'addresses array is required',
+        });
+      }
+      
+      try {
+        const summary = await smartMoneyEngine.getSmartMoneySummary(addresses);
+        
+        return reply.send({
+          ok: true,
+          data: summary,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get smart money summary',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/alerts/groups/:groupId/smart-money
+   * Get smart money context for alert group
+   */
+  fastify.get<{ Params: { groupId: string } }>(
+    '/alerts/groups/:groupId/smart-money',
+    async (request, reply) => {
+      const { groupId } = request.params;
+      
+      try {
+        // Get drivers for this group
+        const drivers = await walletTokenCorrelationEngine.getAlertGroupDrivers(groupId);
+        const driverAddresses = drivers?.drivers?.map(d => d.walletAddress) || [];
+        
+        const context = await smartMoneyEngine.getAlertSmartMoneyContext(groupId, driverAddresses);
+        
+        return reply.send({
+          ok: true,
+          data: context,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get alert smart money context',
+        });
+      }
+    }
+  );
+
+  fastify.log.info('Wallet routes registered (B1 + B2 + B3 + B4)');
 }
