@@ -1,11 +1,12 @@
 /**
- * Wallet Routes (B1)
+ * Wallet Routes (B1 + B2)
  * 
- * API endpoints for wallet profiles
+ * API endpoints for wallet profiles and token correlations
  */
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { walletProfileEngine, RawWalletData } from './wallet_profile.engine';
-import type { WalletTag } from './wallet_profile.schema';
+import { walletProfileEngine, RawWalletData } from './wallet_profile.engine.js';
+import { walletTokenCorrelationEngine } from './wallet_token_correlation.engine.js';
+import type { WalletTag } from './wallet_profile.schema.js';
 
 interface WalletParams {
   address: string;
