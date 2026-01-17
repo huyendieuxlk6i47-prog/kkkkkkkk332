@@ -384,5 +384,205 @@ export async function walletRoutes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.log.info('Wallet routes registered (B1 + B2)');
+  // ========== B3: Wallet Clusters Routes ==========
+
+  /**
+   * GET /api/wallets/:address/clusters
+   * Get clusters for a wallet
+   */
+  fastify.get<{ Params: WalletParams }>(
+    '/wallets/:address/clusters',
+    async (request, reply) => {
+      const { address } = request.params;
+      
+      try {
+        const clusters = await walletClusterEngine.getWalletClusters(address);
+        
+        return reply.send({
+          ok: true,
+          data: clusters,
+          count: clusters.length,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get wallet clusters',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/wallets/:address/clusters/analyze
+   * Analyze and find related wallets
+   */
+  fastify.post<{ Params: WalletParams; Body: { chain?: string } }>(
+    '/wallets/:address/clusters/analyze',
+    async (request, reply) => {
+      const { address } = request.params;
+      const { chain = 'Ethereum' } = request.body || {};
+      
+      try {
+        const cluster = await walletClusterEngine.findRelatedWallets(address, chain);
+        
+        if (!cluster) {
+          return reply.send({
+            ok: true,
+            data: null,
+            message: 'No related wallets found',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: cluster,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to analyze wallet relationships',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/clusters/:id
+   * Get cluster by ID
+   */
+  fastify.get<{ Params: ClusterParams }>(
+    '/clusters/:id',
+    async (request, reply) => {
+      const { id } = request.params;
+      
+      try {
+        const cluster = await walletClusterEngine.getCluster(id);
+        
+        if (!cluster) {
+          return reply.status(404).send({
+            ok: false,
+            error: 'Cluster not found',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: cluster,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get cluster',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/clusters/:id/review
+   * Get cluster for review (detailed evidence)
+   */
+  fastify.get<{ Params: ClusterParams }>(
+    '/clusters/:id/review',
+    async (request, reply) => {
+      const { id } = request.params;
+      
+      try {
+        const review = await walletClusterEngine.getClusterForReview(id);
+        
+        if (!review) {
+          return reply.status(404).send({
+            ok: false,
+            error: 'Cluster not found',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: review,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get cluster review',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/clusters/:id/confirm
+   * Confirm a cluster (user action)
+   */
+  fastify.post<{ Params: ClusterParams; Body: { notes?: string } }>(
+    '/clusters/:id/confirm',
+    async (request, reply) => {
+      const { id } = request.params;
+      const { notes } = request.body || {};
+      
+      try {
+        const cluster = await walletClusterEngine.confirmCluster(id, notes);
+        
+        if (!cluster) {
+          return reply.status(404).send({
+            ok: false,
+            error: 'Cluster not found',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: cluster,
+          message: 'Cluster confirmed',
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to confirm cluster',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/clusters/:id/reject
+   * Reject a cluster (user action)
+   */
+  fastify.post<{ Params: ClusterParams; Body: { notes?: string } }>(
+    '/clusters/:id/reject',
+    async (request, reply) => {
+      const { id } = request.params;
+      const { notes } = request.body || {};
+      
+      try {
+        const cluster = await walletClusterEngine.rejectCluster(id, notes);
+        
+        if (!cluster) {
+          return reply.status(404).send({
+            ok: false,
+            error: 'Cluster not found',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: cluster,
+          message: 'Cluster rejected',
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to reject cluster',
+        });
+      }
+    }
+  );
+
+  fastify.log.info('Wallet routes registered (B1 + B2 + B3)');
 }
