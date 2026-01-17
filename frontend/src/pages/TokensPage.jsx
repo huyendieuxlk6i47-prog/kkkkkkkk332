@@ -477,21 +477,13 @@ function TokenActionsBlock({ resolvedData, actionsEnabled, onCreateAlert }) {
         Create Alert
       </button>
       
-      {/* Add to Watchlist - Coming soon */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button 
-            disabled
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-400 rounded-xl text-sm font-medium cursor-not-allowed"
-          >
-            <Star className="w-4 h-4" />
-            Watchlist
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="bg-gray-900 text-white">
-          <p className="text-xs">Coming soon — Watchlist integration</p>
-        </TooltipContent>
-      </Tooltip>
+      {/* Track Token - IMPLEMENTED */}
+      <TrackTokenButton 
+        tokenAddress={resolvedData.normalizedId}
+        tokenSymbol={resolvedData.symbol}
+        tokenName={resolvedData.label}
+        chain={resolvedData.chain || 'Ethereum'}
+      />
       
       {/* Etherscan - Always enabled */}
       <a 
