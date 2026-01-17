@@ -581,12 +581,10 @@ export default function WalletsPage() {
 
               {/* Unknown state - fallback to showing data */}
               {!isActuallyIndexing && !isResolved && !isEmpty && (
-                    onClick: () => {
-                      setSearchQuery('');
-                      setResolvedData(null);
-                    },
-                    icon: Search,
-                  }}
+                <WalletResolvedView 
+                  resolvedData={resolvedData}
+                  walletData={walletData}
+                  walletProfile={walletProfile}
                 />
               )}
             </>
