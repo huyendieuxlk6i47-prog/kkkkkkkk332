@@ -605,6 +605,7 @@ export default function WalletsPage() {
                   resolvedData={resolvedData}
                   walletData={walletData}
                   walletProfile={walletProfile}
+                  onCreateAlert={() => setShowAlertModal(true)}
                 />
               )}
 
@@ -631,6 +632,7 @@ export default function WalletsPage() {
                   resolvedData={resolvedData}
                   walletData={walletData}
                   walletProfile={walletProfile}
+                  onCreateAlert={() => setShowAlertModal(true)}
                 />
               )}
             </>
