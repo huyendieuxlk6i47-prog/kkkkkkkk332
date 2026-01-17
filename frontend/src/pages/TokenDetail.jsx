@@ -169,6 +169,7 @@ const TokenHeader = ({ token }) => (
 
 export default function TokenDetail() {
   const { tokenId } = useParams();
+  const navigate = useNavigate();
   const [token, setToken] = useState(null);
   const [viewType, setViewType] = useState('addresses');
 
@@ -177,6 +178,11 @@ export default function TokenDetail() {
       .then(res => setToken(res.data))
       .catch(err => console.error(err));
   }, [tokenId]);
+
+  // Navigate to wallet profile
+  const handleWalletClick = (walletAddress) => {
+    navigate(`/wallets/${walletAddress}`);
+  };
 
   if (!token) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
@@ -189,6 +195,15 @@ export default function TokenDetail() {
 
       {/* Analytics Grid */}
       <div className="px-4 pb-8">
+        {/* B2: Who is driving this activity? */}
+        <div className="mb-4">
+          <TokenActivityDrivers 
+            tokenAddress={tokenId}
+            chain="Ethereum"
+            onWalletClick={handleWalletClick}
+          />
+        </div>
+
         {/* Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <GlassCard className="p-5">
