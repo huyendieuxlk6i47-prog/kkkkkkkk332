@@ -45,38 +45,39 @@
 
 ---
 
-## 🔜 Phase B2: Wallet → Token Correlation (NEXT)
+## ✅ Phase B2: Wallet → Token Correlation (COMPLETE)
 
-**Status**: 📋 Ready to implement  
-**Priority**: P1
+**Status**: ✅ Complete  
+**Completion Date**: 2026-01-17
 
 **Goal**: Answer "This token moves because of WHO?"
 
-**To implement:**
-```typescript
-WalletTokenCorrelation {
-  wallet: string
-  token: string
-  
-  participation: {
-    buyCount: number
-    sellCount: number
-    netVolume: number
-  }
-  
-  timing: {
-    beforeMovesCount: number  // Entry BEFORE price move
-    afterMovesCount: number
-  }
-  
-  influenceScore: number  // 0..1
-}
-```
+**What was done:**
+- WalletTokenCorrelation engine with influenceScore calculation
+- Volume share, activity frequency, timing weight metrics
+- Role classification (buyer/seller/mixed)
+- Time relation analysis (before_signal/during_signal/after_signal)
+- AlertGroupDrivers - links drivers to alerts
+- TokenActivityDrivers UI component
+- AlertDriversBadge component for alert cards
+- API endpoints for token drivers and alert group drivers
 
-**UI:**
-- Section: "Who's behind the activity?" on Token Page
-- Top participants with roles (buyer/seller/flipper)
-- Link to Alert Group: "This alert is driven by Wallet A & B"
+**Key Files:**
+- `/backend/src/core/wallets/wallet_token_correlation.schema.ts`
+- `/backend/src/core/wallets/wallet_token_correlation.model.ts`
+- `/backend/src/core/wallets/wallet_token_correlation.engine.ts`
+- `/backend/src/core/wallets/wallet.routes.ts` (updated with B2 routes)
+- `/frontend/src/components/TokenActivityDrivers.jsx`
+- `/frontend/src/components/AlertDriversBadge.jsx`
+- `/frontend/src/api/wallets.api.js` (updated with B2 APIs)
+- `/frontend/src/pages/TokensPage.jsx` (integrated TokenActivityDrivers)
+
+**API Endpoints:**
+- `GET /api/tokens/:address/drivers` - Get wallets driving token activity
+- `POST /api/tokens/:address/drivers/calculate` - Trigger fresh calculation
+- `GET /api/wallets/:address/token-influence` - Get tokens where wallet has influence
+- `GET /api/alerts/groups/:groupId/drivers` - Get drivers for alert group
+- `POST /api/alerts/groups/:groupId/drivers/link` - Link drivers to alert
 
 ---
 
