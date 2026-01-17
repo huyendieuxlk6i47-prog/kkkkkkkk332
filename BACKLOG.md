@@ -448,3 +448,56 @@ if (!drivers || drivers.length === 0) {
 ---
 
 **Last Updated**: 2026-01-17
+
+---
+
+## ✅ Phase B3: Wallet Clusters (COMPLETE)
+
+**Status**: ✅ Complete  
+**Completion Date**: 2026-01-17
+
+**Goal**: "Это один актор или несколько независимых кошельков?"
+
+**What was done:**
+- WalletCluster schema with evidence and confidence
+- ClusterEngine with deterministic rules (NO ML)
+- Token overlap, timing correlation, role similarity
+- Suggested/Confirmed/Rejected status system
+- API endpoints for CRUD and review
+- RelatedAddresses UI component
+- ClusterReviewModal for evidence review
+
+**CRITICAL RULES:**
+- NO auto-merge, only suggestion + explain
+- NO ML, only deterministic rules
+- UI never says "definitely one actor"
+- Only says "may be related"
+
+**Algorithm (MVP):**
+```
+For wallet A:
+  find wallets B where:
+    tokenOverlap > 60%
+    AND timingCorrelation > 0.7
+    AND rolePattern matches
+  → propose cluster with status: 'suggested'
+```
+
+**Key Files:**
+- `/backend/src/core/wallets/wallet_cluster.schema.ts`
+- `/backend/src/core/wallets/wallet_cluster.model.ts`
+- `/backend/src/core/wallets/wallet_cluster.engine.ts`
+- `/backend/src/core/wallets/wallet.routes.ts` (B3 routes)
+- `/frontend/src/api/clusters.api.js`
+- `/frontend/src/components/RelatedAddresses.jsx`
+- `/frontend/src/components/ClusterReviewModal.jsx`
+
+**API Endpoints:**
+- `GET /api/wallets/:address/clusters` - Get wallet clusters
+- `POST /api/wallets/:address/clusters/analyze` - Analyze relationships
+- `GET /api/clusters/:id` - Get cluster
+- `GET /api/clusters/:id/review` - Get cluster for review
+- `POST /api/clusters/:id/confirm` - Confirm cluster
+- `POST /api/clusters/:id/reject` - Reject cluster
+
+---
