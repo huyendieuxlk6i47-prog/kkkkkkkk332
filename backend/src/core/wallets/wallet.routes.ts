@@ -206,4 +206,178 @@ export async function walletRoutes(fastify: FastifyInstance) {
     
     return reply.send(tags);
   });
+
+  // ========== B2: Wallet Token Correlation Routes ==========
+
+  /**
+   * GET /api/tokens/:address/drivers
+   * Get wallets driving activity on this token
+   * "Who is driving this activity?"
+   */
+  fastify.get<{ Params: { address: string }; Querystring: { chain?: string; limit?: string } }>(
+    '/tokens/:address/drivers',
+    async (request, reply) => {
+      const { address } = request.params;
+      const chain = request.query.chain || 'Ethereum';
+      const limit = parseInt(request.query.limit || '5');
+      
+      try {
+        const drivers = await walletTokenCorrelationEngine.getTokenActivityDrivers(
+          address,
+          chain,
+          limit
+        );
+        
+        if (!drivers) {
+          return reply.send({
+            ok: true,
+            data: null,
+            message: 'No activity data available for this token',
+          });
+        }
+        
+        return reply.send({
+          ok: true,
+          data: drivers,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get token drivers',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/tokens/:address/drivers/calculate
+   * Trigger fresh correlation calculation
+   */
+  fastify.post<{ Params: { address: string }; Body: { chain?: string; windowHours?: number } }>(
+    '/tokens/:address/drivers/calculate',
+    async (request, reply) => {
+      const { address } = request.params;
+      const { chain = 'Ethereum', windowHours = 24 } = request.body || {};
+      
+      try {
+        const correlations = await walletTokenCorrelationEngine.calculateTokenCorrelations(
+          address,
+          chain,
+          windowHours
+        );
+        
+        return reply.send({
+          ok: true,
+          data: {
+            calculated: correlations.length,
+            topDriver: correlations[0] || null,
+          },
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to calculate correlations',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/wallets/:address/token-influence
+   * Get tokens where this wallet has influence
+   */
+  fastify.get<{ Params: WalletParams; Querystring: { limit?: string } }>(
+    '/wallets/:address/token-influence',
+    async (request, reply) => {
+      const { address } = request.params;
+      const limit = parseInt(request.query.limit || '10');
+      
+      try {
+        const correlations = await walletTokenCorrelationEngine.getWalletCorrelations(
+          address,
+          limit
+        );
+        
+        return reply.send({
+          ok: true,
+          data: correlations,
+          count: correlations.length,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get wallet correlations',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/alerts/groups/:groupId/drivers
+   * Get wallet drivers for an alert group
+   */
+  fastify.get<{ Params: { groupId: string } }>(
+    '/alerts/groups/:groupId/drivers',
+    async (request, reply) => {
+      const { groupId } = request.params;
+      
+      try {
+        const drivers = await walletTokenCorrelationEngine.getAlertGroupDrivers(groupId);
+        
+        return reply.send({
+          ok: true,
+          data: drivers,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get alert group drivers',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/alerts/groups/:groupId/drivers/link
+   * Link drivers to an alert group
+   */
+  fastify.post<{ Params: { groupId: string }; Body: { tokenAddress: string; chain?: string } }>(
+    '/alerts/groups/:groupId/drivers/link',
+    async (request, reply) => {
+      const { groupId } = request.params;
+      const { tokenAddress, chain = 'Ethereum' } = request.body || {};
+      
+      if (!tokenAddress) {
+        return reply.status(400).send({
+          ok: false,
+          error: 'tokenAddress is required',
+        });
+      }
+      
+      try {
+        const drivers = await walletTokenCorrelationEngine.linkDriversToAlertGroup(
+          groupId,
+          tokenAddress,
+          chain
+        );
+        
+        return reply.send({
+          ok: true,
+          data: drivers,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to link drivers to alert group',
+        });
+      }
+    }
+  );
+
+  fastify.log.info('Wallet routes registered (B1 + B2)');
 }
