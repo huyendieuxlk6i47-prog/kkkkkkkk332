@@ -541,17 +541,19 @@ export default function WalletsPage() {
           {/* Resolved Content */}
           {resolvedData && !loading && (
             <>
-              {isIndexing && (
+              {/* ACTUALLY indexing (not just low confidence) */}
+              {isActuallyIndexing && (
                 <WalletIndexingState 
                   resolvedData={resolvedData}
                   onSetAlert={() => setShowAlertModal(true)}
                   onIndexingComplete={() => {
                     // Auto-refresh resolver when indexing completes
-                    handleSearch(searchQuery);
+                    resolveWallet(searchQuery);
                   }}
                 />
               )}
 
+              {/* RESOLVED - show data even with low confidence */}
               {isResolved && (
                 <WalletResolvedView 
                   resolvedData={resolvedData}
@@ -560,13 +562,25 @@ export default function WalletsPage() {
                 />
               )}
 
-              {!isIndexing && !isResolved && (
+              {/* EMPTY - no data found */}
+              {isEmpty && (
                 <EmptyState
                   type="search"
-                  title="Address not found"
-                  description="We couldn't find sufficient data for this address."
+                  title="No data found"
+                  description="This address doesn't have enough on-chain activity to analyze."
                   action={{
                     label: 'Try Another',
+                    onClick: () => {
+                      setSearchQuery('');
+                      setResolvedData(null);
+                    },
+                    icon: Search,
+                  }}
+                />
+              )}
+
+              {/* Unknown state - fallback to showing data */}
+              {!isActuallyIndexing && !isResolved && !isEmpty && (
                     onClick: () => {
                       setSearchQuery('');
                       setResolvedData(null);
