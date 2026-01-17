@@ -186,14 +186,26 @@ function WalletIndexingState({ resolvedData, onSetAlert, onIndexingComplete }) {
   );
 }
 
-// Resolved Wallet View - Real Data Only
+// Resolved Wallet View - Real Data Only (with B1-B4 components)
 function WalletResolvedView({ resolvedData, walletData, walletProfile }) {
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [showClusterModal, setShowClusterModal] = useState(false);
+  const [selectedClusterId, setSelectedClusterId] = useState(null);
+  const navigate = useNavigate();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(resolvedData.normalizedId);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
+  const handleWalletClick = (walletAddress) => {
+    navigate(`/wallets/${walletAddress}`);
+  };
+
+  const handleReviewCluster = (clusterId) => {
+    setSelectedClusterId(clusterId);
+    setShowClusterModal(true);
   };
 
   return (
