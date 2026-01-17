@@ -335,16 +335,30 @@ export default function WalletsPage() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [walletProfile, setWalletProfile] = useState(null);
 
-  // Determine state
-  const isIndexing = resolvedData && (
+  // Determine state - FIXED: 4 states instead of 2
+  // 'idle' - nothing entered
+  // 'indexing' - backend ACTUALLY indexing (status === 'indexing' OR 'pending')
+  // 'resolved' - data ready (even partial!) - status === 'resolved'
+  // 'empty' - no data, but that's a result
+  
+  // CRITICAL FIX: low confidence is NOT indexing!
+  // low confidence = "not enough activity yet" (valid resolved state)
+  const isActuallyIndexing = resolvedData && (
     resolvedData.status === 'indexing' || 
-    resolvedData.status === 'pending' ||
-    (resolvedData.confidence !== null && resolvedData.confidence < 0.4)
+    resolvedData.status === 'pending'
   );
   
+  // FIXED: resolved means data is ready, even with low confidence
   const isResolved = resolvedData && (
-    resolvedData.status === 'resolved' && 
-    resolvedData.confidence >= 0.4
+    resolvedData.status === 'resolved' ||
+    resolvedData.status === 'ready' ||
+    resolvedData.status === 'partial'
+  );
+  
+  // Empty state - address exists but no useful data
+  const isEmpty = resolvedData && (
+    resolvedData.status === 'not_found' ||
+    resolvedData.status === 'error'
   );
 
   // Resolve wallet address
