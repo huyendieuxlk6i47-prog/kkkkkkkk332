@@ -639,45 +639,17 @@ export default function WalletsPage() {
           )}
         </div>
 
-        {/* Alert Modal */}
-        {showAlertModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAlertModal(false)} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-gray-700" />
-                  <h3 className="font-bold text-gray-900">Wallet Alerts</h3>
-                </div>
-                <button onClick={() => setShowAlertModal(false)} className="p-1 hover:bg-gray-100 rounded">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              
-              <div className="p-5">
-                <p className="text-sm text-gray-500 mb-4">
-                  Get notified about activity for this wallet
-                </p>
-                
-                <div className="space-y-2">
-                  {['Large transfers', 'New token interactions', 'NFT activity', 'Data ready'].map((alert, i) => (
-                    <label key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-                      <span className="font-medium text-gray-900 text-sm">{alert}</span>
-                      <input type="checkbox" className="w-4 h-4 text-gray-900 rounded" />
-                    </label>
-                  ))}
-                </div>
-                
-                <button
-                  onClick={() => setShowAlertModal(false)}
-                  className="w-full mt-4 py-3 bg-gray-900 text-white rounded-xl font-semibold text-sm hover:bg-gray-800 transition-colors"
-                >
-                  Save Alert Settings
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Wallet Alert Modal - WORKING */}
+        <CreateWalletAlertModal
+          isOpen={showAlertModal}
+          onClose={() => setShowAlertModal(false)}
+          walletAddress={resolvedData?.normalizedId}
+          walletLabel={walletProfile?.summary?.headline || resolvedData?.label}
+          chain={resolvedData?.chain || 'Ethereum'}
+          onSuccess={() => {
+            setShowAlertModal(false);
+          }}
+        />
       </div>
     </TooltipProvider>
   );
