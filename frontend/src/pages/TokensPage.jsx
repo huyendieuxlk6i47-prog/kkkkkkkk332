@@ -30,6 +30,9 @@ import {
 } from "../components/ui/tooltip";
 import { resolverApi, marketApi } from '../api';
 
+// B2: Wallet Token Correlation
+import TokenActivityDrivers from '../components/TokenActivityDrivers';
+
 // ============================================================================
 // P0: Fixed Token Search - No icon, plain input
 // ============================================================================
