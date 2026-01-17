@@ -431,15 +431,22 @@ export default function CreateWalletAlertModal({
                           <div className="text-xs text-gray-500">Checking connection...</div>
                         ) : telegramConnected ? (
                           <div className="text-xs text-green-600">Connected</div>
-                        ) : (
+                        ) : telegramLink ? (
                           <a 
-                            href={telegramLink || '#'} 
+                            href={telegramLink} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:underline"
                           >
-                            Connect Telegram
+                            Click to connect
                           </a>
+                        ) : (
+                          <button
+                            onClick={generateTelegramLink}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Connect Telegram →
+                          </button>
                         )}
                       </div>
                     </div>
@@ -448,6 +455,7 @@ export default function CreateWalletAlertModal({
                       className={`w-10 h-6 rounded-full transition-colors ${
                         telegramEnabled ? 'bg-blue-500' : 'bg-gray-300'
                       }`}
+                      data-testid="wallet-alert-telegram-toggle"
                     >
                       <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
                         telegramEnabled ? 'translate-x-5' : 'translate-x-1'
