@@ -25,6 +25,11 @@ import WalletProfileCard from '../components/WalletProfileCard';
 import { IndexingState } from '../components/IndexingState';
 import { useBootstrapProgress, formatStepName } from '../hooks/useBootstrapProgress';
 import { useWebSocket } from '../hooks/useWebSocket';
+
+// B2-B4 Components
+import RelatedAddresses from '../components/RelatedAddresses';
+import SmartMoneyProfile from '../components/SmartMoneyProfile';
+
 import {
   Tooltip,
   TooltipContent,
