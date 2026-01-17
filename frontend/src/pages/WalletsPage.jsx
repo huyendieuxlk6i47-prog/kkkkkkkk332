@@ -308,12 +308,44 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile }) {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
+          {/* B4: Smart Money Profile - Historical Performance */}
+          {resolvedData?.normalizedId && (
+            <SmartMoneyProfile 
+              walletAddress={resolvedData.normalizedId}
+              chain={resolvedData.chain || 'Ethereum'}
+            />
+          )}
+
+          {/* B3: Related Addresses (Clusters) */}
+          {resolvedData?.normalizedId && (
+            <RelatedAddresses 
+              walletAddress={resolvedData.normalizedId}
+              chain={resolvedData.chain || 'Ethereum'}
+              onWalletClick={handleWalletClick}
+              onReviewCluster={handleReviewCluster}
+            />
+          )}
+
           {/* Data Availability */}
           {resolvedData?.available && (
             <DataAvailability 
               available={resolvedData.available}
               confidence={resolvedData.confidence}
             />
+          )}
+
+          {/* Low confidence info - human language, not "indexing" */}
+          {resolvedData?.confidence < 0.4 && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-center gap-2 text-amber-700 font-medium text-sm mb-1">
+                <AlertCircle className="w-4 h-4" />
+                Not enough activity yet
+              </div>
+              <p className="text-xs text-amber-600">
+                This wallet doesn't have enough on-chain history to provide confident analysis.
+                Data shown may be incomplete.
+              </p>
+            </div>
           )}
 
           {/* Resolution Info */}
