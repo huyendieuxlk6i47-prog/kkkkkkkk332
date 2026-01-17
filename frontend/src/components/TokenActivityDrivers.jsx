@@ -3,14 +3,18 @@
  * 
  * UI component: "Who is driving this activity?"
  * 
- * Shows wallet drivers on Token Page with:
- * - Top participants with roles
- * - Influence scores
- * - Human-readable summary
- * - Links to wallet profiles
+ * PRODUCT RULES:
+ * - Max 3 wallets (not dashboard)
+ * - Sort by influenceScore (not txCount)
+ * - Human-summary ALWAYS on top
+ * - Role is contextual: "acted as buyer during this accumulation"
+ * - scoreComponents visible for transparency
+ * 
+ * ARCHITECTURAL RULE:
+ * UI never guesses, backend always explains.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, TrendingUp, TrendingDown, Activity, ExternalLink, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Users, TrendingUp, TrendingDown, Activity, ExternalLink, RefreshCw, AlertTriangle, Info } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -26,39 +30,40 @@ const formatAddress = (address) => {
 };
 
 /**
- * Format large numbers
+ * Get role display with CONTEXTUAL text
+ * NOT: "Wallet is buyer" (absolute)
+ * YES: "Acted as buyer during this accumulation" (contextual)
  */
-const formatNumber = (num) => {
-  if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
-  return `$${num.toFixed(0)}`;
-};
+const getRoleDisplay = (role, roleContext) => {
+  const contextText = {
+    accumulation: 'during this accumulation',
+    distribution: 'during this distribution',
+    net_flow: 'based on net flow',
+    alert_group: 'in this alert',
+    signal_window: 'during signal window',
+  }[roleContext] || '';
 
-/**
- * Get role badge color and icon
- */
-const getRoleDisplay = (role) => {
   switch (role) {
     case 'buyer':
       return {
         color: 'bg-green-500/10 text-green-600 border-green-500/20',
         icon: TrendingUp,
         label: 'Buyer',
-        description: 'Primarily accumulating',
+        description: `Acted as buyer ${contextText}`.trim(),
       };
     case 'seller':
       return {
         color: 'bg-red-500/10 text-red-600 border-red-500/20',
         icon: TrendingDown,
         label: 'Seller',
-        description: 'Primarily distributing',
+        description: `Acted as seller ${contextText}`.trim(),
       };
     default:
       return {
         color: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
         icon: Activity,
         label: 'Mixed',
-        description: 'Both buying and selling',
+        description: `Mixed activity ${contextText}`.trim(),
       };
   }
 };
@@ -76,10 +81,56 @@ const getConfidenceBadge = (confidence) => {
 };
 
 /**
+ * Score Components Tooltip - explains WHY this wallet is important
+ */
+const ScoreComponentsInfo = ({ scoreComponents, influenceScore }) => {
+  if (!scoreComponents) return null;
+  
+  const weights = { volumeShare: 0.4, activityFrequency: 0.3, timingWeight: 0.3 };
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button className="p-1 hover:bg-slate-100 rounded">
+            <Info className="w-3 h-3 text-muted-foreground" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <div className="space-y-2 text-xs">
+            <p className="font-medium">Influence Breakdown</p>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span>Volume Share ({Math.round(weights.volumeShare * 100)}%)</span>
+                <span className="font-mono">{Math.round(scoreComponents.volumeShare * 100)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Activity ({Math.round(weights.activityFrequency * 100)}%)</span>
+                <span className="font-mono">{Math.round(scoreComponents.activityFrequency * 100)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Timing ({Math.round(weights.timingWeight * 100)}%)</span>
+                <span className="font-mono">{Math.round(scoreComponents.timingWeight * 100)}%</span>
+              </div>
+            </div>
+            <div className="pt-1 border-t">
+              <div className="flex justify-between font-medium">
+                <span>Total Influence</span>
+                <span>{Math.round(influenceScore * 100)}%</span>
+              </div>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+/**
  * Single Driver Card
  */
 const DriverCard = ({ driver, rank, onWalletClick }) => {
-  const roleDisplay = getRoleDisplay(driver.role);
+  const roleDisplay = getRoleDisplay(driver.role, driver.roleContext);
   const RoleIcon = roleDisplay.icon;
   const confidenceBadge = getConfidenceBadge(driver.confidence);
   
@@ -119,7 +170,7 @@ const DriverCard = ({ driver, rank, onWalletClick }) => {
           {/* Wallet tags if available */}
           {driver.walletMeta?.tags?.length > 0 && (
             <div className="flex gap-1 mt-1">
-              {driver.walletMeta.tags.slice(0, 3).map((tag) => (
+              {driver.walletMeta.tags.slice(0, 2).map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs py-0">
                   {tag}
                 </Badge>
@@ -130,36 +181,27 @@ const DriverCard = ({ driver, rank, onWalletClick }) => {
       </div>
       
       {/* Metrics */}
-      <div className="flex items-center gap-4 text-right">
-        {/* Influence Score */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <div>
-                <div className="text-xs text-muted-foreground">Influence</div>
-                <div className="font-semibold text-sm">
-                  {Math.round(driver.influenceScore * 100)}%
-                </div>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Combined score based on volume, activity, and timing</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      <div className="flex items-center gap-3 text-right">
+        {/* Influence Score with breakdown */}
+        <div className="flex items-center gap-1">
+          <div>
+            <div className="text-xs text-muted-foreground">Influence</div>
+            <div className="font-semibold text-sm">
+              {Math.round(driver.influenceScore * 100)}%
+            </div>
+          </div>
+          <ScoreComponentsInfo 
+            scoreComponents={driver.scoreComponents} 
+            influenceScore={driver.influenceScore}
+          />
+        </div>
         
         {/* Volume Share */}
-        <div>
+        <div className="hidden sm:block">
           <div className="text-xs text-muted-foreground">Volume</div>
           <div className="text-sm">
             {Math.round(driver.volumeShare * 100)}%
           </div>
-        </div>
-        
-        {/* Transactions */}
-        <div className="hidden sm:block">
-          <div className="text-xs text-muted-foreground">Txs</div>
-          <div className="text-sm">{driver.txCount}</div>
         </div>
         
         {/* Confidence */}
@@ -176,6 +218,11 @@ const DriverCard = ({ driver, rank, onWalletClick }) => {
 
 /**
  * Main TokenActivityDrivers Component
+ * 
+ * PRODUCT RULES:
+ * - Max 3 wallets
+ * - Human-summary on top
+ * - Sorted by influenceScore
  */
 export function TokenActivityDrivers({ 
   tokenAddress, 
@@ -195,7 +242,8 @@ export function TokenActivityDrivers({
     setError(null);
     
     try {
-      const response = await getTokenDrivers(tokenAddress, chain, 5);
+      // Request max 3 drivers (product rule)
+      const response = await getTokenDrivers(tokenAddress, chain, 3);
       if (response.ok) {
         setDrivers(response.data);
       } else {
@@ -266,7 +314,7 @@ export function TokenActivityDrivers({
     );
   }
   
-  // No data state
+  // No data / Empty state
   if (!drivers || drivers.topDrivers?.length === 0) {
     return (
       <Card className={className}>
@@ -289,8 +337,8 @@ export function TokenActivityDrivers({
         <CardContent>
           <div className="text-center py-6 text-muted-foreground">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No significant wallet activity detected</p>
-            <p className="text-sm mt-1">Activity analysis requires recent token transfers</p>
+            <p className="font-medium">No dominant wallets identified</p>
+            <p className="text-sm mt-1">Market may be moving as "crowd" without dominant actors</p>
           </div>
         </CardContent>
       </Card>
@@ -318,7 +366,7 @@ export function TokenActivityDrivers({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Summary */}
+        {/* Human-readable Summary - ALWAYS ON TOP (product rule) */}
         <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
           <p className="font-medium text-blue-900 dark:text-blue-100">
             {drivers.summary?.headline || 'Activity analysis in progress'}
@@ -336,13 +384,13 @@ export function TokenActivityDrivers({
             Top Participants
           </h4>
           <Badge variant="outline" className="text-xs">
-            {drivers.totalParticipants} total
+            Showing {Math.min(3, drivers.topDrivers.length)} of {drivers.totalParticipants}
           </Badge>
         </div>
         
-        {/* Driver List */}
+        {/* Driver List (max 3 - product rule) */}
         <div className="space-y-2">
-          {drivers.topDrivers.map((driver, index) => (
+          {drivers.topDrivers.slice(0, 3).map((driver, index) => (
             <DriverCard
               key={driver.walletAddress}
               driver={driver}
@@ -353,16 +401,18 @@ export function TokenActivityDrivers({
         </div>
         
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            onClick={() => onWalletClick?.(drivers.topDrivers[0]?.walletAddress)}
-          >
-            View Top Wallet Profile
-          </Button>
-        </div>
+        {drivers.topDrivers.length > 0 && (
+          <div className="flex gap-2 pt-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={() => onWalletClick?.(drivers.topDrivers[0]?.walletAddress)}
+            >
+              View Top Wallet Profile
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
