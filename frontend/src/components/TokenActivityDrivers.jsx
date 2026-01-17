@@ -245,13 +245,18 @@ export function TokenActivityDrivers({
       // Request max 3 drivers (product rule)
       const response = await getTokenDrivers(tokenAddress, chain, 3);
       if (response.ok) {
+        // data can be null (no activity data) - this is valid, not an error
         setDrivers(response.data);
-      } else {
+      } else if (response.ok === false) {
         setError(response.error || 'Failed to load drivers');
+      } else {
+        // Unexpected response format
+        setDrivers(null);
       }
     } catch (err) {
       console.error('Error fetching drivers:', err);
-      setError('Failed to load activity drivers');
+      // Network or parsing error
+      setError('Unable to connect to activity service');
     } finally {
       setLoading(false);
     }
