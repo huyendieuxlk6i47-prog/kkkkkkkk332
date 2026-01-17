@@ -115,7 +115,7 @@ export const getAlertGroupDrivers = async (groupId) => {
  * @param {string} chain - Chain name
  */
 export const linkAlertGroupDrivers = async (groupId, tokenAddress, chain = 'Ethereum') => {
-  const response = await api.post(`/alerts/groups/${groupId}/drivers/link`, {
+  const response = await api.post(`/api/alerts/groups/${groupId}/drivers/link`, {
     tokenAddress,
     chain,
   });
