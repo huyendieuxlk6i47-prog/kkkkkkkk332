@@ -877,10 +877,12 @@ export default function TokensPage() {
             <EntryState onResolve={handleResolve} loading={loading} />
           )}
 
-          {isIndexingState && (
+          {/* ACTUALLY indexing - backend is working */}
+          {isActuallyIndexing && (
             <IndexingState resolvedData={resolvedData} onRefresh={handleRefresh} />
           )}
 
+          {/* RESOLVED - show data even with low confidence */}
           {isResolvedState && (
             <ResolvedState 
               resolvedData={resolvedData} 
