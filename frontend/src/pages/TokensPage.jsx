@@ -505,7 +505,7 @@ function TokenActionsBlock({ resolvedData, actionsEnabled, onCreateAlert }) {
 }
 
 // ============================================================================
-// Indexing State Component
+// Indexing State Component - Human language, not technical
 // ============================================================================
 function IndexingState({ resolvedData, onRefresh }) {
   const indexingItems = [
@@ -526,7 +526,7 @@ function IndexingState({ resolvedData, onRefresh }) {
                 {resolvedData.symbol || resolvedData.label || 'Unknown Token'}
               </span>
               <span className="px-2 py-1 rounded-lg text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                INDEXING
+                ANALYZING
               </span>
             </div>
             <div className="text-sm text-gray-400 font-mono">
@@ -545,14 +545,14 @@ function IndexingState({ resolvedData, onRefresh }) {
         </div>
       </div>
 
-      {/* Indexing Progress */}
+      {/* Analyzing Progress - Human language */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="flex items-center gap-3 mb-4">
           <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
           <div>
-            <h3 className="font-medium text-blue-900">Indexing in Progress</h3>
+            <h3 className="font-medium text-blue-900">Analyzing On-Chain Behavior</h3>
             <p className="text-sm text-blue-700">
-              Token analytics require indexed on-chain data
+              Gathering token activity data for analysis
             </p>
           </div>
         </div>
