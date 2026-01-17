@@ -1,11 +1,23 @@
 /**
  * Wallet Token Correlation Mongoose Model (B2)
+ * 
+ * ARCHITECTURAL RULES:
+ * - scoreComponents for transparent influence breakdown
+ * - roleContext for contextual role interpretation
+ * - hasDrivers for empty state handling
  */
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import type { WalletTokenCorrelation, AlertGroupDrivers } from './wallet_token_correlation.schema';
+import type { WalletTokenCorrelation, AlertGroupDrivers } from './wallet_token_correlation.schema.js';
 
 export interface IWalletTokenCorrelation extends WalletTokenCorrelation, Document {}
 export interface IAlertGroupDrivers extends AlertGroupDrivers, Document {}
+
+// Score Components Schema
+const ScoreComponentsSubSchema = new Schema({
+  volumeShare: { type: Number, required: true },
+  activityFrequency: { type: Number, required: true },
+  timingWeight: { type: Number, required: true },
+}, { _id: false });
 
 const WalletTokenCorrelationMongoSchema = new Schema<IWalletTokenCorrelation>(
   {
@@ -30,11 +42,17 @@ const WalletTokenCorrelationMongoSchema = new Schema<IWalletTokenCorrelation>(
       default: 'Ethereum',
     },
     
-    // Role
+    // Role (contextual)
     role: { 
       type: String, 
       required: true,
       enum: ['buyer', 'seller', 'mixed'],
+    },
+    roleContext: {
+      type: String,
+      required: true,
+      enum: ['accumulation', 'distribution', 'net_flow', 'alert_group', 'signal_window'],
+      default: 'net_flow',
     },
     
     // Influence
@@ -44,6 +62,9 @@ const WalletTokenCorrelationMongoSchema = new Schema<IWalletTokenCorrelation>(
       min: 0,
       max: 1,
     },
+    
+    // NEW: Transparent score breakdown
+    scoreComponents: ScoreComponentsSubSchema,
     
     // Metrics
     netFlow: { type: Number, required: true },
@@ -115,10 +136,13 @@ const AlertGroupDriversMongoSchema = new Schema<IAlertGroupDrivers>(
     drivers: [{
       walletAddress: { type: String, required: true },
       influenceScore: { type: Number, required: true },
+      scoreComponents: ScoreComponentsSubSchema,  // NEW
       role: { type: String, enum: ['buyer', 'seller', 'mixed'] },
+      roleContext: { type: String, enum: ['accumulation', 'distribution', 'net_flow', 'alert_group', 'signal_window'] },
       confidence: { type: Number, required: true },
     }],
     driverSummary: { type: String, required: true },
+    hasDrivers: { type: Boolean, required: true, default: true },  // NEW: Empty state flag
     calculatedAt: { type: Date, required: true },
   },
   {
