@@ -1,5 +1,5 @@
 /**
- * Wallets API - B1 Wallet Profile endpoints
+ * Wallets API - B1 Wallet Profile + B2 Token Correlation endpoints
  */
 import { api } from './client';
 
@@ -55,5 +55,69 @@ export const getHighVolumeWallets = async (limit = 20) => {
  */
 export const getTags = async () => {
   const response = await api.get('/wallets/tags');
+  return response.data;
+};
+
+// ========== B2: Token Correlation APIs ==========
+
+/**
+ * Get wallets driving activity on a token
+ * @param {string} tokenAddress - Token address
+ * @param {string} chain - Chain name
+ * @param {number} limit - Max drivers to return
+ */
+export const getTokenDrivers = async (tokenAddress, chain = 'Ethereum', limit = 5) => {
+  const response = await api.get(`/tokens/${tokenAddress}/drivers`, {
+    params: { chain, limit },
+  });
+  return response.data;
+};
+
+/**
+ * Trigger fresh correlation calculation for a token
+ * @param {string} tokenAddress - Token address
+ * @param {string} chain - Chain name
+ * @param {number} windowHours - Analysis window in hours
+ */
+export const calculateTokenDrivers = async (tokenAddress, chain = 'Ethereum', windowHours = 24) => {
+  const response = await api.post(`/tokens/${tokenAddress}/drivers/calculate`, {
+    chain,
+    windowHours,
+  });
+  return response.data;
+};
+
+/**
+ * Get tokens where a wallet has influence
+ * @param {string} walletAddress - Wallet address
+ * @param {number} limit - Max results
+ */
+export const getWalletTokenInfluence = async (walletAddress, limit = 10) => {
+  const response = await api.get(`/wallets/${walletAddress}/token-influence`, {
+    params: { limit },
+  });
+  return response.data;
+};
+
+/**
+ * Get wallet drivers for an alert group
+ * @param {string} groupId - Alert group ID
+ */
+export const getAlertGroupDrivers = async (groupId) => {
+  const response = await api.get(`/alerts/groups/${groupId}/drivers`);
+  return response.data;
+};
+
+/**
+ * Link drivers to an alert group
+ * @param {string} groupId - Alert group ID
+ * @param {string} tokenAddress - Token address
+ * @param {string} chain - Chain name
+ */
+export const linkAlertGroupDrivers = async (groupId, tokenAddress, chain = 'Ethereum') => {
+  const response = await api.post(`/alerts/groups/${groupId}/drivers/link`, {
+    tokenAddress,
+    chain,
+  });
   return response.data;
 };
