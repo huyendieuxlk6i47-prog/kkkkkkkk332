@@ -501,3 +501,73 @@ For wallet A:
 - `POST /api/clusters/:id/reject` - Reject cluster
 
 ---
+
+## ✅ Phase B4: Smart Money Patterns (COMPLETE)
+
+**Status**: ✅ Complete  
+**Completion Date**: 2026-01-17
+
+**Goal**: "Этот кошелёк historically приводил к результату?"
+
+**CRITICAL RULES:**
+- B4 ≠ signal, B4 = context + trust amplifier
+- B4 never triggers alerts (only enriches A-layer)
+- sampleSize < MIN_SAMPLE → label = 'emerging'
+- NO external "alpha lists"
+- NO "trust me bro"
+- NEVER say "Buy" / "Strong signal" / "Guaranteed"
+
+**Scoring Formula (honest):**
+```
+score = 0.4 * winRate + 0.3 * accumulationSuccess + 0.2 * timingAdvantage - 0.1 * drawdownPenalty
+confidence = min(1, sampleSize / TARGET_SAMPLE)
+```
+
+**Labels:**
+- `emerging` - sampleSize < 10 OR score < 50
+- `proven` - sampleSize >= 10 AND score >= 50
+- `elite` - sampleSize >= 25 AND score >= 75
+
+**Key Files:**
+- `/backend/src/core/wallets/smart_money_profile.schema.ts`
+- `/backend/src/core/wallets/smart_money_profile.model.ts`
+- `/backend/src/core/wallets/smart_money_profile.engine.ts`
+- `/backend/src/core/wallets/wallet.routes.ts` (B4 routes)
+- `/frontend/src/api/smartMoney.api.js`
+- `/frontend/src/components/SmartMoneyProfile.jsx`
+- `/frontend/src/components/SmartMoneyBadge.jsx`
+
+**API Endpoints:**
+- `GET /api/wallets/:address/smart-profile` - Get smart money profile
+- `POST /api/wallets/:address/smart-profile/calculate` - Force recalculate
+- `GET /api/clusters/:id/smart-profile` - Get cluster profile
+- `GET /api/smart-money/top` - Get top performers
+- `POST /api/smart-money/summary` - Get summary for multiple wallets
+- `GET /api/alerts/groups/:groupId/smart-money` - Get alert context
+
+---
+
+## 🏆 Architecture Complete
+
+### Final Chain:
+```
+Raw activity
+→ A0–A4 (alerts: WHEN / HOW IMPORTANT)
+→ B1 (wallet profile: WHO is this wallet)
+→ B2 (correlation: WHY this token/alert moved)
+→ B3 (clusters: ARE wallets related?)
+→ B4 (smart money: ARE they historically successful?)
+```
+
+### Maturity Check:
+| Question | Status |
+|----------|--------|
+| Doesn't spam? | ✅ |
+| Explainable? | ✅ |
+| No magic? | ✅ |
+| Doesn't mislead? | ✅ |
+| Telegram ready? | ✅ |
+
+---
+
+**Last Updated**: 2026-01-17
