@@ -191,7 +191,7 @@ export default function CreateWalletAlertModal({
       
       try {
         // Check if already in watchlist
-        const watchlistResponse = await watchlistApi.getWatchlist('wallet');
+        const watchlistResponse = await getWatchlist('wallet');
         if (watchlistResponse?.ok && watchlistResponse.data) {
           const existing = watchlistResponse.data.find(
             item => item.target?.address?.toLowerCase() === walletAddress.toLowerCase()
@@ -203,7 +203,7 @@ export default function CreateWalletAlertModal({
         
         // If not in watchlist, add it
         if (!watchlistItemId) {
-          const addResponse = await watchlistApi.addToWatchlist({
+          const addResponse = await addToWatchlist({
             type: 'wallet',
             target: {
               address: walletAddress,
@@ -221,29 +221,49 @@ export default function CreateWalletAlertModal({
         // Continue anyway - alert might still work
       }
 
-      // STEP 2: Create AlertRule
+      // STEP 2: Create AlertRule using correct API
+      const triggerConfig = {
+        type: selectedTrigger,
+      };
+      
+      // Add threshold if provided
+      const thresholdValue = parseFormattedNumber(threshold);
+      if (thresholdValue && currentTrigger.hasThreshold) {
+        triggerConfig.threshold = thresholdValue;
+      }
+      
+      // Add direction
+      if (currentTrigger.defaultDirection) {
+        triggerConfig.direction = currentTrigger.defaultDirection;
+      }
+      
+      // Add window
+      if (currentTrigger.hasWindow) {
+        triggerConfig.window = window;
+      }
+
       const rulePayload = {
-        type: 'wallet',
-        targetAddress: walletAddress,
-        targetLabel: walletLabel || `Wallet ${walletAddress.slice(0, 8)}...`,
-        chain,
+        scope: 'wallet',
+        targetId: walletAddress,
         triggerTypes: [selectedTrigger],
-        trigger: {
-          type: selectedTrigger,
-          threshold: currentTrigger.hasThreshold ? parseFormattedNumber(threshold) : null,
-          direction: currentTrigger.defaultDirection || direction,
-          window: currentTrigger.hasWindow ? window : null,
-        },
+        trigger: triggerConfig,
         channels: {
-          telegram: telegramEnabled && telegramConnected,
           inApp: uiEnabled,
-          email: false,
+          telegram: telegramEnabled && telegramConnected,
         },
-        status: 'active',
+        minSeverity: 50,
+        minConfidence: 0.6,
+        throttle: window || '6h',
+        name: `${walletLabel || walletAddress?.slice(0, 10) || 'Wallet'} ${currentTrigger.label} Alert`,
+        targetMeta: {
+          label: walletLabel,
+          address: walletAddress,
+          chain: chain,
+        },
         watchlistItemId,
       };
 
-      const response = await alertsApi.createRule(rulePayload);
+      const response = await alertsApi.createAlertRule(rulePayload);
       
       if (response?.ok) {
         setSuccess(true);
