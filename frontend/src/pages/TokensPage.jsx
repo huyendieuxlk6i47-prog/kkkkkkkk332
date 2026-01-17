@@ -720,6 +720,13 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left Column */}
         <div className="space-y-4">
+          {/* B2: Who is driving this activity? */}
+          <TokenActivityDrivers 
+            tokenAddress={resolvedData.normalizedId}
+            chain={resolvedData.chain || 'Ethereum'}
+            onWalletClick={onWalletClick}
+          />
+          
           {/* Token Activity (P1) */}
           <TokenActivityBlock resolvedData={resolvedData} marketContext={marketContext} />
           
