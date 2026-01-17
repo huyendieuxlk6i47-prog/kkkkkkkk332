@@ -30,6 +30,10 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import RelatedAddresses from '../components/RelatedAddresses';
 import SmartMoneyProfile from '../components/SmartMoneyProfile';
 
+// Wallet Tracking & Alerts
+import TrackWalletButton from '../components/TrackWalletButton';
+import CreateWalletAlertModal from '../components/CreateWalletAlertModal';
+
 import {
   Tooltip,
   TooltipContent,
