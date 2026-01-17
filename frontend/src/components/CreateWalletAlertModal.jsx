@@ -144,15 +144,23 @@ export default function CreateWalletAlertModal({
   const checkTelegramStatus = async () => {
     setCheckingTelegram(true);
     try {
-      const response = await alertsApi.getTelegramStatus();
-      if (response?.ok) {
-        setTelegramConnected(response.data?.connected ?? false);
-        setTelegramLink(response.data?.link);
-      }
+      const response = await alertsApi.getTelegramConnection();
+      setTelegramConnected(response?.connected || false);
     } catch (err) {
       console.error('Failed to check Telegram status:', err);
     } finally {
       setCheckingTelegram(false);
+    }
+  };
+  
+  const generateTelegramLink = async () => {
+    try {
+      const response = await alertsApi.connectTelegram();
+      if (response?.ok && response?.link) {
+        setTelegramLink(response.link);
+      }
+    } catch (err) {
+      console.error('Failed to generate Telegram link:', err);
     }
   };
 
