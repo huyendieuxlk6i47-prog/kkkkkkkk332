@@ -80,7 +80,7 @@ export const getTokenDrivers = async (tokenAddress, chain = 'Ethereum', limit = 
  * @param {number} windowHours - Analysis window in hours
  */
 export const calculateTokenDrivers = async (tokenAddress, chain = 'Ethereum', windowHours = 24) => {
-  const response = await api.post(`/tokens/${tokenAddress}/drivers/calculate`, {
+  const response = await api.post(`/api/tokens/${tokenAddress}/drivers/calculate`, {
     chain,
     windowHours,
   });
