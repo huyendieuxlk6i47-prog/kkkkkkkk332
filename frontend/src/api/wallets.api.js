@@ -93,7 +93,7 @@ export const calculateTokenDrivers = async (tokenAddress, chain = 'Ethereum', wi
  * @param {number} limit - Max results
  */
 export const getWalletTokenInfluence = async (walletAddress, limit = 10) => {
-  const response = await api.get(`/wallets/${walletAddress}/token-influence`, {
+  const response = await api.get(`/api/wallets/${walletAddress}/token-influence`, {
     params: { limit },
   });
   return response.data;
