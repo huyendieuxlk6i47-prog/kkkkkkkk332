@@ -104,7 +104,7 @@ export const getWalletTokenInfluence = async (walletAddress, limit = 10) => {
  * @param {string} groupId - Alert group ID
  */
 export const getAlertGroupDrivers = async (groupId) => {
-  const response = await api.get(`/alerts/groups/${groupId}/drivers`);
+  const response = await api.get(`/api/alerts/groups/${groupId}/drivers`);
   return response.data;
 };
 
