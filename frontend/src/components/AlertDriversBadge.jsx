@@ -3,10 +3,15 @@
  * 
  * Compact badge showing "Driven by Wallet A and 1 more" in alert cards
  * 
- * Connects Phase A (Alerts) with Phase B2 (Wallet Correlation)
+ * ARCHITECTURAL RULES:
+ * - A4 Dispatcher does NOT form drivers
+ * - Drivers come ONLY from B2
+ * - Empty state: "Behavior detected" (not error - crowd behavior)
+ * - Role is contextual with roleContext
+ * - scoreComponents visible in expanded view
  */
 import React, { useState, useEffect } from 'react';
-import { Users, ChevronRight } from 'lucide-react';
+import { Users, ChevronRight, Info } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { getAlertGroupDrivers } from '../api/wallets.api';
@@ -20,7 +25,7 @@ const formatAddress = (address) => {
 };
 
 /**
- * Get role emoji
+ * Get role emoji with context
  */
 const getRoleEmoji = (role) => {
   switch (role) {
@@ -31,7 +36,27 @@ const getRoleEmoji = (role) => {
 };
 
 /**
+ * Get role text with context
+ */
+const getRoleText = (role, roleContext) => {
+  const contextText = {
+    accumulation: 'in accumulation',
+    distribution: 'in distribution',
+    net_flow: 'by flow',
+    alert_group: 'in alert',
+    signal_window: 'during signal',
+  }[roleContext] || '';
+  
+  return `${role} ${contextText}`.trim();
+};
+
+/**
  * Compact drivers badge for alert cards
+ * 
+ * Empty state behavior:
+ * - label: "Behavior detected"
+ * - tooltip: "No dominant wallets identified for this activity"
+ * - Empty driver ≠ error (sometimes market moves as "crowd")
  */
 export function AlertDriversBadge({ 
   groupId, 
@@ -47,7 +72,7 @@ export function AlertDriversBadge({
     const fetchDrivers = async () => {
       try {
         const response = await getAlertGroupDrivers(groupId);
-        if (response.ok && response.data) {
+        if (response.ok) {
           setDrivers(response.data);
         }
       } catch (err) {
@@ -66,8 +91,28 @@ export function AlertDriversBadge({
     );
   }
   
-  if (!drivers || drivers.drivers?.length === 0) {
-    return null;
+  // Empty state: "Behavior detected" - not an error
+  if (!drivers || !drivers.hasDrivers || drivers.drivers?.length === 0) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant="secondary" 
+              className={`cursor-help ${className}`}
+              data-testid="alert-drivers-badge-empty"
+            >
+              <Users className="w-3 h-3 mr-1 opacity-50" />
+              Behavior detected
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">No dominant wallets identified for this activity</p>
+            <p className="text-xs text-muted-foreground mt-1">Market may be moving as "crowd"</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   }
   
   return (
@@ -93,7 +138,7 @@ export function AlertDriversBadge({
                 <div key={driver.walletAddress} className="flex items-center gap-2 text-sm">
                   <span>{getRoleEmoji(driver.role)}</span>
                   <span className="font-mono">{formatAddress(driver.walletAddress)}</span>
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {Math.round(driver.influenceScore * 100)}%
                   </span>
                 </div>
@@ -109,6 +154,7 @@ export function AlertDriversBadge({
 
 /**
  * Expanded drivers panel for alert detail view
+ * Shows scoreComponents for transparency
  */
 export function AlertDriversPanel({ 
   groupId,
@@ -124,7 +170,7 @@ export function AlertDriversPanel({
     const fetchDrivers = async () => {
       try {
         const response = await getAlertGroupDrivers(groupId);
-        if (response.ok && response.data) {
+        if (response.ok) {
           setDrivers(response.data);
         }
       } catch (err) {
@@ -148,11 +194,17 @@ export function AlertDriversPanel({
     );
   }
   
-  if (!drivers || drivers.drivers?.length === 0) {
+  // Empty state
+  if (!drivers || !drivers.hasDrivers || drivers.drivers?.length === 0) {
     return (
-      <div className={`p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center text-muted-foreground ${className}`}>
-        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">No wallet drivers linked to this alert</p>
+      <div className={`p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg ${className}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-4 h-4 text-slate-400" />
+          <span className="font-medium text-sm text-slate-600">Behavior Detected</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          No dominant wallets identified for this activity. Market may be moving as "crowd" without individual actors driving the behavior.
+        </p>
       </div>
     );
   }
@@ -179,12 +231,33 @@ export function AlertDriversPanel({
               <span>{getRoleEmoji(driver.role)}</span>
               <span className="font-mono text-sm">{formatAddress(driver.walletAddress)}</span>
               <Badge variant="outline" className="text-xs capitalize">
-                {driver.role}
+                {getRoleText(driver.role, driver.roleContext)}
               </Badge>
             </div>
-            <div className="text-sm">
-              <span className="font-medium">{Math.round(driver.influenceScore * 100)}%</span>
-              <span className="text-muted-foreground ml-1">influence</span>
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-right">
+                <span className="font-medium">{Math.round(driver.influenceScore * 100)}%</span>
+                <span className="text-muted-foreground ml-1">influence</span>
+              </div>
+              {/* Score breakdown tooltip */}
+              {driver.scoreComponents && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="p-1 hover:bg-slate-100 rounded">
+                        <Info className="w-3 h-3 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">
+                      <div className="space-y-1">
+                        <div>Volume: {Math.round(driver.scoreComponents.volumeShare * 100)}%</div>
+                        <div>Activity: {Math.round(driver.scoreComponents.activityFrequency * 100)}%</div>
+                        <div>Timing: {Math.round(driver.scoreComponents.timingWeight * 100)}%</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           </div>
         ))}
