@@ -1,15 +1,20 @@
 /**
- * Wallet Routes (B1 + B2)
+ * Wallet Routes (B1 + B2 + B3)
  * 
- * API endpoints for wallet profiles and token correlations
+ * API endpoints for wallet profiles, token correlations, and clusters
  */
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { walletProfileEngine, RawWalletData } from './wallet_profile.engine.js';
 import { walletTokenCorrelationEngine } from './wallet_token_correlation.engine.js';
+import { walletClusterEngine } from './wallet_cluster.engine.js';
 import type { WalletTag } from './wallet_profile.schema.js';
 
 interface WalletParams {
   address: string;
+}
+
+interface ClusterParams {
+  id: string;
 }
 
 interface SearchQuery {
