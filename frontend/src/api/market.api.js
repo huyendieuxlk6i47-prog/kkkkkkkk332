@@ -1,0 +1,64 @@
+/**
+ * Market API Client (Phase 15.5.2 - Extended)
+ */
+import { api } from './client';
+
+/**
+ * Get market context for an asset (exploration mode)
+ * @param {string} asset - Asset address or symbol
+ * @param {string} chain - Chain (default: ethereum)
+ */
+export async function getMarketContext(asset, chain = 'ethereum') {
+  const response = await api.get(`/api/market/context/${asset}`, {
+    params: { chain }
+  });
+  return response.data;
+}
+
+/**
+ * Get latest price for an asset
+ * @param {string} asset - Asset address
+ * @param {string} chain - Chain (default: ethereum)
+ */
+export async function getLatestPrice(asset, chain = 'ethereum') {
+  const response = await api.get(`/api/market/prices/${asset}/latest`, {
+    params: { chain }
+  });
+  return response.data;
+}
+
+/**
+ * Get market metrics for an asset
+ * @param {string} asset - Asset address
+ * @param {string} window - Time window (1h, 4h, 24h, 7d)
+ */
+export async function getMarketMetrics(asset, window = '24h') {
+  const response = await api.get(`/api/market/market-metrics/${asset}`, {
+    params: { window }
+  });
+  return response.data;
+}
+
+/**
+ * Get known tokens
+ * @param {string} chain - Chain (default: ethereum)
+ */
+export async function getKnownTokens(chain = 'ethereum') {
+  const response = await api.get('/api/market/known-tokens', {
+    params: { chain }
+  });
+  return response.data;
+}
+
+/**
+ * Get flow anomalies (z-score deviations) for market analysis
+ * @param {string} asset - Asset address (default: ETH)
+ * @param {string} chain - Chain (default: ethereum)
+ * @param {string} timeframe - Time window (7d, 14d, 30d)
+ */
+export async function getFlowAnomalies(asset = '0x0000000000000000000000000000000000000000', chain = 'ethereum', timeframe = '7d') {
+  const response = await api.get('/api/market/flow-anomalies', {
+    params: { asset, chain, timeframe }
+  });
+  return response.data;
+}

@@ -1,0 +1,98 @@
+/**
+ * Token Profile Routes (Phase 15.5)
+ */
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import * as tokenProfileService from './token_profile.service.js';
+
+export async function tokenProfileRoutes(app: FastifyInstance): Promise<void> {
+  /**
+   * GET /api/tokens/:address/profile
+   * Get comprehensive token profile
+   */
+  app.get('/:address/profile', async (request: FastifyRequest) => {
+    const { address } = request.params as { address: string };
+    const query = request.query as { chain?: string };
+    
+    const profile = await tokenProfileService.getTokenProfile(
+      address,
+      query.chain || 'ethereum'
+    );
+    
+    if (!profile) {
+      return {
+        ok: false,
+        error: 'TOKEN_NOT_FOUND',
+        message: 'No data available for this token',
+      };
+    }
+    
+    return {
+      ok: true,
+      data: profile,
+    };
+  });
+  
+  /**
+   * POST /api/tokens/profiles/batch
+   * Get multiple token profiles
+   */
+  app.post('/profiles/batch', async (request: FastifyRequest) => {
+    const body = request.body as { addresses?: string[]; chain?: string };
+    
+    if (!body.addresses || !Array.isArray(body.addresses)) {
+      return {
+        ok: false,
+        error: 'INVALID_BODY',
+        message: 'Body must contain "addresses" array',
+      };
+    }
+    
+    if (body.addresses.length > 20) {
+      return {
+        ok: false,
+        error: 'TOO_MANY_ADDRESSES',
+        message: 'Maximum 20 addresses per batch',
+      };
+    }
+    
+    const profiles = await tokenProfileService.getTokenProfiles(
+      body.addresses,
+      body.chain || 'ethereum'
+    );
+    
+    return {
+      ok: true,
+      data: profiles,
+      count: profiles.length,
+    };
+  });
+  
+  /**
+   * GET /api/tokens/trending
+   * Get trending tokens by signal activity
+   */
+  app.get('/trending', async (request: FastifyRequest) => {
+    const query = request.query as { limit?: string; timeframe?: string };
+    
+    const limit = Math.min(50, parseInt(query.limit || '10'));
+    const timeframe = (query.timeframe || '24h') as '1h' | '24h' | '7d';
+    
+    if (!['1h', '24h', '7d'].includes(timeframe)) {
+      return {
+        ok: false,
+        error: 'INVALID_TIMEFRAME',
+        message: 'Timeframe must be 1h, 24h, or 7d',
+      };
+    }
+    
+    const trending = await tokenProfileService.getTrendingTokens(limit, timeframe);
+    
+    return {
+      ok: true,
+      data: trending,
+      count: trending.length,
+    };
+  });
+  
+  app.log.info('Token profile routes registered');
+}
