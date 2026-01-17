@@ -818,9 +818,23 @@ export default function TokensPage() {
     }
   };
 
+  // FIXED: 4 states instead of 2
+  // - idle: nothing entered
+  // - indexing: backend ACTUALLY indexing (status=indexing/pending)
+  // - resolved: data ready (even partial, even low confidence!)
+  // - empty: no data
+  
   const isEntryState = !address && !resolvedData;
-  const isIndexingState = resolvedData && resolvedData.confidence < CONFIDENCE_THRESHOLDS.UI_DISPLAY;
-  const isResolvedState = resolvedData && resolvedData.confidence >= CONFIDENCE_THRESHOLDS.UI_DISPLAY;
+  
+  // CRITICAL FIX: low confidence is NOT indexing!
+  // low confidence = "not enough activity yet" (valid resolved state)
+  const isActuallyIndexing = resolvedData && (
+    resolvedData.status === 'indexing' || 
+    resolvedData.status === 'pending'
+  );
+  
+  // FIXED: resolved with low confidence is STILL resolved
+  const isResolvedState = resolvedData && !isActuallyIndexing;
 
   return (
     <TooltipProvider>
