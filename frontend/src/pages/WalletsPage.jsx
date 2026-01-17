@@ -421,8 +421,9 @@ export default function WalletsPage() {
       if (response?.ok) {
         setResolvedData(response.data);
         
-        // Only fetch additional data if resolved with good confidence
-        if (response.data.status === 'resolved' && response.data.confidence >= 0.4) {
+        // FIXED: Load additional data whenever resolved (even with low confidence)
+        // Low confidence = partial data, but still show what we have
+        if (response.data.status === 'resolved') {
           // Try to get B1 Wallet Profile first
           try {
             const profile = await walletsApi.getProfile(response.data.normalizedId);
