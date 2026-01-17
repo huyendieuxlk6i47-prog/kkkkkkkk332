@@ -640,7 +640,7 @@ function IndexingState({ resolvedData, onRefresh }) {
 // ============================================================================
 // Resolved State Component
 // ============================================================================
-function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert }) {
+function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, onWalletClick }) {
   const price = marketContext?.price?.current;
   const change24h = marketContext?.price?.change24h;
   const regime = marketContext?.regime?.current;
