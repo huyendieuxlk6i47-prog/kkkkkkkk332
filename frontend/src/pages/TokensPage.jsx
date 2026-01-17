@@ -873,6 +873,7 @@ export default function TokensPage() {
               marketContext={marketContext}
               onRefresh={handleRefresh}
               onCreateAlert={() => setShowAlertModal(true)}
+              onWalletClick={(walletAddress) => navigate(`/wallets/${walletAddress}`)}
             />
           )}
         </div>
