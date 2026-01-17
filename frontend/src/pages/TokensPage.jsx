@@ -33,6 +33,9 @@ import { resolverApi, marketApi } from '../api';
 // B2: Wallet Token Correlation
 import TokenActivityDrivers from '../components/TokenActivityDrivers';
 
+// Token Watchlist
+import TrackTokenButton from '../components/TrackTokenButton';
+
 // ============================================================================
 // P0: Fixed Token Search - No icon, plain input
 // ============================================================================
