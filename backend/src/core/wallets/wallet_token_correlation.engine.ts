@@ -3,33 +3,41 @@
  * 
  * Purpose: "Этот токен движется из-за кого?"
  * 
+ * ARCHITECTURAL RULES:
+ * 1. UI never guesses, backend always explains (scoreComponents)
+ * 2. Role is contextual, not absolute (roleContext)
+ * 3. A4 Dispatcher does NOT form drivers - drivers come ONLY from B2
+ * 4. Empty driver ≠ error (crowd behavior)
+ * 
  * Calculates influence score using:
  * - Volume share (доля кошелька в общем потоке)
  * - Activity frequency (как часто участвовал)
  * - Timing weight (до/во время сигнала)
  * 
  * Formula (MVP):
- * influenceScore = w1 * volume_share + w2 * activity_freq + w3 * timing_weight
+ * influenceScore = 0.4 * volume_share + 0.3 * activity_freq + 0.3 * timing_weight
  */
 import { v4 as uuidv4 } from 'uuid';
 import type { 
   WalletTokenCorrelation, 
   TokenActivityDrivers,
   WalletRole,
+  RoleContext,
   TimeRelation,
   AlertGroupDrivers,
-} from './wallet_token_correlation.schema';
-import { WalletTokenCorrelationModel, AlertGroupDriversModel } from './wallet_token_correlation.model';
-import { WalletProfileModel } from './wallet_profile.model';
-import { SignalModel } from '../signals/signals.model';
-import { TransferModel } from '../transfers/transfers.model';
-import { AlertGroupModel } from '../alerts/grouping/alert_group.model';
+  ScoreComponents,
+} from './wallet_token_correlation.schema.js';
+import { WalletTokenCorrelationModel, AlertGroupDriversModel } from './wallet_token_correlation.model.js';
+import { WalletProfileModel } from './wallet_profile.model.js';
+import { SignalModel } from '../signals/signals.model.js';
+import { TransferModel } from '../transfers/transfers.model.js';
 
 /**
  * Weights for influence score calculation
+ * Transparent and documented
  */
 const INFLUENCE_WEIGHTS = {
-  volumeShare: 0.4,      // 40% - доля в объеме
+  volumeShare: 0.4,       // 40% - доля в объеме
   activityFrequency: 0.3, // 30% - частота активности  
   timingWeight: 0.3,      // 30% - время относительно сигнала
 };
@@ -38,10 +46,11 @@ const INFLUENCE_WEIGHTS = {
  * Thresholds
  */
 const THRESHOLDS = {
-  minTxCount: 2,           // Minimum transactions to be considered
-  minVolumeShare: 0.01,    // Minimum 1% volume share
-  topDriversLimit: 10,     // Max drivers to return
-  analysisWindowHours: 24, // Default analysis window
+  minTxCount: 2,             // Minimum transactions to be considered
+  minVolumeShare: 0.01,      // Minimum 1% volume share
+  topDriversLimit: 10,       // Max drivers for storage
+  uiDriversLimit: 3,         // Max drivers for UI (product rule)
+  analysisWindowHours: 24,   // Default analysis window
 };
 
 export class WalletTokenCorrelationEngine {
@@ -120,6 +129,9 @@ export class WalletTokenCorrelationEngine {
     
     const firstSignalTime = signals.length > 0 ? signals[0].timestamp : periodEnd;
     
+    // Determine overall roleContext based on net flow
+    const overallRoleContext = this.determineRoleContext(walletStats, totalVolume);
+    
     // Calculate correlations
     const correlations: WalletTokenCorrelation[] = [];
     
@@ -131,7 +143,7 @@ export class WalletTokenCorrelationEngine {
       if (stats.txCount < THRESHOLDS.minTxCount) continue;
       if (volumeShare < THRESHOLDS.minVolumeShare) continue;
       
-      // Determine role
+      // Determine role (contextual, not absolute)
       const netFlow = stats.inVolume - stats.outVolume;
       let role: WalletRole = 'mixed';
       if (netFlow > walletVolume * 0.3) role = 'buyer';
@@ -151,11 +163,18 @@ export class WalletTokenCorrelationEngine {
       const activityFrequency = stats.txCount / daySpan;
       const normalizedFrequency = Math.min(1, activityFrequency / 10); // Cap at 10 tx/day
       
+      // Build scoreComponents (transparent breakdown)
+      const scoreComponents: ScoreComponents = {
+        volumeShare: volumeShare,
+        activityFrequency: normalizedFrequency,
+        timingWeight: timingWeight,
+      };
+      
       // Calculate influence score
       const influenceScore = 
-        INFLUENCE_WEIGHTS.volumeShare * volumeShare +
-        INFLUENCE_WEIGHTS.activityFrequency * normalizedFrequency +
-        INFLUENCE_WEIGHTS.timingWeight * timingWeight;
+        INFLUENCE_WEIGHTS.volumeShare * scoreComponents.volumeShare +
+        INFLUENCE_WEIGHTS.activityFrequency * scoreComponents.activityFrequency +
+        INFLUENCE_WEIGHTS.timingWeight * scoreComponents.timingWeight;
       
       // Get wallet profile for metadata
       const walletProfile = await WalletProfileModel.findOne({ 
@@ -168,7 +187,9 @@ export class WalletTokenCorrelationEngine {
         tokenAddress: tokenAddr,
         chain,
         role,
+        roleContext: overallRoleContext,  // NEW: Context for role
         influenceScore: Math.min(1, influenceScore),
+        scoreComponents,  // NEW: Transparent breakdown
         netFlow,
         totalVolume: walletVolume,
         txCount: stats.txCount,
@@ -190,7 +211,7 @@ export class WalletTokenCorrelationEngine {
       correlations.push(correlation);
     }
     
-    // Sort by influence score
+    // Sort by influence score (not by txCount - product rule)
     correlations.sort((a, b) => b.influenceScore - a.influenceScore);
     
     // Save top correlations to database
@@ -207,6 +228,30 @@ export class WalletTokenCorrelationEngine {
   }
   
   /**
+   * Determine role context based on overall market behavior
+   */
+  private determineRoleContext(
+    walletStats: Map<string, any>,
+    totalVolume: number
+  ): RoleContext {
+    let totalInflow = 0;
+    let totalOutflow = 0;
+    
+    for (const [, stats] of walletStats) {
+      totalInflow += stats.inVolume;
+      totalOutflow += stats.outVolume;
+    }
+    
+    const netFlow = totalInflow - totalOutflow;
+    const flowRatio = totalVolume > 0 ? Math.abs(netFlow) / totalVolume : 0;
+    
+    if (flowRatio > 0.2) {
+      return netFlow > 0 ? 'accumulation' : 'distribution';
+    }
+    return 'net_flow';
+  }
+  
+  /**
    * Calculate timing metrics relative to signal
    */
   private calculateTimingMetrics(
@@ -216,7 +261,6 @@ export class WalletTokenCorrelationEngine {
   ): { timeRelation: TimeRelation; timingWeight: number } {
     const activityMs = firstActivityTime.getTime();
     const signalMs = firstSignalTime.getTime();
-    const periodMs = periodStart.getTime();
     
     let timeRelation: TimeRelation;
     let timingWeight: number;
@@ -259,21 +303,29 @@ export class WalletTokenCorrelationEngine {
   
   /**
    * Get token activity drivers (aggregated view for UI)
+   * 
+   * PRODUCT RULES:
+   * - Max 3 wallets (not dashboard)
+   * - Sort by influenceScore
+   * - Human-summary always on top
    */
   async getTokenActivityDrivers(
     tokenAddress: string,
     chain: string = 'Ethereum',
-    limit: number = 5
+    limit: number = THRESHOLDS.uiDriversLimit  // Default 3 for UI
   ): Promise<TokenActivityDrivers | null> {
     const tokenAddr = tokenAddress.toLowerCase();
+    
+    // Enforce UI limit (max 3)
+    const effectiveLimit = Math.min(limit, THRESHOLDS.uiDriversLimit);
     
     // First try to get from recent calculations
     const correlations = await WalletTokenCorrelationModel.find({
       tokenAddress: tokenAddr,
       chain,
     })
-      .sort({ influenceScore: -1 })
-      .limit(limit)
+      .sort({ influenceScore: -1 })  // Sort by influenceScore, NOT txCount
+      .limit(effectiveLimit)
       .lean();
     
     // If no data, calculate fresh
@@ -282,7 +334,7 @@ export class WalletTokenCorrelationEngine {
       if (freshCorrelations.length === 0) {
         return null;
       }
-      return this.buildActivityDrivers(tokenAddr, chain, freshCorrelations.slice(0, limit));
+      return this.buildActivityDrivers(tokenAddr, chain, freshCorrelations.slice(0, effectiveLimit));
     }
     
     return this.buildActivityDrivers(tokenAddr, chain, correlations as WalletTokenCorrelation[]);
@@ -301,22 +353,32 @@ export class WalletTokenCorrelationEngine {
     for (const c of correlations) {
       roleCounts[c.role]++;
     }
-    const dominantRole = roleCounts.buyer >= roleCounts.seller ? 'buyer' : 'seller';
+    const dominantRole: WalletRole = roleCounts.buyer >= roleCounts.seller ? 'buyer' : 'seller';
     
-    // Generate summary
+    // Get role context from first correlation
+    const roleContext: RoleContext = correlations[0]?.roleContext || 'net_flow';
+    
+    // Generate summary (human-readable, product-focused)
     const highInfluence = correlations.filter(c => c.influenceScore > 0.5);
-    const headline = this.generateHeadline(highInfluence.length, dominantRole);
-    const description = this.generateDescription(correlations);
+    const headline = this.generateHeadline(highInfluence.length, dominantRole, roleContext);
+    const description = this.generateDescription(correlations, roleContext);
     
     return {
       tokenAddress,
       chain,
       totalParticipants: correlations.length,
       dominantRole,
+      roleContext,
       topDrivers: correlations.map(c => ({
         walletAddress: c.walletAddress,
         role: c.role,
+        roleContext: c.roleContext || roleContext,
         influenceScore: c.influenceScore,
+        scoreComponents: c.scoreComponents || {
+          volumeShare: c.volumeShare,
+          activityFrequency: Math.min(1, c.activityFrequency / 10),
+          timingWeight: c.timingWeight,
+        },
         volumeShare: c.volumeShare,
         netFlow: c.netFlow,
         txCount: c.txCount,
@@ -334,34 +396,44 @@ export class WalletTokenCorrelationEngine {
   }
   
   /**
-   * Generate headline for UI
+   * Generate headline for UI (product-focused, not analytical)
+   * Example: "Recent accumulation is primarily driven by 2 wallets with historically high activity."
    */
-  private generateHeadline(highInfluenceCount: number, dominantRole: WalletRole): string {
-    const roleText = dominantRole === 'buyer' ? 'accumulation' : 'distribution';
+  private generateHeadline(
+    highInfluenceCount: number, 
+    dominantRole: WalletRole,
+    roleContext: RoleContext
+  ): string {
+    const contextText = roleContext === 'accumulation' 
+      ? 'accumulation' 
+      : roleContext === 'distribution'
+      ? 'distribution'
+      : 'activity';
     
     if (highInfluenceCount === 0) {
-      return 'No significant wallet activity detected';
+      return `No dominant wallets identified for this ${contextText}`;
     } else if (highInfluenceCount === 1) {
-      return `1 high-activity wallet driving ${roleText}`;
+      return `Recent ${contextText} is primarily driven by 1 wallet with high activity`;
     } else {
-      return `${highInfluenceCount} high-activity wallets driving ${roleText}`;
+      return `Recent ${contextText} is primarily driven by ${highInfluenceCount} wallets with high activity`;
     }
   }
   
   /**
    * Generate description for UI
    */
-  private generateDescription(correlations: WalletTokenCorrelation[]): string {
+  private generateDescription(
+    correlations: WalletTokenCorrelation[],
+    roleContext: RoleContext
+  ): string {
     if (correlations.length === 0) {
       return 'Insufficient data to analyze wallet influence.';
     }
     
-    const top = correlations[0];
-    const totalShare = correlations.reduce((sum, c) => sum + c.volumeShare, 0);
-    
     const parts: string[] = [];
     
     // Volume concentration
+    const totalShare = correlations.reduce((sum, c) => sum + c.volumeShare, 0);
     if (totalShare > 0.5) {
       parts.push(`Top ${correlations.length} wallets account for ${Math.round(totalShare * 100)}% of recent volume`);
     }
@@ -372,13 +444,17 @@ export class WalletTokenCorrelationEngine {
       parts.push(`${earlyWallets.length} wallet(s) were active before signal detection`);
     }
     
-    // Role breakdown
-    const buyers = correlations.filter(c => c.role === 'buyer');
-    const sellers = correlations.filter(c => c.role === 'seller');
-    if (buyers.length > sellers.length * 2) {
-      parts.push('Predominantly buying activity');
-    } else if (sellers.length > buyers.length * 2) {
-      parts.push('Predominantly selling activity');
+    // Role context insight
+    if (roleContext === 'accumulation') {
+      const buyers = correlations.filter(c => c.role === 'buyer');
+      if (buyers.length > 0) {
+        parts.push(`${buyers.length} wallet(s) acted as buyers during this accumulation`);
+      }
+    } else if (roleContext === 'distribution') {
+      const sellers = correlations.filter(c => c.role === 'seller');
+      if (sellers.length > 0) {
+        parts.push(`${sellers.length} wallet(s) acted as sellers during this distribution`);
+      }
     }
     
     return parts.join('. ') + (parts.length > 0 ? '.' : 'Activity analysis in progress.');
@@ -386,16 +462,35 @@ export class WalletTokenCorrelationEngine {
   
   /**
    * Link drivers to alert group
+   * 
+   * ARCHITECTURAL RULE:
+   * A4 Dispatcher does NOT form drivers.
+   * Drivers come ONLY from B2.
    */
   async linkDriversToAlertGroup(
     groupId: string,
     tokenAddress: string,
     chain: string = 'Ethereum'
-  ): Promise<AlertGroupDrivers | null> {
+  ): Promise<AlertGroupDrivers> {
     const drivers = await this.getTokenActivityDrivers(tokenAddress, chain);
     
+    // Handle empty state (not an error - sometimes market moves as "crowd")
     if (!drivers || drivers.topDrivers.length === 0) {
-      return null;
+      const emptyResult: AlertGroupDrivers = {
+        groupId,
+        drivers: [],
+        driverSummary: 'Behavior detected',  // Empty state label
+        hasDrivers: false,
+        calculatedAt: new Date(),
+      };
+      
+      await AlertGroupDriversModel.findOneAndUpdate(
+        { groupId },
+        { $set: emptyResult },
+        { upsert: true }
+      );
+      
+      return emptyResult;
     }
     
     // Create driver summary for alert card
@@ -413,13 +508,16 @@ export class WalletTokenCorrelationEngine {
     
     const alertGroupDrivers: AlertGroupDrivers = {
       groupId,
-      drivers: drivers.topDrivers.slice(0, 5).map(d => ({
+      drivers: drivers.topDrivers.map(d => ({
         walletAddress: d.walletAddress,
         influenceScore: d.influenceScore,
+        scoreComponents: d.scoreComponents,
         role: d.role,
+        roleContext: d.roleContext,
         confidence: d.confidence,
       })),
       driverSummary,
+      hasDrivers: true,
       calculatedAt: new Date(),
     };
     
@@ -451,7 +549,7 @@ export class WalletTokenCorrelationEngine {
     const addr = walletAddress.toLowerCase();
     
     return WalletTokenCorrelationModel.find({ walletAddress: addr })
-      .sort({ influenceScore: -1 })
+      .sort({ influenceScore: -1 })  // Sort by influenceScore
       .limit(limit)
       .lean() as Promise<WalletTokenCorrelation[]>;
   }
