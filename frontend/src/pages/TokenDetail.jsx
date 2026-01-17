@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   ChevronDown, ChevronLeft, ChevronRight, Filter, ArrowUpRight, Wallet, ExternalLink
@@ -16,6 +16,9 @@ import DEXMicrostructure from '../components/DEXMicrostructure';
 import OIVolumeCorrelations from '../components/OIVolumeCorrelations';
 import ActivityBreakdown from '../components/ActivityBreakdown';
 import DecisionEngine from '../components/DecisionEngine';
+
+// B2: Wallet Token Correlation
+import TokenActivityDrivers from '../components/TokenActivityDrivers';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL + '/api';
 
