@@ -390,3 +390,61 @@ SmartMoneyPattern {
 
 **Last Updated**: 2026-01-17  
 **Next Review**: P2 planning session
+
+---
+
+## 📐 Architectural Rules (B2)
+
+### 1. scoreComponents — Transparent Influence Breakdown
+
+```typescript
+scoreComponents: {
+  volumeShare: number      // Weight: 0.4
+  activityFrequency: number // Weight: 0.3
+  timingWeight: number      // Weight: 0.3
+}
+```
+
+**Rule**: UI never guesses, backend always explains.
+
+### 2. roleContext — Contextual Role Interpretation
+
+```typescript
+roleContext: 'accumulation' | 'distribution' | 'net_flow' | 'alert_group' | 'signal_window'
+```
+
+**Wrong**: "Wallet is buyer" (absolute)
+**Right**: "This wallet acted as a buyer during this accumulation" (contextual)
+
+### 3. A4 ↔ B2 Relationship
+
+```
+CRITICAL RULE:
+- A4 Dispatcher does NOT form drivers
+- Drivers come ONLY from B2
+- AlertGroupDrivers are populated by B2 engine, not A4
+```
+
+This prevents future architectural confusion.
+
+### 4. Empty Driver State
+
+```typescript
+if (!drivers || drivers.length === 0) {
+  driverSummary: "Behavior detected"
+  hasDrivers: false
+}
+```
+
+**Rule**: Empty driver ≠ error. Sometimes market moves as "crowd".
+
+### 5. Token Page UI Rules
+
+- ❌ NOT more than 3 wallets in the block
+- ❌ NOT sorted by txCount
+- ✅ Sorted by influenceScore
+- ✅ Human-summary ALWAYS on top
+
+---
+
+**Last Updated**: 2026-01-17
