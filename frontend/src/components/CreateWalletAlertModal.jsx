@@ -12,7 +12,8 @@
  */
 import { useState, useEffect, useMemo } from 'react';
 import { X, Bell, Loader2, Check, AlertCircle, ChevronDown, Settings2, Clock } from 'lucide-react';
-import { alertsApi, watchlistApi } from '../api';
+import { alertsApi } from '../api';
+import { addToWatchlist, getWatchlist } from '../api/watchlist.api';
 import {
   Tooltip,
   TooltipContent,
