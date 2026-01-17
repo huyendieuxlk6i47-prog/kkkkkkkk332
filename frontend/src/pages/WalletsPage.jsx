@@ -191,7 +191,7 @@ function WalletIndexingState({ resolvedData, onSetAlert, onIndexingComplete }) {
 }
 
 // Resolved Wallet View - Real Data Only (with B1-B4 components)
-function WalletResolvedView({ resolvedData, walletData, walletProfile }) {
+function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateAlert }) {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [showClusterModal, setShowClusterModal] = useState(false);
   const [selectedClusterId, setSelectedClusterId] = useState(null);
@@ -244,16 +244,13 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
-              <Star className="w-4 h-4" />
-              Track
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
-              <Bell className="w-4 h-4" />
-              Alerts
-            </button>
-          </div>
+          {/* Wallet Actions - Track + Alert */}
+          <TrackWalletButton
+            walletAddress={resolvedData.normalizedId}
+            walletLabel={walletProfile?.summary?.headline || resolvedData.label}
+            chain={resolvedData.chain || 'Ethereum'}
+            onCreateAlert={onCreateAlert}
+          />
         </div>
       </div>
 
