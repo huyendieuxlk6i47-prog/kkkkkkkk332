@@ -173,7 +173,7 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
   
   /**
    * GET /api/alerts/rules/:id/feedback
-   * Get feedback status for a rule
+   * Get feedback status for a rule (A5.1 stats)
    */
   app.get('/rules/:id/feedback', async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = getUserId(request);
@@ -185,25 +185,55 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(404).send({ ok: false, error: 'Rule not found' });
     }
     
-    // Calculate triggers in last 24h
+    // Get fresh stats
+    const { getAlertStats } = await import('./alert_rules.model.js');
+    const stats = await getAlertStats(params.id);
+    
+    // Calculate triggers in last 24h from recentTriggerTimestamps
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const triggersIn24h = (rule.recentTriggerTimestamps || [])
       .filter((ts: Date) => new Date(ts) > twentyFourHoursAgo)
       .length;
     
-    // Determine if feedback should be shown
-    const showFeedback = triggersIn24h >= 3 && rule.minSeverity <= 75;
+    const noiseScore = stats?.noiseScore || triggersIn24h;
+    
+    // Determine feedback based on A5.1 rules
+    // noiseScore >= 3 → suggest reduce sensitivity
+    // noiseScore >= 6 + highestPriority !== high → suggest pause
+    const shouldReduceSensitivity = noiseScore >= 3 && stats?.highestPriority24h !== 'high';
+    const shouldPause = noiseScore >= 6 && stats?.highestPriority24h !== 'high';
+    
+    let recommendation = null;
+    if (shouldPause) {
+      recommendation = 'This monitoring has triggered frequently with moderate priority. Consider pausing to reduce noise.';
+    } else if (shouldReduceSensitivity) {
+      recommendation = 'This monitoring is triggering often. Consider reducing sensitivity to focus on more significant events.';
+    }
     
     return {
       ok: true,
       data: {
+        // A5.1: Full stats
+        stats: {
+          triggers24h: stats?.triggers24h || triggersIn24h,
+          suppressedCount24h: stats?.suppressedCount24h || 0,
+          highestPriority24h: stats?.highestPriority24h || 'low',
+          dominantReason24h: stats?.dominantReason24h || null,
+          noiseScore,
+        },
+        
+        // Legacy fields
         triggersIn24h,
         totalTriggerCount: rule.triggerCount,
-        showFeedback,
+        
+        // Feedback decisions
+        showFeedback: shouldReduceSensitivity,
+        suggestPause: shouldPause,
         feedbackSent: rule.feedbackStatus?.feedbackSent || false,
-        recommendation: showFeedback 
-          ? 'This alert has triggered frequently. Consider reducing sensitivity or pausing monitoring.'
-          : null,
+        recommendation,
+        
+        // Current sensitivity
+        currentSensitivity: rule.sensitivity || 'medium',
       },
     };
   });
