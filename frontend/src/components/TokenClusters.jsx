@@ -23,12 +23,13 @@ const formatAddress = (address) => {
 export default function TokenClusters({ tokenAddress, clusters, className = '' }) {
   const hasClusters = clusters && clusters.length > 0;
 
-  // P2.1 FIX: Empty state is VALID result
+  // P2.1 FIX: Empty state is VALID result - explain WHAT was checked
   if (!hasClusters) {
     return (
       <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Related Wallet Clusters</h3>
+          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
         </div>
         <div className="text-center py-6 bg-gray-50 rounded-xl">
           <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
@@ -37,8 +38,9 @@ export default function TokenClusters({ tokenAddress, clusters, className = '' }
           <p className="text-sm font-medium text-gray-700 mb-2">
             No related wallet clusters detected
           </p>
-          <p className="text-xs text-gray-500 max-w-xs mx-auto">
-            We haven't identified coordinated wallet behavior around this token yet.
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            We analyzed timing correlation, token overlap, and behavioral patterns across active wallets. 
+            No coordinated clusters were identified.
           </p>
         </div>
       </div>
