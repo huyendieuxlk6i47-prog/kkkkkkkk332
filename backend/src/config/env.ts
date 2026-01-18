@@ -17,6 +17,9 @@ const EnvSchema = z.object({
   // Ethereum RPC (Infura)
   INFURA_RPC_URL: z.string().url().optional(),
   
+  // Ankr RPC (secondary)
+  ANKR_RPC_URL: z.string().url().optional(),
+  
   // Arbitrum RPC
   ARBITRUM_RPC_URL: z.string().url().optional(),
   
