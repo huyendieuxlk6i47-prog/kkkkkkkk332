@@ -1,0 +1,78 @@
+{
+  "summary": "Completed testing of Wallet Alerts, Watchlist, and Token Search functionality. Backend: 16/16 tests passed (100%). Frontend: All P0 features working - Wallet Alert Modal opens from 'Notify when ready' button with correct trigger types, Token search works, Create Alert modal works on TokensPage.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "WebSocket /api/ws", "issue": "WebSocket connections failing with 403 Forbidden - non-blocking for alert functionality", "priority": "LOW"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "DataAvailability component", "issues": ["Low confidence still shows 'Indexing in progress' message (line 196) - should show 'Limited activity' or similar human-friendly message instead"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/tests/test_wallet_alerts.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Consider updating DataAvailability.jsx line 196 to show 'Limited activity' instead of 'Indexing in progress' for low confidence"
+  ],
+  "critical_code_review_comments": [
+    "CreateWalletAlertModal correctly uses backend trigger types: accumulation, distribution, large_move, smart_money_entry, activity_spike",
+    "TrackWalletButton is integrated in WalletResolvedView but not shown during indexing state (by design)",
+    "Token search and alert creation working correctly on TokensPage"
+  ],
+  "updated_files": [
+    "/app/tests/test_wallet_alerts.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (all P0 flows working)"
+  },
+  "test_credentials": {
+    "test_user_id": "anonymous",
+    "backend_url": "https://crypto-insights-52.preview.emergentagent.com"
+  },
+  "seed_data_creation": "Test alert rules created during testing were cleaned up via TestCleanup class",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All P0 wallet alert functionality verified working: 1) 'Notify when ready' button on WalletsPage indexing state opens CreateWalletAlertModal with correct trigger types (Large Inflow=accumulation, Large Outflow=distribution, Smart Money Entry, Activity Spike, Large Movement=large_move). 2) TrackWalletButton is integrated in WalletResolvedView component (shown when wallet is resolved, not during indexing). 3) Token search on /tokens page works - type 'USDT' and press Enter to resolve. 4) TokensPage shows 'Create Alert' and 'Tracked' buttons when token is resolved. 5) Backend API tests confirm all wallet trigger types work: accumulation, distribution, large_move, smart_money_entry, activity_spike. WebSocket has 403 errors but doesn't affect core functionality.",
+  "features_tested": {
+    "backend_api": [
+      "POST /api/alerts/rules with wallet scope and accumulation trigger ✓",
+      "POST /api/alerts/rules with wallet scope and distribution trigger ✓",
+      "POST /api/alerts/rules with wallet scope and large_move trigger ✓",
+      "POST /api/alerts/rules with wallet scope and smart_money_entry trigger ✓",
+      "POST /api/alerts/rules with wallet scope and activity_spike trigger ✓",
+      "POST /api/watchlist with type=wallet ✓",
+      "GET /api/watchlist?type=wallet ✓",
+      "GET /api/watchlist/:id ✓",
+      "GET /api/resolve?input=USDT (token symbol) ✓",
+      "GET /api/resolve?input=0xdac17f958d2ee523a2206206994597c13d831ec7 (token address) ✓",
+      "GET /api/resolve?input=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 (wallet address) ✓",
+      "POST /api/alerts/rules with token scope ✓",
+      "GET /api/alerts/rules ✓",
+      "GET /api/alerts/rules?activeOnly=true ✓",
+      "DELETE /api/alerts/rules/:id (cleanup) ✓",
+      "GET /api/health ✓"
+    ],
+    "frontend_ui": [
+      "WalletsPage loads with reference wallets ✓",
+      "Click reference wallet triggers resolution ✓",
+      "'Notify when ready' button visible during indexing ✓",
+      "CreateWalletAlertModal opens from 'Notify when ready' ✓",
+      "Modal shows correct trigger types (Large Inflow, Large Outflow, Smart Money Entry, Activity Spike, Large Movement) ✓",
+      "Modal shows notification channels (Telegram, In-App) ✓",
+      "TokensPage search input works ✓",
+      "Token search resolves USDT correctly ✓",
+      "TokensPage shows 'Create Alert' button ✓",
+      "TokensPage shows 'Tracked' badge ✓",
+      "Token Create Alert modal opens ✓",
+      "No infinite loading spinner - pages show actual status from backend ✓"
+    ]
+  },
+  "mocked_apis_note": "Core algorithms for B3 (clustering) and B4 (smart money) are placeholders, but API endpoints work. /api/wallets/:address/clusters and /api/wallets/:address/smart-profile return placeholder data."
+}
