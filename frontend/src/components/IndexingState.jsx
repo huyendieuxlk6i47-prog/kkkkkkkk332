@@ -60,10 +60,10 @@ export function IndexingState({
         {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
         {isFailed && <AlertCircle className="w-4 h-4 text-red-500" />}
         <span className="text-sm text-gray-600">
-          {isQueued && 'Queued for indexing...'}
-          {isRunning && `${stepName} (${progress}%)`}
-          {isDone && 'Indexing complete'}
-          {isFailed && 'Indexing failed'}
+          {isQueued && 'Preparing...'}
+          {isRunning && `Analyzing (${progress}%)`}
+          {isDone && 'Ready'}
+          {isFailed && 'Analysis failed'}
         </span>
         {eta && isRunning && (
           <span className="text-xs text-gray-400">{eta}</span>
