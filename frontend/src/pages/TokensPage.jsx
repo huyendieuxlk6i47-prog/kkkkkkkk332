@@ -405,7 +405,7 @@ function TokenSignalsBlock({ signals, confidence }) {
           <p className="text-sm font-medium text-gray-700 mb-2">No signals detected</p>
           <p className="text-xs text-gray-500 max-w-xs mx-auto">
             {!actionsEnabled ? (
-              'Signals will be available once token indexing reaches sufficient confidence'
+              'Signals will appear once we have more data on this token'
             ) : (
               'No abnormal trading activity detected. Signals appear when smart money shows significant patterns'
             )}
