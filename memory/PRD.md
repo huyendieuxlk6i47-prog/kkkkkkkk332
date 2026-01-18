@@ -193,29 +193,44 @@ Answer: "Who is this wallet?"
 
 ## 🗓 Roadmap
 
-### Phase B2 - Wallet → Token Correlation ✅ SKELETON COMPLETE
+### Phase B2 - Wallet → Token Correlation ✅ LIVE DATA CONNECTED (2026-01-18)
 **Goal**: "This token moves because of WHO?"
 
-- [x] Backend engine skeleton (wallet_token_correlation.engine.ts)
-- [x] API endpoint: GET /api/tokens/:address/drivers
-- [x] UI: TokenActivityDrivers component
-- [ ] Full algorithm implementation (placeholder)
+- [x] Backend engine: token_signals.service.ts - getActivityDrivers()
+- [x] API endpoint: GET /api/market/token-drivers/:tokenAddress (live data)
+- [x] UI: TokenActivityDrivers component (fetches from live API)
+- [x] Live metrics: influence scores, USD volumes, wallet roles
+- [x] Tests: 5/5 passed
 
-### Phase B3 - Wallet Clusters ✅ SKELETON COMPLETE
+### Phase B3 - Wallet Clusters ✅ LIVE DATA CONNECTED (2026-01-18)
 **Goal**: "One actor = many addresses"
 
-- [x] Backend schema and model (wallet_cluster.engine.ts)
-- [x] API endpoint: GET /api/wallets/:address/clusters
-- [x] UI: RelatedAddresses component
-- [ ] Full clustering algorithm (placeholder)
+- [x] Backend: Cluster detection from indexed transfers
+- [x] API endpoint: GET /api/market/token-clusters/:tokenAddress (live data)
+- [x] UI: TokenClusters component displays coordinated wallet clusters
+- [x] Live metrics: cluster confidence, wallet counts, behavior patterns
+- [x] Tests: 4/4 passed
 
-### Phase B4 - Smart Money Patterns ✅ SKELETON COMPLETE
+### Phase B4 - Smart Money Patterns ✅ LIVE DATA CONNECTED (2026-01-18)
 **Goal**: "Should I trust this wallet?"
 
-- [x] Backend schema and model (smart_money_profile.engine.ts)
-- [x] API endpoint: GET /api/wallets/:address/smart-profile
-- [x] UI: SmartMoneyProfile component
-- [ ] Full pattern recognition algorithm (placeholder)
+- [x] Backend: Smart money detection from volume patterns
+- [x] API endpoint: GET /api/market/token-smart-money/:tokenAddress (live data)
+- [x] UI: TokenSmartMoney component shows accumulators/distributors
+- [x] Live metrics: total value, action type, USD amounts
+- [x] Tests: 3/3 passed
+
+### P0 - Signals Generation ✅ COMPLETE (2026-01-18)
+**Goal**: Generate trading signals based on baseline deviation
+
+- [x] Backend: token_signals.service.ts - generateTokenSignals()
+- [x] API endpoint: GET /api/market/token-signals/:tokenAddress
+- [x] Signal types: activity_spike, large_move, accumulation, distribution
+- [x] Baseline calculation: 7-day average activity
+- [x] Evidence: metric, baseline, current, deviation
+- [x] Frontend: TokenSignalsBlock fetches live signals
+- [x] Tests: 5/5 passed
+- [x] Live verification: USDT shows "Activity Spike 117x from baseline"
 
 ### 🔧 Bug Fixes Completed (2026-01-18)
 
