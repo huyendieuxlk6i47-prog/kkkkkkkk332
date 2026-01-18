@@ -547,6 +547,7 @@ export async function createAlertRuleWithWatchlist(
     throttle?: ThrottleInterval;
     name?: string;
     targetMeta?: { symbol?: string; name?: string; chain?: string };
+    sensitivity?: SensitivityLevel;  // A5.4: Add sensitivity parameter
   }
 ): Promise<IAlertRule> {
   const { findOrCreateWatchlistItem } = await import('../watchlist/watchlist.model.js');
@@ -568,6 +569,11 @@ export async function createAlertRuleWithWatchlist(
     }
   );
   
+  // A5.4: Use sensitivity to derive minSeverity and throttle if not explicitly set
+  const sensitivity = data.sensitivity || 'medium';
+  const derivedMinSeverity = data.minSeverity ?? sensitivityToMinSeverity(sensitivity);
+  const derivedThrottle = data.throttle || sensitivityToThrottle(sensitivity);
+  
   // Create AlertRule with watchlistItemId and targetType
   const rule = new AlertRuleModel({
     userId,
@@ -578,9 +584,10 @@ export async function createAlertRuleWithWatchlist(
     triggerTypes: data.triggerTypes,
     trigger: data.trigger || { type: data.triggerTypes[0] },
     channels: data.channels || { inApp: true, telegram: true },
-    minSeverity: data.minSeverity ?? 50,
+    minSeverity: derivedMinSeverity,
     minConfidence: data.minConfidence ?? 0.6,
-    throttle: data.throttle || '6h',
+    throttle: derivedThrottle,
+    sensitivity: sensitivity,  // A5.4: Store sensitivity level
     name: data.name,
     status: 'active',
     active: true,
