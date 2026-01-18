@@ -4,7 +4,7 @@
 
 **Product**: BlockView - Blockchain Analytics Platform  
 **Version**: 3.1.0  
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-01-18 (P0 Signals + P1 B2/B3/B4 Complete)
 
 ### Vision
 Transform on-chain data from passive reference into actionable intelligence through smart alerts and wallet behavior analysis.
