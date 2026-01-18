@@ -625,5 +625,169 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     };
   });
   
+  // ============================================================================
+  // DISCOVERY LAYER ENDPOINTS (P2)
+  // ============================================================================
+  
+  /**
+   * GET /api/market/emerging-signals
+   * Get tokens with recent signals for discovery
+   */
+  app.get('/emerging-signals', async (request: FastifyRequest) => {
+    const query = request.query as { limit?: string };
+    const limit = Math.min(parseInt(query.limit || '10'), 20);
+    
+    const { generateTokenSignals } = await import('./token_signals.service.js');
+    const { ERC20LogModel } = await import('../../onchain/ethereum/logs_erc20.model.js');
+    const { getTokenMetadata } = await import('./coingecko.service.js');
+    
+    // Get top active tokens first
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const topTokens = await ERC20LogModel.aggregate([
+      { $match: { blockTimestamp: { $gte: since } } },
+      { $group: { _id: '$token', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 20 },
+    ]);
+    
+    // Check each token for signals
+    const tokensWithSignals: Array<{
+      address: string;
+      symbol: string;
+      name: string;
+      signals: any[];
+      transferCount: number;
+      topSignal?: {
+        type: string;
+        severity: number;
+        title: string;
+      };
+    }> = [];
+    
+    for (const token of topTokens) {
+      const address = token._id.toLowerCase();
+      const result = await generateTokenSignals(address);
+      
+      if (result.signals.length > 0) {
+        const metadata = getTokenMetadata(address);
+        const topSignal = result.signals.sort((a, b) => b.severity - a.severity)[0];
+        
+        tokensWithSignals.push({
+          address,
+          symbol: metadata?.symbol || address.slice(0, 8) + '...',
+          name: metadata?.name || 'Unknown Token',
+          signals: result.signals,
+          transferCount: token.count,
+          topSignal: {
+            type: topSignal.type,
+            severity: topSignal.severity,
+            title: topSignal.title,
+          },
+        });
+      }
+      
+      if (tokensWithSignals.length >= limit) break;
+    }
+    
+    return {
+      ok: true,
+      data: {
+        tokens: tokensWithSignals,
+        checkedCount: topTokens.length,
+        window: '24h',
+        interpretation: tokensWithSignals.length === 0
+          ? {
+              headline: 'No emerging signals detected',
+              description: `We checked ${topTokens.length} most active tokens for significant deviations from baseline.`,
+            }
+          : {
+              headline: `${tokensWithSignals.length} token${tokensWithSignals.length > 1 ? 's' : ''} with signals`,
+              description: 'Showing tokens with statistically significant activity deviations.',
+            },
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
+  /**
+   * GET /api/market/new-actors
+   * Get recently active new wallets
+   */
+  app.get('/new-actors', async (request: FastifyRequest) => {
+    const query = request.query as { limit?: string };
+    const limit = Math.min(parseInt(query.limit || '10'), 20);
+    
+    const { ERC20LogModel } = await import('../../onchain/ethereum/logs_erc20.model.js');
+    const { getTokenPriceUsd, getTokenDecimals, getTokenMetadata } = await import('./coingecko.service.js');
+    
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    // Find wallets with high activity but recent first appearance
+    const activeWallets = await ERC20LogModel.aggregate([
+      { $match: { blockTimestamp: { $gte: since } } },
+      // Group by sender (from)
+      { 
+        $group: { 
+          _id: '$from', 
+          txCount: { $sum: 1 },
+          firstSeen: { $min: '$blockTimestamp' },
+          tokens: { $addToSet: '$token' },
+          totalAmount: { $sum: { $toDouble: '$amount' } },
+        } 
+      },
+      { $match: { txCount: { $gte: 5 } } }, // At least 5 transfers
+      { $sort: { firstSeen: -1, txCount: -1 } }, // Newest first
+      { $limit: limit * 2 },
+    ]);
+    
+    // Get volume estimates
+    const actors: Array<{
+      address: string;
+      txCount: number;
+      firstSeen: Date;
+      tokenCount: number;
+      topToken?: string;
+      estimatedVolumeUsd?: number;
+    }> = [];
+    
+    for (const wallet of activeWallets) {
+      if (actors.length >= limit) break;
+      
+      // Skip contracts (simple heuristic - very high activity)
+      if (wallet.txCount > 1000) continue;
+      
+      // Get top token
+      const topToken = wallet.tokens[0];
+      const metadata = getTokenMetadata(topToken);
+      
+      actors.push({
+        address: wallet._id,
+        txCount: wallet.txCount,
+        firstSeen: wallet.firstSeen,
+        tokenCount: wallet.tokens.length,
+        topToken: metadata?.symbol || topToken?.slice(0, 8) + '...',
+      });
+    }
+    
+    return {
+      ok: true,
+      data: {
+        actors,
+        window: '24h',
+        interpretation: actors.length === 0
+          ? {
+              headline: 'No significant new actors detected',
+              description: 'We checked for wallets with high recent activity and recent first appearance.',
+            }
+          : {
+              headline: `${actors.length} new active wallet${actors.length > 1 ? 's' : ''} detected`,
+              description: 'Wallets showing significant activity in the last 24h.',
+            },
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
   app.log.info('Market routes registered');
 }
