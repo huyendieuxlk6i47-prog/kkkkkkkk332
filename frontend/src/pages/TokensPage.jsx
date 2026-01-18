@@ -382,11 +382,11 @@ function TokenActivityBlock({ resolvedData, marketContext }) {
 // ============================================================================
 // P2: Token Signals Block (improved empty state)
 // ============================================================================
-function TokenSignalsBlock({ signals, confidence }) {
+function TokenSignalsBlock({ signals }) {
   const hasSignals = signals && signals.length > 0;
-  const actionsEnabled = confidence >= CONFIDENCE_THRESHOLDS.ACTIONS_ENABLED;
 
-  // No signals - explain why
+  // P1.1 FIX: No more confidence-based messaging
+  // Empty state is ALWAYS valid - explain behavior patterns
   if (!hasSignals) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -399,11 +399,7 @@ function TokenSignalsBlock({ signals, confidence }) {
           </div>
           <p className="text-sm font-medium text-gray-700 mb-2">No signals detected</p>
           <p className="text-xs text-gray-500 max-w-xs mx-auto">
-            {!actionsEnabled ? (
-              'Signals will appear once we have more data on this token'
-            ) : (
-              'No abnormal trading activity detected. Signals appear when smart money shows significant patterns'
-            )}
+            No abnormal trading activity detected in recent history. Signals appear when smart money shows significant patterns.
           </p>
           <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-400">
             <span>Signals track:</span>
