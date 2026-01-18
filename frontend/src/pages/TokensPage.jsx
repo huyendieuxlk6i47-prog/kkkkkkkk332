@@ -772,14 +772,14 @@ export default function TokensPage() {
       if (resolveResponse?.ok) {
         setResolvedData(resolveResponse.data);
         
-        if (resolveResponse.data.confidence >= CONFIDENCE_THRESHOLDS.UI_DISPLAY) {
-          const contextResponse = await marketApi.getMarketContext(
-            resolveResponse.data.normalizedId || tokenInput
-          );
-          
-          if (contextResponse?.ok) {
-            setMarketContext(contextResponse.data);
-          }
+        // P1.1 FIX: ALWAYS fetch context, не зависит от confidence
+        // Если данных нет, API вернет пустой ответ - это норма
+        const contextResponse = await marketApi.getMarketContext(
+          resolveResponse.data.normalizedId || tokenInput
+        );
+        
+        if (contextResponse?.ok) {
+          setMarketContext(contextResponse.data);
         }
       } else {
         setError(resolveResponse?.error || 'Failed to resolve token');
