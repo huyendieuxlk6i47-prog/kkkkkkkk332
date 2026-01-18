@@ -163,8 +163,8 @@ function MarketContextLayer({ marketContext, loading, selectedAsset }) {
               Building Market Context
             </h3>
             <p className="text-xs text-amber-700 mb-3">
-              We are indexing on-chain activity for {selectedAsset?.symbol || 'ETH'}. 
-              Context appears once sufficient signals are detected.
+              We're gathering activity data for {selectedAsset?.symbol || 'ETH'}. 
+              Context appears once we detect significant patterns.
             </p>
             <div className="flex items-center gap-2">
               <button
