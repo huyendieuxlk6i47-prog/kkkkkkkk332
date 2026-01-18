@@ -123,11 +123,21 @@ Type /help anytime for commands.`,
             );
           }
         }
-        // Handle /help
+        // P0 FIX: Handle /help with clean command list
         else if (text === '/help') {
           await telegramService.sendTelegramMessage(
             chatId,
-            `📖 <b>BlockView Bot Commands</b>\n\n/start - Connect your account\n/status - Check connection status\n/disconnect - Stop receiving alerts\n/help - Show this message\n\n🌐 <a href="https://blockview.app">blockview.app</a>`,
+            `📖 <b>Available Commands</b>
+
+/start - Welcome message & setup guide
+/status - Check your connection status
+/disconnect - Stop receiving alerts
+/help - Show this message
+
+<b>How it works:</b>
+This bot only sends notifications. All setup (alerts, tracking) happens on the website.
+
+🌐 Visit: crypto-insights-52.preview.emergentagent.com`,
             { parseMode: 'HTML' }
           );
         }
