@@ -295,12 +295,22 @@ async function sendTelegramNotificationAsync(
     const { sendAlertNotification, sendFeedbackMessage } = await import('../notifications/telegram.service.js');
     await sendAlertNotification(userId, alert);
     
-    // Check if we need to send feedback (after 3rd trigger)
+    // A5.1/A5.3: Check if we need to send feedback nudge
     if (ruleId) {
-      const { updateLastTriggered, markFeedbackSent } = await import('./alert_rules.model.js');
-      const { shouldSendFeedback, triggersIn24h } = await updateLastTriggered(ruleId);
+      // Map severity to priority
+      const priority = alert.severity >= 70 ? 'high' : (alert.severity >= 40 ? 'medium' : 'low');
+      
+      const { updateLastTriggered, markFeedbackSent, AlertRuleModel } = await import('./alert_rules.model.js');
+      const { shouldSendFeedback, triggersIn24h, stats } = await updateLastTriggered(
+        ruleId,
+        undefined,
+        { priority, reason: alert.signalType }
+      );
       
       if (shouldSendFeedback) {
+        // Get rule for sensitivity info
+        const rule = await AlertRuleModel.findById(ruleId);
+        
         // Get token/wallet name for the message
         const targetName = alert.targetId.slice(0, 8) + '...';
         
@@ -308,6 +318,9 @@ async function sendTelegramNotificationAsync(
           targetName,
           triggersIn24h,
           scope: alert.scope,
+          dominantReason: stats.dominantReason24h,
+          currentSensitivity: rule?.sensitivity || 'medium',
+        });
         });
         
         await markFeedbackSent(ruleId);
