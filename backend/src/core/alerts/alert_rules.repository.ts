@@ -33,6 +33,7 @@ export interface CreateAlertRuleInput {
   throttle?: ThrottleInterval;
   name?: string;
   targetMeta?: { symbol?: string; name?: string; chain?: string };
+  sensitivity?: 'low' | 'medium' | 'high';
 }
 
 export interface UpdateAlertRuleInput {
