@@ -1,139 +1,135 @@
-<analysis>**original_problem_statement**: 
+<analysis>**original_problem_statement**:
 The user wants to deploy a project from the GitHub repository . This repository contains BlockView, a full-stack application for blockchain analytics, which includes a React frontend, a TypeScript/Fastify backend, and Telegram bot integration.
 
 The primary goal is to make the application fully functional, focusing on its core feature: smart alerts sent via a Telegram bot. The project evolved through several phases based on user feedback:
 1.  **Initial Deployment & Bug Fixes**: The first phase involved deploying the app, fixing critical bugs like an infinite analyzing state on the frontend, and non-functional Telegram alerts.
 2.  **Infrastructure Workaround**: A platform-level issue was blocking Telegram webhooks. A polling mechanism was implemented as a workaround to make the bot functional.
-3.  **UI/UX Interpretation Layer**: The user reported that the app had zero practical value because it showed raw, empty results. The agent implemented a detailed UI contract to provide honest empty states, which explain *what was checked* rather than just showing nothing. This was done for the Tokens, Wallets, and Alerts pages.
-4.  **P0 Critical Engine Fix**: The user then identified the root cause of the empty results: the backend's analytics engine was completely disconnected from the blockchain. The data indexer was disabled and lacked an RPC connection. The final and most critical work was to connect the engine to live on-chain data.
+3.  **UI/UX Interpretation Layer**: The user reported that the app had zero practical value because it showed raw, empty results. The agent implemented a detailed UI contract to provide honest empty states, which explain *what was checked* rather than just showing nothing.
+4.  **P0 Critical Engine Fix**: The user identified that the backend's analytics engine was completely disconnected from the blockchain. This was fixed by connecting the engine to live on-chain data.
+5.  **P1 Semantic Layer**: After getting live data, the user pointed out the app was still empty of meaning. The agent then implemented a semantic layer of analytics to generate actual insights (e.g., activity concentration, baseline deviations for signals) instead of just showing raw numbers. This was completed for the .
+6.  **P1 Synchronization**: The current goal is to apply the same semantic layer and UI/UX standards to the  to ensure consistency.
 
 **User's preferred language**: Russian. The next agent **MUST** respond in Russian.
 
 **what currently exists?**
-The application is fully deployed and running. The UI has been significantly overhauled to provide a valuable user experience with clear interpretations, even for empty states. Most importantly, the backend's analytics engine is now **connected to live on-chain data**.
+The application is fully deployed and connected to live on-chain data via an ERC20 indexer. The  is feature-complete, displaying a rich semantic layer of analytics with data-driven interpretations for activity drivers, signals, and smart money. A CoinGecko integration provides live prices for non-stablecoins.
 
--   **Live Data Pipeline**: An ERC20 indexer job is now active, using user-provided Infura and Ankr RPC URLs with load balancing. It continuously fetches on-chain  events and populates the MongoDB database (,  collections).
--   **Live Metrics UI**: The  and  now display real-time, aggregated data from the blockchain. The  for tokens like USDT shows live metrics (e.g., thousands of transfers, active wallets, and total net flow in USD).
--   **Market Discovery**: The  has been transformed from a static page into a discovery dashboard that shows the Top Active Tokens based on live on-chain activity.
--   **Advanced UI**: The Interpretation Layer and Alerts UX have been fully implemented according to the user's detailed specifications, making the UI intuitive and insight-first.
--   **Telegram Workaround**: A polling worker () remains active to ensure the Telegram bot is responsive.
+The backend has been extended with new analytics services (, ) and corresponding API endpoints to power both the  and . The backend APIs for the  have been created and tested. Work to update the  frontend components to consume these new APIs is in progress.
 
 **Last working item**:
--   **Last item agent was working**: The agent was implementing **Signals Generation**. Now that the backend has access to a live stream of transfer data, the next logical step is to generate analytical signals (e.g., Consistent Buying, Large Transfer) based on that data. This requires creating a baseline of normal activity and detecting deviations.
+-   **Last item agent was working**: The agent was synchronizing the  with the  by updating the frontend components (, , , ) to use the newly created backend analytics APIs. This is a critical step to ensure both core pages of the application share the same high-quality interpretation layer.
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: N
--   **Which testing method agent to use?**: Backend testing agent (to verify signal generation logic and API responses) followed by frontend testing agent (to ensure signals are displayed correctly in the UI).
+-   **Agent Testing Done**: N (Backend APIs were tested via , but a full E2E frontend test was not completed due to repeated memory limit crashes.)
+-   **Which testing method agent to use?**: both (Start with  or  to verify the UI on , then use  for regression if any backend changes are needed.)
 -   **User Testing Done**: N
 
-**All Pending/In progress Issue list**: 
-- **Issue 1: Infrastructure - Ingress blocks all external API calls (P0 - Workaround in place)**
-  - **Why fix this issue and what will be achieved with the fix?**: This is a platform-level routing issue where external requests to  endpoints return a 404 error. The current polling mechanism is a temporary fix. Solving the root Ingress problem will allow for a more robust and standard webhook-based architecture for Telegram and future integrations.
-  - **Attempted fixes**: The previous agent confirmed it's an infrastructure issue beyond its control. A polling worker was implemented as a workaround.
-  - **Next debug checklist**: The issue is blocked on platform-level support. The next agent should proceed with the current polling workaround and not attempt to fix the ingress.
-  - **Status**: BLOCKED
+**All Pending/In progress Issue list**:
+-   **Issue 1: Infrastructure - Ingress blocks external API calls (P0)**
+    -   **Why fix this issue**: A platform-level issue blocks webhooks. The current polling mechanism for Telegram is a workaround.
+    -   **Status**: BLOCKED (Blocked on platform support. Continue using the polling workaround).
+-   **Issue 2: System Instability - Repeated Memory Crashes (P1)**
+    -   **Why fix this issue**: The agent was repeatedly interrupted by  errors, causing pod termination. This is a high-priority issue as it severely hinders development and testing, especially for frontend tasks like taking screenshots.
+    -   **Next debug checklist**: Work in smaller, incremental steps. Prioritize  or python script-based testing over resource-intensive screenshot tests. If crashes persist, investigate potential memory leaks in the backend or frontend processes.
+    -   **Status**: NOT STARTED
 
 **In progress Task List**:
--   **Task 1: Complete Signals Generation with Baseline Calculation (P0)**
-    -   **Where to resume**: The agent created  and added an API endpoint in . The next step is to implement the core logic in . This involves:
-        1.  Creating a job or service to calculate a baseline of activity (e.g., average hourly transfer volume/count) for tracked tokens.
-        2.  Implementing the logic to compare current activity against this baseline to generate signals like , , or .
-        3.  Ensuring the API endpoint returns these generated signals.
-        4.  Updating the  component on the frontend to fetch and display these live signals.
-    -   **What will be achieved with this?**: This will activate the Recent Signals block on the  with real, data-driven insights, which is a core value proposition of the application.
+-   **Task 1: P1 - WalletsPage Frontend Finalization and Verification (P0 - HIGHEST PRIORITY)**
+    -   **Where to resume**: The backend APIs for wallet analytics are complete. The frontend components on  (, , , etc.) were being updated. The next agent MUST verify that all these components are correctly wired to their respective APIs (, , , ), handle loading/empty/data states correctly, and display the interpretation layer text provided by the API.
+    -   **What will be achieved with this?**: The  will be brought to feature parity with the , providing a consistent and meaningful user experience across the application's core entities.
     -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: Both
+    -   **Should Test frontend/backend/both after fix?**: both
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **(P1) Connect B2, B3, B4 Analytics to Live Data**: The UI for Who is driving this activity?, Related Wallet Clusters, and Smart Money Activity is ready, but the backend logic is not yet connected to the live data. This requires implementing the analysis engines for these features using the indexed  data.
-    - **(P2) Implement Net Flow for Non-Stablecoins**: The current price service is hardcoded for stablecoins. To calculate Net Flow for assets like WETH, a real price oracle (e.g., CoinGecko API, Chainlink) needs to be integrated.
-    - **(P3) Confidence Score Explanation**: Add a tooltip to explain that the Confidence score reflects data completeness, not analysis quality.
-
+    - **(P2) Rework MarketPage into a Discovery Layer**: Transform the  from a watchlist duplicate into a true discovery tool. It should feature Top Active Tokens, Emerging Signals, and New Actors, with a clear CTA to add items to the user's personal watchlist.
 - **Future Tasks**:
-    - **Advanced Alert Parameters UI**: Enhance the  with more granular controls.
-    - **Alert Feedback Loop**: Implement a system to reduce alert fatigue.
-    - Remove the Telegram polling worker once the infrastructure issue is resolved.
-    - Clean up the WebSocket 403 error.
+    - **(P3) Alert Feedback Loop**: Implement a system to reduce alert fatigue (e.g., prompting the user to adjust sensitivity after repeated alerts).
+    - **(P3) Price Alerts**: Add a new alert type for when a token's price crosses a specific threshold.
+    - **(Backlog) Remove Telegram polling worker**: Decommission the workaround once the platform Ingress issue is resolved.
+    - **(Backlog) Clean up WebSocket 403 error**: Investigate and fix the persistent WebSocket connection error visible in the browser console.
 
 **Completed work in this session**
-- **P0 Critical Fix: Connected Engine to Live Data**: Diagnosed and fixed the disconnected backend by enabling and configuring the ERC20 indexer with user-provided RPC URLs and load balancing. The application now processes real-time blockchain data.
-- **Live Metrics Implementation**: Created backend APIs () and frontend components () to display live on-chain metrics (transfer count, active wallets, net flow) on the .
-- **Market Page Rework (Discovery Engine)**: Transformed the  into a discovery tool by adding a Top Active Tokens list, powered by a new backend endpoint that aggregates live data.
-- **Alerts UX Overhaul (A1-A3)**: Completely redesigned the alert creation modal and alerts page to be insight-first, replacing technical jargon with user-friendly descriptions and adding a notification preview.
-- **UI Interpretation Layer (Tokens & Wallets)**: Implemented the user's detailed UI contract to show honest empty states that explain what was analyzed, which was a critical step in making the product feel trustworthy and valuable.
-
-**Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: N/A
-- **Recurrence count**: N/A
-- **Status**: N/A
+- **P0 Critical Data Logic Fixes**:
+  - : Fixed calculation (was sorting string, now number), showing correct multi-million dollar values.
+  - : Fixed calculation to be a true directional flow (inflow - outflow) instead of total volume.
+- **P0.5 UI/API Contract Synchronization**: Found and fixed a critical bug on  where  showed all zeros due to an Axios timeout and incorrect data handling, successfully connecting the UI to the live backend data.
+- **P1 Semantic Layer Implementation ()**:
+  - Rewrote backend services to provide analytical interpretations, not just raw data.
+  - Implemented logic for **Activity Drivers** (concentration), **Signals** (baseline deviation), and **Smart Money** (volume share, fixing a >100% share bug).
+- **P2 CoinGecko Integration**: Integrated a price oracle for non-stablecoin price data.
+- **P2/P3 UI Enhancements**: Added an Advanced Alert Parameters UI to the  and a  component.
+- **P1 WalletsPage Backend**: Created the full suite of backend analytics APIs and services for the  to mirror the  functionality.
+- **Documentation**: Generated  and  and updated .
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Data Ingestion**: An active ERC20 indexer () polls Ethereum RPC endpoints, fetches  event logs, and stores them in MongoDB (). Another job normalizes this data into a  collection.
-- **On-Demand Aggregation**: New API endpoints (, ) perform real-time aggregation queries against the MongoDB  collection to generate live metrics for the UI.
-- **RPC Load Balancing**: The backend rotates between multiple RPC URLs (, ) to distribute load and enhance the reliability of the data indexer.
-
-**key DB schema**
--   :  - Raw ERC20 event logs from the blockchain.
--   :  - Normalized transfer data used for all analytics.
--   :  - Tracks the last synced block number for the indexer.
+-   **Semantic Layer**: A backend layer that translates raw blockchain data into human-readable interpretations and insights (e.g., activity is moderately concentrated, unusual accumulation detected). This logic resides primarily in  and .
+-   **Baseline Deviation**: A method for signal generation where current activity is compared against a historical baseline (e.g., 7-day average) to detect statistically significant anomalies.
+-   **Concentration Analysis**: A technique used in  to calculate the share of trading volume controlled by top wallets, which determines if activity is crowd-driven or concentrated.
+-   **Price Oracle**: Use of the CoinGecko API as an external data source for real-time cryptocurrency prices.
 
 **All files of reference**
--   : The core data ingestion engine.
--   : Contains the new API endpoints for serving live data.
--   : The file for the current in-progress task.
--   : The primary page displaying live token analytics.
--   : The market discovery page.
--   : The redesigned, user-friendly modal for creating alerts.
-
-**Areas that need refactoring**
--   The  is a placeholder and only handles a few hardcoded stablecoins. It needs to be replaced with a robust price oracle integration to support Net Flow calculations for all tokens.
--   The Telegram polling worker () is a temporary solution and should be removed if the platform's Ingress issue is resolved.
+-   : The main file for the current in-progress task.
+-   , , : Components being updated.
+-   : The new backend service providing logic for the .
+-   : Contains the new API endpoints for the .
+-   : Contains the full product requirements and history.
 
 **key api endpoints**
--   : **(NEW & LIVE)** Returns a real-time activity snapshot for a given token address.
--   : **(NEW & LIVE)** Returns the most active tokens on the network, powering the market discovery page.
--   : The endpoint for the redesigned insight-first alert creation flow.
+-    (Enhanced with semantic data)
+-    (Enhanced)
+-   **NEW**: 
+-   **NEW**: 
+-   **NEW**: 
+-   **NEW**: 
 
 **Critical Info for New Agent**
 -   **You MUST respond in Russian.**
--   The core problem of the app having no real data is **SOLVED**. The indexer is running, the database is populated with live on-chain data, and the main UI pages reflect this.
--   The user's primary focus is now on building out the analytical features that consume this live data.
--   Your immediate task is to complete the **Signals Generation** feature. This is the top priority and involves implementing baseline calculations to make the Recent Signals block functional.
--   After signals, the next step is to power the remaining analytics blocks (B2, B3, B4) with the live data.
+-   The user is highly technical and product-focused. The main priority is building a semantic layer that provides real insights, not just raw data. The honest empty state pattern (explaining *what* was checked) is critical to the user.
+-   The immediate task is to finalize the  frontend, ensuring it matches the  in quality and functionality. This was interrupted by memory crashes, so you must verify the state of all components on that page.
+-   The system has been unstable due to memory limits. Be cautious with resource-intensive operations like screenshots. Prefer  and lightweight tests to verify functionality before attempting full UI tests.
 
-**Last 10 User Messages and any pending HUMAN messages** 
-1.  **User**: Corrected the agent's plan, stating the core problem is that the analytics engine is disconnected from real market data, rendering the UI improvements useless. Used USDT showing zero activity as the prime example.
-2.  **Agent**: Agreed this is the root problem and started investigating the backend data pipeline.
-3.  **User**: Provided Infura and Ankr RPC keys to enable data indexing.
-4.  **Agent**: Successfully configured the  file, enabled the indexer, and implemented RPC load balancing.
-5.  **Agent**: Confirmed the indexer was running and populating the database with thousands of live transactions.
-6.  **Agent**: Implemented new backend APIs and updated the frontend to consume and display the live data.
-7.  **Agent**: Shared a screenshot of the  for USDT showing real metrics (thousands of transfers, etc.).
-8.  **User**: Confirmed the next priorities are Net Flow calculation, Signals generation, and Market Page discovery.
-9.  **Agent**: Implemented the market discovery page and Net Flow calculation.
-10. **User**: Provided the final, detailed specification for the Alerts UX, which the agent implemented. The user then re-confirmed the next steps should be building on the now-live engine.
+**documents and test reports created in this job**
+-   
+-   
+-   
+-   
+-   
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User**: Provided critical feedback on logical errors in data (, ) and clarified that the UI, while showing data, was still empty of meaning.
+2.  **Agent**: Acknowledged and fixed the data logic bugs.
+3.  **Agent**: Verified and fixed the API-to-UI contract on , resolving a major bug where  showed zeros.
+4.  **User**: Confirmed data correctness and re-emphasized the need for a semantic layer on the analytical blocks (Drivers, Signals, Smart Money).
+5.  **Agent**: Implemented the semantic layer for .
+6.  **User**: Provided another critical review, correcting a logical error in the Smart Money calculation (>100% volume share) and giving a detailed checklist for bringing  to the same standard.
+7.  **Agent**: Fixed the Smart Money logic.
+8.  **Agent**: Created the new backend analytics APIs for .
+9.  **User**: Requested to proceed with updating the  frontend and then reworking the .
+10. **Agent**: Began updating  frontend components but was repeatedly interrupted by memory crashes. The final user message is a detailed checklist of what is expected for the  synchronization.
 
 **Project Health Check:**
 -   **Broken**:
-    -   Inbound webhook traffic to  is broken at the platform's Ingress level (workaround in place).
+    -   Inbound webhook traffic to  (platform issue; workaround in place).
+    -   System stability is low due to frequent memory limit crashes.
 -   **Mocked**:
     -   None.
 
 **3rd Party Integrations**
--   **Telegram Bot API**: Used for sending alerts and handling user commands.
--   **Infura**: Used as a primary RPC provider for Ethereum data.
--   **Ankr**: Used as a secondary RPC provider for Ethereum data.
+-   **Telegram Bot API**: Used for sending alerts.
+-   **Infura**: Primary RPC provider for Ethereum data.
+-   **Ankr**: Secondary RPC provider for Ethereum data.
+-   **CoinGecko**: For live cryptocurrency prices (non-stablecoins).
 
 **Testing status**
--   **Testing agent used after significant changes**: NO
+-   **Testing agent used after significant changes**: YES (for  and CoinGecko integration)
 -   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: []
--   **Known regressions**: None. The rich UI was restored and is now powered by live data.
+-   **Test files created**:
+    -   
+    -   
+-   **Known regressions**: None.
 
-**Credentials to test flow:**
--   **Telegram Bot Token**: 
--   **Infura Project ID**: 
--   **Ankr Project ID**: </analysis>
+**What agent forgot to execute**
+The agent was in the process of a critical task—updating all frontend components on —when it was repeatedly halted by memory errors. The task is therefore incomplete and must be picked up and verified from the start by the next agent. The specific components are , , , and .</analysis>

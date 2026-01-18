@@ -39,7 +39,7 @@
       "LINK": "0x514910771af9ca656af840dff83e8264ecf986ca",
       "UNI": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
     },
-    "backend_url": "https://tokentrack-2.preview.emergentagent.com"
+    "backend_url": "https://blockchain-radar.preview.emergentagent.com"
   },
   "seed_data_creation": "No seed data created - tests use live indexed blockchain data and CoinGecko API",
   "retest_needed": false,

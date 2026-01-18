@@ -31,7 +31,7 @@
   },
   "test_credentials": {
     "test_user_id": "anonymous",
-    "backend_url": "https://tokentrack-2.preview.emergentagent.com"
+    "backend_url": "https://blockchain-radar.preview.emergentagent.com"
   },
   "seed_data_creation": "Test alert rules created during testing were cleaned up. One existing alert rule for USDT (0xdac17f958d2ee523a2206206994597c13d831ec7) remains in database.",
   "retest_needed": false,

@@ -37,7 +37,7 @@
   },
   "test_credentials": {
     "test_token": "USDT (0xdac17f958d2ee523a2206206994597c13d831ec7)",
-    "backend_url": "https://tokentrack-2.preview.emergentagent.com"
+    "backend_url": "https://blockchain-radar.preview.emergentagent.com"
   },
   "seed_data_creation": "No seed data created - tests use live indexed blockchain data",
   "retest_needed": false,
