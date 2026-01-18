@@ -405,6 +405,28 @@ export function registerDefaultJobs(): void {
 
   console.log('[Scheduler] Dispatch Alerts job registered');
 
+  // ========== P0 FIX: EVALUATE ALERT RULES JOB ==========
+  // This is the MISSING PIECE - evaluates user-created alert rules against blockchain data
+  // Run every 60 seconds (1 minute)
+  const evaluateRulesInterval = 60 * 1000; // 60 seconds
+  
+  scheduler.register('evaluate-alert-rules', evaluateRulesInterval, async () => {
+    try {
+      const result = await evaluateAlertRules();
+      
+      if (result.eventsTriggered > 0) {
+        console.log(
+          `[Evaluate Alert Rules] Evaluated ${result.rulesEvaluated} rules, ` +
+          `triggered ${result.eventsTriggered} events (${result.duration}ms)`
+        );
+      }
+    } catch (err) {
+      console.error('[Evaluate Alert Rules] Job failed:', err);
+    }
+  });
+
+  console.log('[Scheduler] Evaluate Alert Rules job registered (P0 FIX)');
+
   // ========== BUILD ACTOR PROFILES JOB (L10) ==========
   // Run every 3 minutes
   const buildActorProfilesInterval = 3 * 60 * 1000; // 3 minutes
