@@ -224,23 +224,24 @@ async function evaluateWalletRules(
           signalType = 'large_move';
         }
         
-        // Create normalized event
-        await processEvent({
+        // Create raw signal for pipeline
+        const rawSignal = {
           type: signalType,
           scope: 'wallet',
-          targetType: 'wallet',
+          targetType: 'wallet' as const,
           targetId: walletAddress,
           chain: 'ethereum',
+          value: Math.abs(metrics.netFlow),
+          window: rule.trigger.params?.window || '1h',
+          direction: metrics.netFlow > 0 ? 'in' : 'out',
           metadata: {
-            value: Math.abs(metrics.netFlow),
-            window: rule.trigger.params?.window || '1h',
-            direction: metrics.netFlow > 0 ? 'in' : 'out',
             txCount: metrics.txCount,
             maxTxValue: metrics.maxTxValue,
           },
-          userId: rule.userId,
-          ruleId: rule._id.toString(),
-        });
+        };
+        
+        // Send through A0-A4 pipeline
+        await alertPipeline.process(rawSignal, rule._id.toString(), rule.userId);
         
         // Update rule trigger tracking
         await AlertRuleModel.updateOne(
