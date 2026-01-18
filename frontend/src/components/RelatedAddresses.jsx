@@ -144,6 +144,8 @@ const ClusterSuggestionCard = ({ suggestion, onReview, onWalletClick }) => {
 
 /**
  * Main RelatedAddresses Component
+ * 
+ * NEW: Uses /api/wallets/:address/related API
  */
 export function RelatedAddresses({ 
   walletAddress, 
@@ -152,7 +154,7 @@ export function RelatedAddresses({
   onReviewCluster,
   className = '',
 }) {
-  const [clusters, setClusters] = useState([]);
+  const [apiData, setApiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState(null);
@@ -164,11 +166,16 @@ export function RelatedAddresses({
     setError(null);
     
     try {
-      const response = await getWalletClusters(walletAddress);
-      if (response.ok) {
-        setClusters(response.data || []);
+      // Use new API endpoint
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/wallets/${walletAddress}/related`
+      );
+      const data = await response.json();
+      
+      if (data?.ok && data?.data) {
+        setApiData(data.data);
       } else {
-        setError(response.error || 'Failed to load clusters');
+        setError(data?.error || 'Failed to load clusters');
       }
     } catch (err) {
       console.error('Error fetching clusters:', err);
