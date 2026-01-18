@@ -785,4 +785,117 @@ export async function walletRoutes(fastify: FastifyInstance) {
   );
 
   fastify.log.info('Wallet routes registered (B1 + B2 + B3 + B4)');
+  
+  // ============================================================================
+  // WALLET ANALYTICS ENDPOINTS (Mirroring TokensPage)
+  // ============================================================================
+  
+  /**
+   * GET /api/wallets/:address/activity-snapshot
+   * Wallet Activity Snapshot - inflow/outflow/netFlow
+   */
+  fastify.get<{ Params: WalletParams; Querystring: { window?: string } }>(
+    '/wallets/:address/activity-snapshot',
+    async (request, reply) => {
+      const { address } = request.params;
+      const windowHours = request.query.window === '1h' ? 1 : request.query.window === '6h' ? 6 : 24;
+      
+      try {
+        const { getWalletActivitySnapshot } = await import('./wallet_analytics.service.js');
+        const snapshot = await getWalletActivitySnapshot(address, windowHours);
+        
+        return reply.send({
+          ok: true,
+          data: snapshot,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get wallet activity snapshot',
+        });
+      }
+    }
+  );
+  
+  /**
+   * GET /api/wallets/:address/signals
+   * Wallet Signals - deviations from baseline
+   */
+  fastify.get<{ Params: WalletParams }>(
+    '/wallets/:address/signals',
+    async (request, reply) => {
+      const { address } = request.params;
+      
+      try {
+        const { getWalletSignals } = await import('./wallet_analytics.service.js');
+        const signals = await getWalletSignals(address);
+        
+        return reply.send({
+          ok: true,
+          data: signals,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get wallet signals',
+        });
+      }
+    }
+  );
+  
+  /**
+   * GET /api/wallets/:address/related
+   * Related Addresses - timing correlation (B3)
+   */
+  fastify.get<{ Params: WalletParams }>(
+    '/wallets/:address/related',
+    async (request, reply) => {
+      const { address } = request.params;
+      
+      try {
+        const { getRelatedAddresses } = await import('./wallet_analytics.service.js');
+        const related = await getRelatedAddresses(address);
+        
+        return reply.send({
+          ok: true,
+          data: related,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get related addresses',
+        });
+      }
+    }
+  );
+  
+  /**
+   * GET /api/wallets/:address/performance
+   * Wallet Historical Performance (B4)
+   */
+  fastify.get<{ Params: WalletParams }>(
+    '/wallets/:address/performance',
+    async (request, reply) => {
+      const { address } = request.params;
+      
+      try {
+        const { getWalletHistoricalPerformance } = await import('./wallet_analytics.service.js');
+        const performance = await getWalletHistoricalPerformance(address);
+        
+        return reply.send({
+          ok: true,
+          data: performance,
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.status(500).send({
+          ok: false,
+          error: 'Failed to get wallet performance',
+        });
+      }
+    }
+  );
 }
