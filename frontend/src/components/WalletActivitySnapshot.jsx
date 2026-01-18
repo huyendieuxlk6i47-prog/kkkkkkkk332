@@ -152,22 +152,54 @@ const OutflowCard = ({ outflow }) => (
  * 
  * ALWAYS renders when status === 'completed'
  * Shows what the system checked, even if results are empty
+ * 
+ * NEW: Fetches from /api/wallets/:address/activity-snapshot API
  */
 export default function WalletActivitySnapshot({ 
+  walletAddress,
   walletData, 
   walletProfile,
   timeWindow = '24h',
   className = '' 
 }) {
-  // Extract metrics from walletData or walletProfile
-  const stats = walletData?.stats || {};
-  const flows = walletProfile?.flows || {};
+  const [apiData, setApiData] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
   
-  const inflow = flows.inflow ?? stats.inflow ?? 0;
-  const outflow = flows.outflow ?? stats.outflow ?? 0;
-  const netFlow = flows.netFlow ?? stats.netFlow ?? (inflow - outflow);
-  const transfers = stats.transfers ?? stats.transfersCount ?? 0;
-  const activeTokens = stats.activeTokens ?? stats.tokensInteracted ?? 0;
+  // Fetch from new API
+  React.useEffect(() => {
+    async function fetchSnapshot() {
+      if (!walletAddress) return;
+      
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/wallets/${walletAddress}/activity-snapshot?window=${timeWindow}`
+        );
+        const data = await response.json();
+        if (data?.ok && data?.data) {
+          setApiData(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load wallet activity:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSnapshot();
+  }, [walletAddress, timeWindow]);
+  
+  // Use API data if available, otherwise fall back to props
+  const activity = apiData?.activity || {};
+  const interpretation = apiData?.interpretation || {};
+  const analysisStatus = apiData?.analysisStatus;
+  
+  // Extract metrics - prioritize API data
+  const inflow = activity.inflowUsd ?? walletData?.stats?.inflow ?? 0;
+  const outflow = activity.outflowUsd ?? walletData?.stats?.outflow ?? 0;
+  const netFlow = activity.netFlowUsd ?? (inflow - outflow);
+  const transfers = activity.transfers ?? walletData?.stats?.transfers ?? 0;
+  const activeTokens = activity.activeTokens ?? walletData?.stats?.activeTokens ?? 0;
   
   // Determine if we have ANY activity
   const hasAnyActivity = inflow > 0 || outflow > 0 || transfers > 0;
@@ -177,16 +209,31 @@ export default function WalletActivitySnapshot({
       className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}
       data-testid="wallet-activity-snapshot"
     >
-      {/* Header */}
+      {/* Header with Checked badge */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-900">Wallet Activity Snapshot</h3>
         </div>
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-          {timeWindow} window
-        </span>
+        <div className="flex items-center gap-2">
+          {analysisStatus === 'completed' && (
+            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Checked</span>
+          )}
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+            {timeWindow} window
+          </span>
+        </div>
       </div>
+      
+      {/* Interpretation Banner */}
+      {interpretation.headline && (
+        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+          <p className="text-sm font-medium text-blue-800">{interpretation.headline}</p>
+          {interpretation.description && (
+            <p className="text-xs text-blue-600 mt-1">{interpretation.description}</p>
+          )}
+        </div>
+      )}
       
       {/* Metrics Grid - ALWAYS shown */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
@@ -223,7 +270,7 @@ export default function WalletActivitySnapshot({
         <MetricCard
           icon={Clock}
           label="Analyzed Window"
-          value={timeWindow === '24h' ? 'Last 24h' : timeWindow}
+          value={apiData?.checkedWindow || (timeWindow === '24h' ? 'Last 24h' : timeWindow)}
           subValue="time range"
         />
       </div>
