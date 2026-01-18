@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="12" time="2.544" timestamp="2026-01-18T22:35:03.636594+00:00" hostname="agent-env-749d28ac-560c-456f-9f6b-6812f0985571"><testcase classname="tests.test_adaptive_alerts.TestSensitivityPresets" name="test_get_sensitivity_presets" time="0.157" /><testcase classname="tests.test_adaptive_alerts.TestAlertRuleWithSensitivity" name="test_create_alert_with_sensitivity" time="0.157"><failure message="AssertionError: Sensitivity not stored correctly&#10;assert ('medium' == 'high'&#10;  &#10;  - high&#10;  + medium or None == 'high')&#10; +  where None = &lt;built-in method get of dict object at 0xff2ae642b940&gt;('sensitivity')&#10; +    where &lt;built-in method get of dict object at 0xff2ae642b940&gt; = {'type': 'accumulation'}.get&#10; +      where {'type': 'accumulation'} = &lt;built-in method get of dict object at 0xff2ae642af00&gt;('trigger', {})&#10; +        where &lt;built-in method get of dict object at 0xff2ae642af00&gt; = {'__v': 0, '_id': '696d6018f5a4ef796641a852', 'active': True, 'channels': {'inApp': True, 'telegram': False}, ...}.get">tests/test_adaptive_alerts.py:150: in test_create_alert_with_sensitivity
+    assert rule.get('sensitivity') == 'high' or rule.get('trigger', {}).get('sensitivity') == 'high', \
+E   AssertionError: Sensitivity not stored correctly
+E   assert ('medium' == 'high'
+E     
+E     - high
+E     + medium or None == 'high')
+E    +  where None = &lt;built-in method get of dict object at 0xff2ae642b940&gt;('sensitivity')
+E    +    where &lt;built-in method get of dict object at 0xff2ae642b940&gt; = {'type': 'accumulation'}.get
+E    +      where {'type': 'accumulation'} = &lt;built-in method get of dict object at 0xff2ae642af00&gt;('trigger', {})
+E    +        where &lt;built-in method get of dict object at 0xff2ae642af00&gt; = {'__v': 0, '_id': '696d6018f5a4ef796641a852', 'active': True, 'channels': {'inApp': True, 'telegram': False}, ...}.get</failure></testcase><testcase classname="tests.test_adaptive_alerts.TestAlertRuleWithSensitivity" name="test_create_alert_with_medium_sensitivity" time="0.178" /><testcase classname="tests.test_adaptive_alerts.TestFeedbackAPI" name="test_get_feedback_returns_stats24h" time="0.236" /><testcase classname="tests.test_adaptive_alerts.TestFeedbackAPI" name="test_feedback_shows_reduce_sensitivity_when_noisy" time="0.165" /><testcase classname="tests.test_adaptive_alerts.TestReduceSensitivityAPI" name="test_reduce_sensitivity_from_high_to_medium" time="0.227"><failure message="AssertionError: Previous sensitivity should be high&#10;assert 'medium' == 'high'&#10;  &#10;  - high&#10;  + medium">tests/test_adaptive_alerts.py:393: in test_reduce_sensitivity_from_high_to_medium
+    assert data.get('previousSensitivity') == 'high', "Previous sensitivity should be high"
+E   AssertionError: Previous sensitivity should be high
+E   assert 'medium' == 'high'
+E     
+E     - high
+E     + medium</failure></testcase><testcase classname="tests.test_adaptive_alerts.TestReduceSensitivityAPI" name="test_reduce_sensitivity_from_medium_to_low" time="0.273"><failure message="AssertionError: Previous sensitivity should be medium&#10;assert 'low' == 'medium'&#10;  &#10;  - medium&#10;  + low">tests/test_adaptive_alerts.py:427: in test_reduce_sensitivity_from_medium_to_low
+    assert data.get('previousSensitivity') == 'medium', "Previous sensitivity should be medium"
+E   AssertionError: Previous sensitivity should be medium
+E   assert 'low' == 'medium'
+E     
+E     - medium
+E     + low</failure></testcase><testcase classname="tests.test_adaptive_alerts.TestUpdateSensitivityAPI" name="test_update_sensitivity_to_high" time="0.215" /><testcase classname="tests.test_adaptive_alerts.TestUpdateSensitivityAPI" name="test_update_sensitivity_to_low" time="0.227" /><testcase classname="tests.test_adaptive_alerts.TestUpdateSensitivityAPI" name="test_update_sensitivity_invalid_value" time="0.191" /><testcase classname="tests.test_adaptive_alerts.TestHealthAndBasicAPIs" name="test_health_endpoint" time="0.067" /><testcase classname="tests.test_adaptive_alerts.TestHealthAndBasicAPIs" name="test_alerts_rules_list" time="0.054" /></testsuite></testsuites>
