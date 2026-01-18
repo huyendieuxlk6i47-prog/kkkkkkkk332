@@ -56,11 +56,30 @@ export async function telegramRoutes(app: FastifyInstance): Promise<void> {
             );
           }
         } 
-        // Handle plain /start
+        // P0 FIX: Handle plain /start with proper welcome message
         else if (text === '/start') {
           await telegramService.sendTelegramMessage(
             chatId,
-            `👋 <b>Welcome to BlockView Alerts!</b>\n\nTo connect your account:\n1. Go to blockview.app/settings\n2. Click "Connect Telegram"\n3. Click the link provided\n\nOnce connected, you'll receive real-time alerts here!`,
+            `👋 <b>Welcome to FOMO Alerts</b>
+
+This bot notifies you when important on-chain behavior is detected.
+
+You'll receive alerts about:
+• Large transfers
+• Consistent buying or selling  
+• Smart money activity
+• Unusual wallet or token behavior
+
+🔔 Alerts are sent only when conditions you selected are met — no spam.
+
+<b>To get started:</b>
+1. Go to crypto-insights-52.preview.emergentagent.com
+2. Track a token or wallet
+3. Create an alert
+
+Once alerts are active, notifications will appear here automatically.
+
+Type /help anytime for commands.`,
             { parseMode: 'HTML' }
           );
         }
