@@ -17,6 +17,7 @@ import Header from '../components/Header';
 import StatusBanner from '../components/StatusBanner';
 import DataAvailability, { ResolutionInfo, CONFIDENCE_THRESHOLDS } from '../components/DataAvailability';
 import CreateAlertModal from '../components/CreateAlertModal';
+import ActivitySnapshot from '../components/ActivitySnapshot';
 import {
   Tooltip,
   TooltipContent,
