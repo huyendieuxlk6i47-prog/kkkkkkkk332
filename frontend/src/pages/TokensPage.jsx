@@ -718,6 +718,18 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
           
           {/* Token Signals (P2) */}
           <TokenSignalsBlock signals={signals} confidence={resolvedData.confidence} />
+          
+          {/* P2.1: Token Clusters (B3) - ALWAYS RENDER */}
+          <TokenClusters 
+            tokenAddress={resolvedData.normalizedId}
+            clusters={marketContext?.clusters}
+          />
+          
+          {/* P2.1: Smart Money Activity (B4) - ALWAYS RENDER */}
+          <TokenSmartMoney 
+            tokenAddress={resolvedData.normalizedId}
+            smartMoneyData={marketContext?.smartMoney}
+          />
         </div>
         
         {/* Right Column */}
