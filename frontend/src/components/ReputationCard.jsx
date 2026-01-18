@@ -27,12 +27,21 @@ export default function ReputationCard({ type, targetId }) {
       const response = await fetch(
         `${backendUrl}/api/reputation/${type}/${targetId}`
       );
+      
+      // Check if response is OK before parsing JSON
+      if (!response.ok) {
+        console.log('Reputation API returned', response.status);
+        setReputation(null);
+        return;
+      }
+      
       const data = await response.json();
       if (data.ok) {
         setReputation(data.data);
       }
     } catch (error) {
       console.error('Failed to fetch reputation:', error);
+      setReputation(null);
     } finally {
       setLoading(false);
     }
