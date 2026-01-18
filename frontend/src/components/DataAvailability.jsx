@@ -13,52 +13,36 @@ import {
 } from "./ui/tooltip";
 
 /**
- * P1.1 FIX: Confidence thresholds DEPRECATED
- * DO NOT USE for UI lifecycle decisions
- * Use resolution.status instead
+ * P1.1 FIX: HARD DEPRECATED - DO NOT USE
  * 
- * These can be used for:
- * - Badges/indicators ("High confidence" / "Low confidence")
- * - Tooltips showing data quality
- * - Warning messages
+ * @deprecated
+ * ⛔ CRITICAL: DO NOT USE FOR UI STATE OR LIFECYCLE DECISIONS
  * 
- * NEVER use for:
- * - Showing/hiding UI components
- * - Determining if analysis is complete
- * - Gating user actions
+ * These thresholds violated FRONTEND_CONTRACT and caused infinite "Analyzing"
+ * Confidence is METADATA ONLY (badges, tooltips), NOT lifecycle
+ * 
+ * Use resolution.status instead:
+ * - 'pending' | 'analyzing' → show analyzing
+ * - 'completed' | 'failed' → show result (even if empty)
  */
 export const CONFIDENCE_THRESHOLDS = {
-  // DEPRECATED - DO NOT USE FOR LIFECYCLE
-  UI_DISPLAY: 0.4,      // For badges only
-  ACTIONS_ENABLED: 0.6, // For tooltips only
+  // ⛔ DO NOT USE - kept only for backwards compat
+  UI_DISPLAY: 0.4,
+  ACTIONS_ENABLED: 0.6,
 };
 
 /**
- * Standard Data Availability Contract
- * @typedef {Object} DataAvailabilityState
- * @property {boolean} profile - Profile data available
- * @property {boolean} market - Market data available
- * @property {boolean} signals - Signals data available
- * @property {boolean} trust - Trust score available
- * @property {boolean} transfers - Transfer history available
- */
-
-const DATA_KEYS = [
-  { key: 'profile', label: 'Profile', description: 'Basic information and metadata' },
-  { key: 'market', label: 'Market', description: 'Price, volume, and market metrics' },
-  { key: 'signals', label: 'Signals', description: 'Trading signals and alerts' },
-  { key: 'trust', label: 'Trust', description: 'Trust and reputation scores' },
-  { key: 'transfers', label: 'Transfers', description: 'On-chain transfer history' },
-];
-
-/**
- * P1.1 FIX: DELETED - DO NOT USE
+ * ⛔ DELETED - DO NOT USE
  * This function violated FRONTEND_CONTRACT
- * Use resolution.status directly instead
+ * 
+ * @deprecated Use resolution.status directly
+ * @throws {Error} Always throws - prevents accidental usage
  */
 export function getStatusFromConfidence(confidence) {
-  console.warn('⚠️ getStatusFromConfidence is DEPRECATED. Use resolution.status instead.');
-  return 'unknown';
+  throw new Error(
+    '⛔ CONFIDENCE_THRESHOLDS MUST NOT be used for lifecycle or UI gating. ' +
+    'Use resolution.status instead. See /app/FRONTEND_CONTRACT.md'
+  );
 }
 
 /**
