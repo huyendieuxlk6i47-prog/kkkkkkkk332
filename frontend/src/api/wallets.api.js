@@ -67,7 +67,7 @@ export const getTags = async () => {
  * @param {number} limit - Max drivers to return
  */
 export const getTokenDrivers = async (tokenAddress, chain = 'Ethereum', limit = 5) => {
-  const response = await api.get(`/api/tokens/${tokenAddress}/drivers`, {
+  const response = await api.get(`/api/market/token-drivers/${tokenAddress}`, {
     params: { chain, limit },
   });
   return response.data;
