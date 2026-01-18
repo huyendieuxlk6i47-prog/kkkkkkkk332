@@ -90,9 +90,14 @@ const MetricCard = ({ icon: Icon, label, value, subValue, iconColor = 'text-gray
 /**
  * Net Flow Card with directional indicator
  */
-const NetFlowCard = ({ netFlow, inflow, outflow }) => {
-  const isPositive = netFlow >= 0;
+const NetFlowCard = ({ netFlow, totalVolume, direction }) => {
+  const isPositive = direction === 'inflow' || (direction === 'neutral' && netFlow >= 0);
   const hasData = netFlow !== null && netFlow !== undefined;
+  
+  // Direction label
+  const directionLabel = direction === 'inflow' ? 'Net Accumulation' :
+                         direction === 'outflow' ? 'Net Distribution' :
+                         'Balanced';
   
   return (
     <div className="p-3 bg-gray-50 rounded-xl">
@@ -106,21 +111,24 @@ const NetFlowCard = ({ netFlow, inflow, outflow }) => {
       </div>
       <div className={`text-xl font-bold ${
         !hasData ? 'text-gray-900' :
-        isPositive ? 'text-emerald-600' : 'text-red-600'
+        direction === 'inflow' ? 'text-emerald-600' : 
+        direction === 'outflow' ? 'text-red-600' : 'text-gray-900'
       }`}>
         {hasData ? (
           <>
-            {isPositive ? '+' : ''}{formatUSD(netFlow)}
+            {netFlow >= 0 ? '+' : ''}{formatUSD(netFlow)}
           </>
-        ) : '0'}
+        ) : '—'}
       </div>
-      {(inflow !== undefined || outflow !== undefined) && (
-        <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-          <span className="text-emerald-600">↑ {formatUSD(inflow || 0)}</span>
-          <span>/</span>
-          <span className="text-red-600">↓ {formatUSD(outflow || 0)}</span>
-        </div>
-      )}
+      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+        <span>{directionLabel}</span>
+        {totalVolume > 0 && (
+          <>
+            <span>•</span>
+            <span>Vol: {formatUSD(totalVolume)}</span>
+          </>
+        )}
+      </div>
     </div>
   );
 };
