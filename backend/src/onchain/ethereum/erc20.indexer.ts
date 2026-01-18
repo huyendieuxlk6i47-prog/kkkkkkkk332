@@ -202,10 +202,13 @@ export async function syncERC20Transfers(rpc: EthereumRpc): Promise<SyncResult> 
   const bulkOps = [];
 
   for (const log of logs) {
+    const parsed = parseTransferLog(log);
+    if (!parsed) continue; // Skip invalid logs
+    
     const blockNumber = parseInt(log.blockNumber, 16);
     const logIndex = parseInt(log.logIndex, 16);
     const txHash = log.transactionHash.toLowerCase();
-    const { token, from, to, amount } = parseTransferLog(log);
+    const { token, from, to, amount } = parsed;
     const blockTimestamp = blockTimestamps.get(blockNumber) || new Date();
 
     bulkOps.push({
