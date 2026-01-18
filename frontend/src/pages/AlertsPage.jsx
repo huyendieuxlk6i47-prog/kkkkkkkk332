@@ -168,7 +168,7 @@ function FeedbackHint({ rule, onPause, onReduceSensitivity }) {
 
 // Alert = Monitoring Card (A2 Contract)
 // Каждая карточка отвечает: Что я отслеживаю, Почему это важно, Что происходило последний раз
-function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit }) {
+function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit, onReduceSensitivity }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   
