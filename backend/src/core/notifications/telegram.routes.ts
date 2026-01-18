@@ -31,6 +31,8 @@ export async function telegramRoutes(app: FastifyInstance): Promise<void> {
         const username = message.from?.username;
         const firstName = message.from?.first_name;
         
+        console.log(`[TG] Incoming update from chatId: ${chatId}, text: "${text}"`);
+        
         // Check if it's a /start command with connection code
         if (text.startsWith('/start ')) {
           const code = text.replace('/start ', '').trim();
