@@ -188,12 +188,12 @@ export default function DataAvailability({
         ))}
       </div>
 
-      {/* Low confidence warning */}
+      {/* Low confidence notice - NOT "indexing" but "limited activity" */}
       {isLowConfidence && (
-        <div className="mt-3 flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-          <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
-          <span className="text-xs text-blue-700">
-            Indexing in progress. Data will be available shortly.
+        <div className="mt-3 flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-amber-600" />
+          <span className="text-xs text-amber-700">
+            Limited on-chain activity. Analysis may be incomplete.
           </span>
         </div>
       )}
