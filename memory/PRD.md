@@ -266,9 +266,26 @@ WalletsPage UI contract implementation - same principle as TokensPage
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| MarketPage Implementation | Connect to Watchlist and Alerts | P1 |
 | Confidence Score Explanation | Tooltip explaining data completeness | P2 |
 | Advanced Alert Parameters UI | Tuning thresholds for alerts | P3 |
+
+**P2 - MarketPage Wiring ✅ COMPLETE (2026-01-18)**
+Market connected to Watchlist & Alerts - no longer shows empty analytics
+
+| Component | Status |
+|-----------|--------|
+| Tracked Tokens Card | ✅ Shows watchlist tokens with alert counts |
+| Tracked Wallets Card | ✅ Shows watchlist wallets with alert counts |
+| Recent Alerts Card | ✅ Shows unacknowledged alerts from feed |
+| Quick Stats Summary | ✅ Token count, Wallet count, Alert count |
+| Empty Market State | ✅ CTA "Track a token or wallet to see market context" |
+
+**Key Changes:**
+- Removed abstract analytics (Flow Anomalies, Smart Money Snapshot, Narratives)
+- Connected to watchlistApi.getWatchlist() for tokens and wallets
+- Connected to alertsApi.getAlertsFeed() for recent alerts
+- Shows personalized data based on user's tracked items
+- Clear empty states with CTAs to track items
 | Multi-chain | Arbitrum, BNB support | Medium |
 | Token Tabs | Overview, Flows, Holders | Medium |
 | Signal Explanations | "Why was this detected?" | Low |
