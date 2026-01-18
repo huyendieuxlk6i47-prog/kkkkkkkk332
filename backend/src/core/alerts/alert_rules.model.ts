@@ -521,18 +521,35 @@ export async function deleteAlertRule(
 
 /**
  * Update last triggered info and track recent triggers for feedback loop
+ * Also updates A5.1 stats24h
  */
 export async function updateLastTriggered(
   ruleId: string,
-  meta?: LastTriggeredMeta
-): Promise<{ shouldSendFeedback: boolean; triggersIn24h: number }> {
+  meta?: LastTriggeredMeta,
+  options?: {
+    priority?: AlertPriority;
+    reason?: string;
+    wasSuppressed?: boolean;
+  }
+): Promise<{ shouldSendFeedback: boolean; triggersIn24h: number; stats: AlertStats24h }> {
   const now = new Date();
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   
   // First, get current rule to check recent triggers
   const rule = await AlertRuleModel.findById(ruleId);
   if (!rule) {
-    return { shouldSendFeedback: false, triggersIn24h: 0 };
+    return { 
+      shouldSendFeedback: false, 
+      triggersIn24h: 0, 
+      stats: {
+        triggers24h: 0,
+        suppressedCount24h: 0,
+        highestPriority24h: 'low',
+        noiseScore: 0,
+        windowStart: now,
+        lastUpdated: now,
+      }
+    };
   }
   
   // Filter out old timestamps and add new one
@@ -542,11 +559,46 @@ export async function updateLastTriggered(
   
   const triggersIn24h = recentTriggers.length;
   
+  // A5.1: Calculate updated stats24h
+  const currentStats = rule.stats24h || {
+    triggers24h: 0,
+    suppressedCount24h: 0,
+    highestPriority24h: 'low' as AlertPriority,
+    noiseScore: 0,
+    windowStart: twentyFourHoursAgo,
+    lastUpdated: now,
+  };
+  
+  // Reset stats if window has passed
+  const windowStillValid = currentStats.windowStart && 
+    new Date(currentStats.windowStart) > twentyFourHoursAgo;
+  
+  const newStats: AlertStats24h = windowStillValid ? {
+    triggers24h: options?.wasSuppressed ? currentStats.triggers24h : currentStats.triggers24h + 1,
+    suppressedCount24h: options?.wasSuppressed ? currentStats.suppressedCount24h + 1 : currentStats.suppressedCount24h,
+    highestPriority24h: getHigherPriority(currentStats.highestPriority24h, options?.priority || 'low'),
+    dominantReason24h: options?.reason || currentStats.dominantReason24h,
+    noiseScore: 0, // Will be calculated below
+    windowStart: currentStats.windowStart,
+    lastUpdated: now,
+  } : {
+    triggers24h: options?.wasSuppressed ? 0 : 1,
+    suppressedCount24h: options?.wasSuppressed ? 1 : 0,
+    highestPriority24h: options?.priority || 'low',
+    dominantReason24h: options?.reason,
+    noiseScore: 0,
+    windowStart: twentyFourHoursAgo,
+    lastUpdated: now,
+  };
+  
+  // Calculate noiseScore: triggers24h + suppressedCount24h * 0.5
+  newStats.noiseScore = newStats.triggers24h + (newStats.suppressedCount24h * 0.5);
+  
   // Determine if we should send feedback
-  // Condition: 3+ triggers in 24h AND minSeverity <= 75 (medium/low) AND feedback not sent recently
+  // Condition: noiseScore >= 3 AND highestPriority24h !== 'high' AND feedback not sent recently
   const shouldSendFeedback = 
-    triggersIn24h >= 3 &&
-    rule.minSeverity <= 75 &&
+    newStats.noiseScore >= 3 &&
+    newStats.highestPriority24h !== 'high' &&
     (!rule.feedbackStatus?.feedbackSent || 
      !rule.feedbackStatus?.lastFeedbackSentAt ||
      new Date(rule.feedbackStatus.lastFeedbackSentAt) < twentyFourHoursAgo);
@@ -557,13 +609,64 @@ export async function updateLastTriggered(
     {
       lastTriggeredAt: now,
       lastTriggeredMeta: meta,
-      $inc: { triggerCount: 1 },
+      $inc: { triggerCount: options?.wasSuppressed ? 0 : 1 },
       recentTriggerTimestamps: recentTriggers,
       'feedbackStatus.triggersIn24h': triggersIn24h,
+      stats24h: newStats,
     }
   );
   
-  return { shouldSendFeedback, triggersIn24h };
+  return { shouldSendFeedback, triggersIn24h, stats: newStats };
+}
+
+/**
+ * Helper: Get higher priority
+ */
+function getHigherPriority(a: AlertPriority, b: AlertPriority): AlertPriority {
+  const order = { 'low': 0, 'medium': 1, 'high': 2 };
+  return order[a] >= order[b] ? a : b;
+}
+
+/**
+ * Record suppressed alert (rate-limited)
+ */
+export async function recordSuppressedAlert(
+  ruleId: string,
+  reason?: string
+): Promise<void> {
+  await updateLastTriggered(ruleId, undefined, { 
+    wasSuppressed: true, 
+    reason 
+  });
+}
+
+/**
+ * Get alert stats for a rule
+ */
+export async function getAlertStats(ruleId: string): Promise<AlertStats24h | null> {
+  const rule = await AlertRuleModel.findById(ruleId);
+  if (!rule) return null;
+  
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
+  // Recalculate from recentTriggerTimestamps if stats are stale
+  const recentTriggers = (rule.recentTriggerTimestamps || [])
+    .filter((ts: Date) => new Date(ts) > twentyFourHoursAgo);
+  
+  const stats = rule.stats24h || {
+    triggers24h: recentTriggers.length,
+    suppressedCount24h: 0,
+    highestPriority24h: 'low' as AlertPriority,
+    noiseScore: recentTriggers.length,
+    windowStart: twentyFourHoursAgo,
+    lastUpdated: now,
+  };
+  
+  // Ensure noiseScore is fresh
+  stats.noiseScore = stats.triggers24h + (stats.suppressedCount24h * 0.5);
+  
+  return stats;
 }
 
 /**
