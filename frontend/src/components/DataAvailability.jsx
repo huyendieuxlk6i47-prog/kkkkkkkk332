@@ -56,8 +56,9 @@ export function getStatusFromConfidence(confidence) {
  * Get status display config
  */
 export function getStatusConfig(status, confidence) {
-  // Auto-downgrade to indexing if confidence < 0.4
-  const effectiveStatus = confidence !== null && confidence < 0.4 ? 'indexing' : status;
+  // FIXED: Low confidence is NOT indexing - it means "not enough activity"
+  // Only use the actual status from backend
+  const effectiveStatus = status || 'unknown';
   
   const configs = {
     resolved: {
@@ -80,10 +81,10 @@ export function getStatusConfig(status, confidence) {
       message: 'System is collecting data',
     },
     insufficient_data: {
-      label: 'No Data',
+      label: 'Limited Data',
       color: 'bg-gray-100 text-gray-500',
       icon: AlertCircle,
-      message: 'Insufficient data available',
+      message: 'Not enough on-chain activity',
     },
     unknown: {
       label: 'Unknown',
