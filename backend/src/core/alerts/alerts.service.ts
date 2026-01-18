@@ -36,6 +36,7 @@ export async function createAlertRule(
     minConfidence?: number;
     minStability?: number;
     throttle?: ThrottleInterval;
+    sensitivity?: 'low' | 'medium' | 'high';  // A5.4: Sensitivity level
     name?: string;
     targetMeta?: { symbol?: string; name?: string; chain?: string };
   } = {}
@@ -50,6 +51,7 @@ export async function createAlertRule(
     minSeverity: options.minSeverity,
     minConfidence: options.minConfidence,
     throttle: options.throttle,
+    sensitivity: options.sensitivity,  // A5.4: Pass sensitivity
     name: options.name,
     targetMeta: options.targetMeta,
   });
