@@ -297,6 +297,13 @@ const AlertRuleSchema = new Schema<IAlertRule>(
       max: 1,
     },
     
+    // Sensitivity preset (A5.4)
+    sensitivity: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    
     // Notification channels
     channels: {
       inApp: {
@@ -357,6 +364,30 @@ const AlertRuleSchema = new Schema<IAlertRule>(
         type: Boolean,
         default: false,
       },
+    },
+    
+    // A5.1: Alert Stats - 24h rolling window (SEMANTIC BACKBONE)
+    stats24h: {
+      triggers24h: {
+        type: Number,
+        default: 0,
+      },
+      suppressedCount24h: {
+        type: Number,
+        default: 0,
+      },
+      highestPriority24h: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'low',
+      },
+      dominantReason24h: String,
+      noiseScore: {
+        type: Number,
+        default: 0,
+      },
+      windowStart: Date,
+      lastUpdated: Date,
     },
     
     // Metadata
