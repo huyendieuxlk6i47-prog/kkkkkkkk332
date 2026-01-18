@@ -104,16 +104,33 @@ function getTriggersIn24h(timestamps) {
   return timestamps.filter(ts => new Date(ts).getTime() > twentyFourHoursAgo).length;
 }
 
-// Feedback Hint Component (P3 - Alert Feedback Loop)
+// Calculate noiseScore from stats24h
+function getNoiseScore(rule) {
+  if (rule.stats24h?.noiseScore) return rule.stats24h.noiseScore;
+  // Fallback calculation
+  const triggers = rule.stats24h?.triggers24h || getTriggersIn24h(rule.recentTriggerTimestamps);
+  const suppressed = rule.stats24h?.suppressedCount24h || 0;
+  return triggers + (suppressed * 0.5);
+}
+
+// A5.2: Enhanced Feedback Hint Component
+// Rules:
+// - noiseScore >= 3 → suggest reduce sensitivity
+// - noiseScore >= 6 + highestPriority !== high → suggest pause
 function FeedbackHint({ rule, onPause, onReduceSensitivity }) {
   const [loading, setLoading] = useState(false);
   
-  const triggersIn24h = getTriggersIn24h(rule.recentTriggerTimestamps);
+  const noiseScore = getNoiseScore(rule);
+  const triggersIn24h = rule.stats24h?.triggers24h || getTriggersIn24h(rule.recentTriggerTimestamps);
+  const highestPriority = rule.stats24h?.highestPriority24h || 'low';
+  const dominantReason = rule.stats24h?.dominantReason24h;
+  const currentSensitivity = rule.sensitivity || 'medium';
   
-  // Show feedback only if: 3+ triggers in 24h AND minSeverity <= 75
-  const shouldShowFeedback = triggersIn24h >= 3 && (rule.minSeverity || 50) <= 75;
+  // A5.2 Decision logic
+  const shouldReduceSensitivity = noiseScore >= 3 && highestPriority !== 'high';
+  const shouldSuggestPause = noiseScore >= 6 && highestPriority !== 'high';
   
-  if (!shouldShowFeedback) return null;
+  if (!shouldReduceSensitivity) return null;
   
   const handlePause = async () => {
     setLoading(true);
@@ -142,23 +159,42 @@ function FeedbackHint({ rule, onPause, onReduceSensitivity }) {
             This alert was triggered {triggersIn24h} times in the last 24 hours.
           </p>
           <p className="text-xs text-amber-700 mt-1">
-            This behavior may no longer be unusual.
+            {shouldSuggestPause 
+              ? 'This monitoring is triggering very frequently with moderate priority. Consider pausing to reduce noise.'
+              : 'This behavior may no longer be unusual. Consider reducing sensitivity to focus on more significant events.'}
           </p>
+          
+          {/* Show dominant reason if available */}
+          {dominantReason && (
+            <p className="text-xs text-amber-600 mt-1">
+              Most common trigger: <span className="font-medium">{dominantReason.replace('_', ' ')}</span>
+            </p>
+          )}
+          
+          {/* Current sensitivity indicator */}
+          <p className="text-xs text-amber-500 mt-1">
+            Current sensitivity: <span className="font-medium capitalize">{currentSensitivity}</span>
+          </p>
+          
           <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleReduceSensitivity}
-              disabled={loading}
-              className="px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Updating...' : 'Reduce sensitivity'}
-            </button>
-            <button
-              onClick={handlePause}
-              disabled={loading}
-              className="px-3 py-1.5 bg-white border border-amber-300 text-amber-700 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
-            >
-              Pause monitoring
-            </button>
+            {currentSensitivity !== 'low' && (
+              <button
+                onClick={handleReduceSensitivity}
+                disabled={loading}
+                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Updating...' : 'Reduce sensitivity'}
+              </button>
+            )}
+            {shouldSuggestPause && (
+              <button
+                onClick={handlePause}
+                disabled={loading}
+                className="px-3 py-1.5 bg-white border border-amber-300 text-amber-700 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
+              >
+                Pause monitoring
+              </button>
+            )}
           </div>
         </div>
       </div>
