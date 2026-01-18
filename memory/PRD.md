@@ -220,6 +220,27 @@ Answer: "Who is this wallet?"
 - Improved confidence messaging: "Limited on-chain activity" vs "Low confidence"
 - Files updated: IndexingState.jsx, WalletsPage.jsx, TokensPage.jsx, ActorProfile.jsx, ArkhamHome.jsx, SignalsPage.jsx, EntitiesPage.jsx, DataAvailability.jsx
 
+**P3 - Interpretation & Metrics Layer ✅ COMPLETE (2026-01-18)**
+TokensPage UI contract implementation - "ничего нет" → "мы проверили X, Y, Z → результат пуст"
+
+| Section | Component | Status |
+|---------|-----------|--------|
+| Section 1 | Token Header | ✅ Added RESOLVED badge, Chain info |
+| Section 2 | Activity Snapshot | ✅ NEW - Net Flow, Wallets, Transfers, Window + interpretation |
+| Section 3 | Who is driving (B2) | ✅ Enhanced empty state with volume distribution explanation |
+| Section 4 | Token Activity | ✅ Added "Checked" badge + explanation |
+| Section 5 | Recent Signals | ✅ "Checked" badge + signal types tracked |
+| Section 6 | Related Clusters (B3) | ✅ "Checked" badge + correlation analysis explanation |
+| Section 7 | Smart Money (B4) | ✅ "Checked" badge + profitable wallets explanation |
+| Section 8 | Resolution Status | ✅ Removed confidence-based messaging |
+
+**Key Changes:**
+- Created ActivitySnapshot.jsx component with baseline metrics grid
+- All blocks show "Checked" badge when analysis complete
+- Empty states explain WHAT was checked, not just "no data"
+- Removed all confidence-based UI gating
+- Added interpretation footers to all blocks
+
 ### P2 - Future Enhancements
 
 | Feature | Description | Priority |
