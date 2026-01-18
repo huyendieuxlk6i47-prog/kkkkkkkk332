@@ -64,9 +64,12 @@ export default function TokenSmartMoney({ tokenAddress, className = '' }) {
   }
 
   const hasData = smartMoneyData && (
-    smartMoneyData.count > 0 || 
-    smartMoneyData.totalValue > 0
+    smartMoneyData.participants?.length > 0 || 
+    smartMoneyData.totalSmartVolume > 0
   );
+  
+  // Get interpretation from API
+  const interpretation = smartMoneyData?.interpretation || {};
 
   // Empty state - explain WHAT was checked
   if (!hasData) {
@@ -74,28 +77,27 @@ export default function TokenSmartMoney({ tokenAddress, className = '' }) {
       <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Smart Money Activity</h3>
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Analyzed</span>
         </div>
         <div className="text-center py-6 bg-gray-50 rounded-xl">
           <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
             <TrendingUp className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-2">
-            No significant smart money patterns
+            {interpretation.headline || 'No significant smart money patterns'}
           </p>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            We analyzed high-volume wallets for consistent accumulation or distribution patterns. 
-            No qualifying activity was found in the last 24h.
+            {interpretation.description || `We analyzed ${smartMoneyData?.checkedWallets?.toLocaleString() || 0} wallets for high-volume activity patterns.`}
           </p>
         </div>
       </div>
     );
   }
 
-  // Show smart money data
-  const { count, totalValue, wallets, recentActivity } = smartMoneyData;
-  const accumulators = wallets?.filter(w => w.action === 'accumulating') || [];
-  const distributors = wallets?.filter(w => w.action === 'distributing') || [];
+  // Show smart money data - use new API structure
+  const { participants, totalSmartVolume, shareOfTotalVolume, checkedWallets } = smartMoneyData;
+  const accumulators = participants?.filter(w => w.action === 'accumulating') || [];
+  const distributors = participants?.filter(w => w.action === 'distributing') || [];
 
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
@@ -104,21 +106,34 @@ export default function TokenSmartMoney({ tokenAddress, className = '' }) {
         <div className="flex items-center gap-2">
           <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Live</span>
           <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-            {count} wallet{count > 1 ? 's' : ''}
+            {participants?.length || 0} wallet{(participants?.length || 0) !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
       
+      {/* Interpretation headline */}
+      <div className="mb-3 p-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+        <p className="text-xs font-medium text-purple-800">{interpretation.headline}</p>
+        {interpretation.description && (
+          <p className="text-xs text-purple-600 mt-1">{interpretation.description}</p>
+        )}
+      </div>
+      
       <div className="space-y-3">
-        {/* Total Value */}
-        {totalValue > 0 && (
+        {/* Total Value & Share */}
+        {totalSmartVolume > 0 && (
           <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600">Total Smart Money Volume</span>
+              <span className="text-xs text-gray-600">Smart Money Volume</span>
               <span className="text-sm font-bold text-emerald-700">
-                ${totalValue.toLocaleString()}
+                ${totalSmartVolume.toLocaleString()}
               </span>
             </div>
+            {shareOfTotalVolume > 0 && (
+              <div className="text-xs text-gray-500 mt-1">
+                {(shareOfTotalVolume * 100).toFixed(1)}% of total volume
+              </div>
+            )}
           </div>
         )}
         
