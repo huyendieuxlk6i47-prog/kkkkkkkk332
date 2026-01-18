@@ -52,15 +52,13 @@ const DATA_KEYS = [
 ];
 
 /**
- * Determine status based on confidence level
- * @param {number} confidence - Confidence score 0-1
- * @returns {'resolved' | 'indexing' | 'pending' | 'unknown'}
+ * P1.1 FIX: DELETED - DO NOT USE
+ * This function violated FRONTEND_CONTRACT
+ * Use resolution.status directly instead
  */
 export function getStatusFromConfidence(confidence) {
-  if (confidence === null || confidence === undefined) return 'unknown';
-  if (confidence >= 0.7) return 'resolved';
-  if (confidence >= 0.4) return 'pending';
-  return 'indexing'; // < 0.4 = auto-indexing state
+  console.warn('⚠️ getStatusFromConfidence is DEPRECATED. Use resolution.status instead.');
+  return 'unknown';
 }
 
 /**
