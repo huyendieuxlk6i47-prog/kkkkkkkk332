@@ -100,6 +100,184 @@ const SENSITIVITY_LEVELS = [
   },
 ];
 
+// Time window options for advanced parameters
+const TIME_WINDOWS = [
+  { id: '1h', label: '1 hour' },
+  { id: '6h', label: '6 hours' },
+  { id: '24h', label: '24 hours' },
+  { id: '7d', label: '7 days' },
+];
+
+// Direction filters
+const DIRECTION_FILTERS = [
+  { id: 'both', label: 'Any direction', description: 'Both inflow and outflow' },
+  { id: 'inflow', label: 'Inflow only', description: 'Only accumulation/buying' },
+  { id: 'outflow', label: 'Outflow only', description: 'Only distribution/selling' },
+];
+
+/**
+ * AdvancedAlertParameters - Granular control for power users
+ * 
+ * CONTRACT:
+ * - Hidden by default (collapsed)
+ * - Only for users who want fine-grained control
+ * - Sensitivity selector remains the PRIMARY control
+ * - These are OVERRIDES, not replacements
+ */
+function AdvancedAlertParameters({ sensitivity, onSensitivityChange }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [customWindow, setCustomWindow] = useState('6h');
+  const [directionFilter, setDirectionFilter] = useState('both');
+  const [minTransferUsd, setMinTransferUsd] = useState('');
+  const [cooldownPeriod, setCooldownPeriod] = useState('1h');
+  
+  // Sync with sensitivity changes
+  useEffect(() => {
+    const config = SENSITIVITY_LEVELS.find(s => s.id === sensitivity);
+    if (config) {
+      setCustomWindow(config.window);
+    }
+  }, [sensitivity]);
+  
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      {/* Header - Always visible */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        data-testid="toggle-advanced-params"
+      >
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="text-sm font-medium text-gray-700">Advanced Parameters</span>
+          <span className="text-xs text-gray-400">(optional)</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="p-4 space-y-4 border-t border-gray-200 bg-white">
+          {/* Time Window */}
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
+              Analysis Window
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {TIME_WINDOWS.map((tw) => (
+                <button
+                  key={tw.id}
+                  onClick={() => setCustomWindow(tw.id)}
+                  data-testid={`window-${tw.id}`}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                    customWindow === tw.id
+                      ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {tw.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Period for baseline comparison
+            </p>
+          </div>
+          
+          {/* Direction Filter */}
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
+              Flow Direction
+            </label>
+            <div className="space-y-1.5">
+              {DIRECTION_FILTERS.map((df) => (
+                <button
+                  key={df.id}
+                  onClick={() => setDirectionFilter(df.id)}
+                  data-testid={`direction-${df.id}`}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-lg border transition-all text-left ${
+                    directionFilter === df.id
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div>
+                    <div className={`text-sm font-medium ${
+                      directionFilter === df.id ? 'text-purple-700' : 'text-gray-700'
+                    }`}>
+                      {df.label}
+                    </div>
+                    <div className="text-xs text-gray-500">{df.description}</div>
+                  </div>
+                  {directionFilter === df.id && (
+                    <Check className="w-4 h-4 text-purple-600" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Minimum Transfer Size */}
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
+              Minimum Transfer Size (USD)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+              <input
+                type="number"
+                value={minTransferUsd}
+                onChange={(e) => setMinTransferUsd(e.target.value)}
+                placeholder="No minimum"
+                data-testid="min-transfer-input"
+                className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Ignore transfers below this amount
+            </p>
+          </div>
+          
+          {/* Cooldown Period */}
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
+              Notification Cooldown
+            </label>
+            <select
+              value={cooldownPeriod}
+              onChange={(e) => setCooldownPeriod(e.target.value)}
+              data-testid="cooldown-select"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="15m">15 minutes</option>
+              <option value="1h">1 hour</option>
+              <option value="6h">6 hours</option>
+              <option value="24h">24 hours</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              Minimum time between alerts of same type
+            </p>
+          </div>
+          
+          {/* Info note */}
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">
+                <strong>Note:</strong> These settings override the Sensitivity preset above. 
+                For most users, the preset is sufficient.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CreateAlertModal({ 
   isOpen, 
   onClose, 
