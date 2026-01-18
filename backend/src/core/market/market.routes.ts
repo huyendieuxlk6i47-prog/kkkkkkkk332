@@ -181,6 +181,113 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
   });
   
   /**
+   * GET /api/market/token-activity/:tokenAddress
+   * Get real-time activity snapshot for a token from indexed transfers
+   * 
+   * This is the CRITICAL endpoint for TokensPage Activity Snapshot
+   */
+  app.get('/token-activity/:tokenAddress', async (request: FastifyRequest) => {
+    const { tokenAddress } = request.params as { tokenAddress: string };
+    const query = request.query as { window?: string };
+    
+    const windowHours = query.window === '1h' ? 1 : query.window === '6h' ? 6 : 24;
+    const since = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+    
+    const { TransferModel } = await import('../transfers/transfers.model.js');
+    const { ERC20LogModel } = await import('../../onchain/ethereum/logs_erc20.model.js');
+    
+    const normalizedAddress = tokenAddress.toLowerCase();
+    
+    // Aggregate from logs_erc20 (raw indexed data)
+    const [transferStats, walletStats, largestTransfer] = await Promise.all([
+      // Count and sum transfers
+      ERC20LogModel.aggregate([
+        { $match: { 
+          token: normalizedAddress,
+          timestamp: { $gte: since }
+        }},
+        { $group: {
+          _id: null,
+          count: { $sum: 1 },
+          totalAmount: { $sum: { $toDouble: '$amount' } },
+          avgAmount: { $avg: { $toDouble: '$amount' } },
+        }},
+      ]),
+      
+      // Count unique wallets (senders + receivers)
+      ERC20LogModel.aggregate([
+        { $match: { 
+          token: normalizedAddress,
+          timestamp: { $gte: since }
+        }},
+        { $group: { _id: null, 
+          senders: { $addToSet: '$from' },
+          receivers: { $addToSet: '$to' }
+        }},
+        { $project: {
+          uniqueWallets: { $setUnion: ['$senders', '$receivers'] }
+        }},
+        { $project: {
+          count: { $size: '$uniqueWallets' }
+        }}
+      ]),
+      
+      // Find largest transfer
+      ERC20LogModel.findOne({ 
+        token: normalizedAddress,
+        timestamp: { $gte: since }
+      }).sort({ amount: -1 }).limit(1),
+    ]);
+    
+    const stats = transferStats[0] || { count: 0, totalAmount: 0, avgAmount: 0 };
+    const uniqueWallets = walletStats[0]?.count || 0;
+    const largestAmount = largestTransfer?.amount || null;
+    
+    // Calculate inflow/outflow from normalized transfers (if available)
+    let inflow = 0;
+    let outflow = 0;
+    let netFlow = 0;
+    
+    const flowStats = await TransferModel.aggregate([
+      { $match: { 
+        assetAddress: normalizedAddress,
+        timestamp: { $gte: since }
+      }},
+      { $group: {
+        _id: null,
+        totalInflow: { $sum: { $cond: [{ $gt: ['$valueUsd', 0] }, '$valueUsd', 0] } },
+        totalOutflow: { $sum: { $cond: [{ $lt: ['$valueUsd', 0] }, { $abs: '$valueUsd' }, 0] } },
+      }},
+    ]);
+    
+    if (flowStats[0]) {
+      inflow = flowStats[0].totalInflow || 0;
+      outflow = flowStats[0].totalOutflow || 0;
+      netFlow = inflow - outflow;
+    }
+    
+    return {
+      ok: true,
+      data: {
+        tokenAddress: normalizedAddress,
+        window: `${windowHours}h`,
+        activity: {
+          transfers24h: stats.count,
+          activeWallets: uniqueWallets,
+          largestTransfer: largestAmount ? parseFloat(largestAmount) : null,
+        },
+        flows: {
+          inflow,
+          outflow,
+          netFlow,
+        },
+        analyzedAt: new Date().toISOString(),
+        dataSource: 'indexed_transfers',
+      },
+    };
+  });
+  
+  /**
    * GET /api/market/flow-anomalies
    * Get flow anomalies (z-score deviations) for an asset
    */
