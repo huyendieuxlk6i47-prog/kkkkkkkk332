@@ -375,10 +375,17 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
           netFlow: netFlowUsd,
           direction: flowDirection,
           hasPrice: price !== null,
+          priceUsd: price,
+          priceSource: tokenMeta.isStablecoin ? 'stablecoin' : tokenMeta.coinGeckoId ? 'coingecko' : price ? 'coingecko_contract' : 'unknown',
         },
         interpretation: {
           walletsDefinition: 'unique senders ∪ receivers',
           netFlowDefinition: 'sum(accumulator_inflows) - sum(distributor_outflows)',
+          priceNote: tokenMeta.isStablecoin 
+            ? 'Stablecoin price fixed at $1' 
+            : price !== null 
+              ? 'Live price from CoinGecko (5min cache)'
+              : 'Price unavailable - showing raw amounts',
         },
         analyzedAt: new Date().toISOString(),
         dataSource: 'indexed_transfers',
