@@ -304,6 +304,23 @@ const AlertRuleSchema = new Schema<IAlertRule>(
       default: 0,
     },
     
+    // Alert Feedback Loop (P3)
+    recentTriggerTimestamps: {
+      type: [Date],
+      default: [],
+    },
+    feedbackStatus: {
+      triggersIn24h: {
+        type: Number,
+        default: 0,
+      },
+      lastFeedbackSentAt: Date,
+      feedbackSent: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    
     // Metadata
     name: String,
   },
