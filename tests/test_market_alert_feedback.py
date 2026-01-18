@@ -212,7 +212,7 @@ class TestAlertFeedbackLoopAPIs:
         if not test_alert_rule:
             pytest.skip("No test alert rule available")
         
-        response = api_client.post(f"{BASE_URL}/api/alerts/rules/{test_alert_rule}/pause")
+        response = api_client.post(f"{BASE_URL}/api/alerts/rules/{test_alert_rule}/pause", json={})
         assert response.status_code == 200
         
         data = response.json()
