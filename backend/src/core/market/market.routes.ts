@@ -331,16 +331,21 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     const stats = transferStats[0] || { count: 0, totalAmount: 0 };
     const uniqueWallets = walletStats[0]?.count || 0;
     const largestAmount = largestTransfer[0]?.amount || null;
+    const largestTxHash = largestTransfer[0]?.txHash || null;
     
     // Calculate USD values if we have price
     let totalVolume = 0;
     let netFlowUsd = 0;
+    let inflowUsd = 0;
+    let outflowUsd = 0;
     let largestTransferUsd = null;
     let flowDirection: 'inflow' | 'outflow' | 'neutral' = 'neutral';
     
     if (price !== null) {
-      // Total volume in USD
+      // Total volume in USD (half is inflow, half is outflow in closed system)
       totalVolume = stats.totalAmount ? (stats.totalAmount / Math.pow(10, decimals)) * price : 0;
+      inflowUsd = totalVolume / 2;  // In closed system, inflow = outflow
+      outflowUsd = totalVolume / 2;
       
       // Net flow = accumulators inflow - distributors outflow
       // Positive = more accumulation, Negative = more distribution
@@ -357,6 +362,8 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
       // Largest transfer in USD
       if (largestAmount) {
         largestTransferUsd = (largestAmount / Math.pow(10, decimals)) * price;
+        // DEBUG: Log largest transfer calculation
+        console.log(`[TokenActivity] Largest transfer: ${largestAmount} raw -> $${largestTransferUsd?.toFixed(2)} USD (decimals=${decimals}, price=${price})`);
       }
     }
     
