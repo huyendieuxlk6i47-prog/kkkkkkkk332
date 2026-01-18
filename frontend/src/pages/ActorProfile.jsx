@@ -347,16 +347,15 @@ export default function ActorProfile() {
   const [showAlertModal, setShowAlertModal] = useState(false);
 
   // Determine state based on resolver response
+  // FIXED: Low confidence is NOT indexing - it means "not enough activity"
+  // Only actual status determines indexing state
   const isIndexing = resolvedData && (
     resolvedData.status === 'indexing' || 
-    resolvedData.status === 'pending' ||
-    resolvedData.confidence < 0.4
+    resolvedData.status === 'pending'
   );
   
-  const isResolved = resolvedData && (
-    resolvedData.status === 'resolved' && 
-    resolvedData.confidence >= 0.4
-  );
+  // FIXED: Resolved state should show data even with low confidence
+  const isResolved = resolvedData && !isIndexing;
 
   // Load actor data
   const loadActorData = useCallback(async () => {
