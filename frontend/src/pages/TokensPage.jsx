@@ -1,15 +1,10 @@
 /**
- * TokensPage - Investigation View (P0/P1/P2 Complete + Alerts)
+ * TokensPage - Investigation View (P1 FIX)
  * 
  * Tokens = точка входа для анализа конкретного EVM-токена
  * 
- * 4 уровня данных:
- * - Level 0: Resolution (gate)
- * - Level 1: Token Identity
- * - Level 2: Token Activity (transfers, flows, wallets)
- * - Level 3: Token Signals
- * 
- * Принцип: confidence < 0.4 = IndexingState, не показывать "0" как данные
+ * P1.1 FIX: Removed confidence-based lifecycle decisions
+ * Now uses ONLY resolution.status for UI state
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
