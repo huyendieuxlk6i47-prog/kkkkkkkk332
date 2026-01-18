@@ -439,28 +439,41 @@ function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
     );
   }
 
-  // CONTRACT: Empty state is VALID analysis result
+  // CONTRACT: Empty state is VALID analysis result - show what was checked
   if (!hasSignals) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Analyzed</span>
         </div>
         <div className="text-center py-6 bg-gray-50 rounded-xl">
           <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
             <Zap className="w-6 h-6 text-gray-400" />
           </div>
-          <p className="text-sm font-medium text-gray-700 mb-2">No signals detected</p>
-          <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            No abnormal accumulation, distribution, or large movements were identified.
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            {interpretation?.headline || 'Current activity is within normal range'}
           </p>
-          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap text-xs text-gray-400">
-            <span>Signals track:</span>
-            <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Accumulation</span>
-            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded">Distribution</span>
-            <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Large Moves</span>
-          </div>
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            {interpretation?.description || 'No significant deviations from baseline detected.'}
+          </p>
+          {/* Show what metrics were checked */}
+          {checkedMetrics.length > 0 && (
+            <div className="mt-4 text-xs text-gray-400">
+              <span className="block mb-2">Analyzed:</span>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {checkedMetrics.map((metric, i) => (
+                  <span key={i} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{metric}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Show baseline info */}
+          {baseline && baseline.avgTransfersPerHour > 0 && (
+            <div className="mt-3 text-xs text-gray-400">
+              Baseline: {baseline.avgTransfersPerHour.toFixed(0)} tx/hr over {baseline.periodHours}h
+            </div>
+          )}
         </div>
       </div>
     );
