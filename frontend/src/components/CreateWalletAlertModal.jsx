@@ -99,7 +99,7 @@ export default function CreateWalletAlertModal({
   onSuccess,
 }) {
   // Selected trigger type
-  const [selectedTrigger, setSelectedTrigger] = useState('large_inflow');
+  const [selectedTrigger, setSelectedTrigger] = useState('accumulation');
   
   // Advanced conditions
   const [threshold, setThreshold] = useState('');
