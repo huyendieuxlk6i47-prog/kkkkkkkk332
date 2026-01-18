@@ -267,6 +267,15 @@ function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit, onReduceSens
         </span>
       </div>
       
+      {/* Feedback Hint - P3 Alert Feedback Loop */}
+      {isActive && (
+        <FeedbackHint 
+          rule={rule} 
+          onPause={onPause} 
+          onReduceSensitivity={onReduceSensitivity} 
+        />
+      )}
+      
       {/* Insight Summary */}
       <div className="mb-3 p-3 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-700">
