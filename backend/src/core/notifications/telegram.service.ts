@@ -329,6 +329,47 @@ export async function sendTokenAlertNotification(
   return sendTelegramMessage(connection.chatId, text);
 }
 
+/**
+ * Send feedback message when alert triggers too frequently
+ * This is NOT an alert - it's an advisory message to reduce noise
+ * 
+ * Condition: triggerCount >= 3 in 24h AND minSeverity <= 75
+ */
+export async function sendFeedbackMessage(
+  userId: string,
+  data: {
+    targetName: string;
+    triggersIn24h: number;
+    scope: string;
+  }
+): Promise<TelegramSendResult> {
+  const connection = await TelegramConnectionModel.findOne({
+    userId,
+    isActive: true,
+  });
+
+  if (!connection) {
+    return { ok: false, error: 'No active Telegram connection' };
+  }
+
+  const scopeLabel = data.scope === 'token' ? 'token' : 'wallet';
+  const targetDisplay = escapeHtml(data.targetName);
+
+  // Advisory message - NOT an alert
+  const text = `🔔 <b>Monitoring Update — ${targetDisplay}</b>
+
+This behavior was observed ${data.triggersIn24h} times today.
+The pattern is now consistent rather than unusual.
+
+👉 You may want to <b>reduce sensitivity</b> or <b>pause monitoring</b> if this is expected behavior.
+
+<i>This is not an alert. It's a suggestion to help reduce noise.</i>
+
+<a href="https://blockview.app/${scopeLabel}s/${targetDisplay}?action=settings">Adjust settings</a>`;
+
+  return sendTelegramMessage(connection.chatId, text, { disableNotification: true });
+}
+
 // ============================================================================
 // CONNECTION MANAGEMENT
 // ============================================================================
