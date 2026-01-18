@@ -748,7 +748,7 @@ async function enqueueBootstrap(input: string, type: BootstrapType): Promise<{
  */
 async function cacheResolution(resolution: ResolutionResult): Promise<void> {
   try {
-    const ttl = resolution.status === 'resolved' ? RESOLUTION_CACHE_TTL : RESOLUTION_PENDING_TTL;
+    const ttl = resolution.status === 'completed' ? RESOLUTION_CACHE_TTL : RESOLUTION_PENDING_TTL;
     
     await ResolutionModel.findOneAndUpdate(
       { input: resolution.input },
