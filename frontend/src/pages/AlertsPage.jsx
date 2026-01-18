@@ -474,7 +474,14 @@ export default function AlertsPage() {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/alerts/rules/${ruleId}/reduce-sensitivity`,
-        { method: 'POST', headers: { 'x-user-id': 'demo-user' } }
+        { 
+          method: 'POST', 
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-user-id': 'anonymous' 
+          },
+          body: JSON.stringify({})
+        }
       );
       const data = await response.json();
       if (data.ok) {
