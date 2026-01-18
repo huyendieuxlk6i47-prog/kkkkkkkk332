@@ -282,6 +282,7 @@ export function completePendingConnection(code: string): void {
 
 /**
  * Save Telegram connection
+ * P0 FIX: Also update UserAlertPreferences so Dispatcher can send notifications
  */
 export async function saveTelegramConnection(
   userId: string,
@@ -289,6 +290,7 @@ export async function saveTelegramConnection(
   username?: string,
   firstName?: string
 ): Promise<ITelegramConnection> {
+  // Save connection
   const connection = await TelegramConnectionModel.findOneAndUpdate(
     { userId },
     {
@@ -300,6 +302,31 @@ export async function saveTelegramConnection(
     },
     { upsert: true, new: true }
   );
+  
+  // P0 FIX: Update UserAlertPreferences to enable Telegram and store chatId
+  // This is CRITICAL - without this, Dispatcher will not send notifications
+  try {
+    const { DispatcherEngine } = await import('../alerts/dispatcher/dispatcher.engine.js');
+    const dispatcher = new DispatcherEngine();
+    
+    const currentPrefs = await dispatcher.getUserPreferences(userId);
+    
+    await dispatcher.updateUserPreferences(userId, {
+      channels: currentPrefs.channels.includes('telegram' as any) 
+        ? currentPrefs.channels 
+        : [...currentPrefs.channels, 'telegram' as any],
+      telegram: {
+        enabled: true,
+        chatId: chatId,
+      },
+    });
+    
+    console.log(`[Telegram] Updated UserAlertPreferences for ${userId}: chatId=${chatId}`);
+  } catch (error) {
+    console.error('[Telegram] Failed to update UserAlertPreferences:', error);
+    // Don't fail connection if preferences update fails
+  }
+  
   return connection;
 }
 
