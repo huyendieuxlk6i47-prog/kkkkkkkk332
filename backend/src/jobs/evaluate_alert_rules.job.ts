@@ -13,7 +13,7 @@
  */
 import { AlertRuleModel, IAlertRule } from '../core/alerts/alert_rules.model.js';
 import { TransferModel } from '../core/transfers/transfers.model.js';
-import { processEvent } from '../core/alerts/alert.pipeline.js';
+import { alertPipeline } from '../core/alerts/alert.pipeline.js';
 
 let lastRunTime: Date | null = null;
 
