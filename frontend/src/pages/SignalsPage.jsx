@@ -420,16 +420,16 @@ export default function SignalsPage() {
         {/* Empty states - based on system status */}
         {!loading && filteredWatchlist.length === 0 && (
           <>
-            {/* Case 1: System is indexing */}
+            {/* Case 1: System is analyzing */}
             {systemStatus === 'indexing' && (
               <div className="py-12">
                 <div className="max-w-md mx-auto text-center">
                   <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Indexing in progress</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Gathering market data</h3>
                   <p className="text-gray-500 mb-6">
-                    The system is actively collecting on-chain data. Signals will appear here as they are detected.
+                    We're collecting on-chain activity. Signals will appear here as they are detected.
                   </p>
                   <div className="flex items-center justify-center gap-3">
                     <button
@@ -451,7 +451,7 @@ export default function SignalsPage() {
                   <div className="text-6xl mb-4">📡</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">No signals detected yet</h3>
                   <p className="text-gray-500 mb-6">
-                    The system is monitoring on-chain activity. Signals will appear here when significant movements are detected.
+                    We're monitoring on-chain activity. Signals will appear when significant movements are detected.
                   </p>
                   <div className="text-sm text-gray-400">
                     System status: <span className="font-medium text-gray-600 capitalize">{systemStatus}</span>
