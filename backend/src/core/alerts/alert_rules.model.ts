@@ -451,18 +451,74 @@ export async function deleteAlertRule(
 }
 
 /**
- * Update last triggered info
+ * Update last triggered info and track recent triggers for feedback loop
  */
 export async function updateLastTriggered(
   ruleId: string,
   meta?: LastTriggeredMeta
-): Promise<void> {
+): Promise<{ shouldSendFeedback: boolean; triggersIn24h: number }> {
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
+  // First, get current rule to check recent triggers
+  const rule = await AlertRuleModel.findById(ruleId);
+  if (!rule) {
+    return { shouldSendFeedback: false, triggersIn24h: 0 };
+  }
+  
+  // Filter out old timestamps and add new one
+  const recentTriggers = (rule.recentTriggerTimestamps || [])
+    .filter((ts: Date) => new Date(ts) > twentyFourHoursAgo);
+  recentTriggers.push(now);
+  
+  const triggersIn24h = recentTriggers.length;
+  
+  // Determine if we should send feedback
+  // Condition: 3+ triggers in 24h AND minSeverity <= 75 (medium/low) AND feedback not sent recently
+  const shouldSendFeedback = 
+    triggersIn24h >= 3 &&
+    rule.minSeverity <= 75 &&
+    (!rule.feedbackStatus?.feedbackSent || 
+     !rule.feedbackStatus?.lastFeedbackSentAt ||
+     new Date(rule.feedbackStatus.lastFeedbackSentAt) < twentyFourHoursAgo);
+  
+  // Update the rule
   await AlertRuleModel.updateOne(
     { _id: ruleId },
     {
-      lastTriggeredAt: new Date(),
+      lastTriggeredAt: now,
       lastTriggeredMeta: meta,
       $inc: { triggerCount: 1 },
+      recentTriggerTimestamps: recentTriggers,
+      'feedbackStatus.triggersIn24h': triggersIn24h,
+    }
+  );
+  
+  return { shouldSendFeedback, triggersIn24h };
+}
+
+/**
+ * Mark feedback as sent for a rule
+ */
+export async function markFeedbackSent(ruleId: string): Promise<void> {
+  await AlertRuleModel.updateOne(
+    { _id: ruleId },
+    {
+      'feedbackStatus.feedbackSent': true,
+      'feedbackStatus.lastFeedbackSentAt': new Date(),
+    }
+  );
+}
+
+/**
+ * Reset feedback status (when user adjusts settings)
+ */
+export async function resetFeedbackStatus(ruleId: string): Promise<void> {
+  await AlertRuleModel.updateOne(
+    { _id: ruleId },
+    {
+      'feedbackStatus.feedbackSent': false,
+      'feedbackStatus.lastFeedbackSentAt': null,
     }
   );
 }
