@@ -327,6 +327,79 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
   });
   
   /**
+   * GET /api/market/token-signals/:tokenAddress
+   * Get generated signals for a token based on baseline deviation
+   */
+  app.get('/token-signals/:tokenAddress', async (request: FastifyRequest) => {
+    const { tokenAddress } = request.params as { tokenAddress: string };
+    
+    const { generateTokenSignals } = await import('./token_signals.service.js');
+    const signals = await generateTokenSignals(tokenAddress);
+    
+    return {
+      ok: true,
+      data: {
+        tokenAddress: tokenAddress.toLowerCase(),
+        signals,
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
+  /**
+   * GET /api/market/token-drivers/:tokenAddress
+   * Get top wallets driving activity for a token (B2 block)
+   */
+  app.get('/token-drivers/:tokenAddress', async (request: FastifyRequest) => {
+    const { tokenAddress } = request.params as { tokenAddress: string };
+    const query = request.query as { limit?: string };
+    const limit = Math.min(parseInt(query.limit || '10'), 50);
+    
+    const { getActivityDrivers } = await import('./token_signals.service.js');
+    const drivers = await getActivityDrivers(tokenAddress, limit);
+    
+    // Token decimals for USD conversion
+    const TOKEN_DECIMALS: Record<string, number> = {
+      '0xdac17f958d2ee523a2206206994597c13d831ec7': 6, // USDT
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 6, // USDC
+      '0x6b175474e89094c44da98b954eedeac495271d0f': 18, // DAI
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 18, // WETH
+    };
+    
+    const TOKEN_PRICES: Record<string, number> = {
+      '0xdac17f958d2ee523a2206206994597c13d831ec7': 1, // USDT
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 1, // USDC
+      '0x6b175474e89094c44da98b954eedeac495271d0f': 1, // DAI
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 3500, // WETH
+    };
+    
+    const normalized = tokenAddress.toLowerCase();
+    const decimals = TOKEN_DECIMALS[normalized] ?? 18;
+    const price = TOKEN_PRICES[normalized] ?? null;
+    
+    // Convert to USD if we have price
+    const convertedDrivers = drivers.topDrivers.map(d => ({
+      ...d,
+      volumeInUsd: price ? (d.volumeIn / Math.pow(10, decimals)) * price : null,
+      volumeOutUsd: price ? (d.volumeOut / Math.pow(10, decimals)) * price : null,
+      netFlowUsd: price ? (d.netFlow / Math.pow(10, decimals)) * price : null,
+    }));
+    
+    return {
+      ok: true,
+      data: {
+        tokenAddress: normalized,
+        topDrivers: convertedDrivers,
+        totalVolume: drivers.totalVolume,
+        totalVolumeUsd: price ? (drivers.totalVolume / Math.pow(10, decimals)) * price : null,
+        hasConcentration: drivers.hasConcentration,
+        window: '24h',
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
+  /**
    * GET /api/market/top-active-tokens
    * Get top active tokens by transfer count (Market Discovery)
    */
