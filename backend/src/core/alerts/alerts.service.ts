@@ -321,7 +321,6 @@ async function sendTelegramNotificationAsync(
           dominantReason: stats.dominantReason24h,
           currentSensitivity: rule?.sensitivity || 'medium',
         });
-        });
         
         await markFeedbackSent(ruleId);
       }
