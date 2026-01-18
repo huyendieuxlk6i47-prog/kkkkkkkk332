@@ -135,6 +135,29 @@ Empty Result = "Мы проверили X, Y, Z → результат пуст"
 - [x] Human-readable metric definitions
 - [x] Resolution Status without confidence-based messaging
 
+### ✅ P1: WalletsPage Synchronization - COMPLETE (2026-01-18)
+**Goal**: Bring WalletsPage to feature parity with TokensPage semantic layer
+
+| Task | Priority | Status |
+|------|----------|--------|
+| WalletActivitySnapshot uses /api/wallets/:address/activity-snapshot | P1 | ✅ DONE |
+| WalletSignalsBlock uses /api/wallets/:address/signals | P1 | ✅ DONE |
+| RelatedAddresses uses /api/wallets/:address/related | P1 | ✅ DONE |
+| SmartMoneyProfile uses /api/wallets/:address/performance | P1 | ✅ DONE |
+| All components show "Checked" badge with interpretation | P1 | ✅ DONE |
+| Empty states explain what was analyzed | P1 | ✅ DONE |
+
+### ✅ P2: MarketPage Discovery Layer - COMPLETE (2026-01-18)
+**Goal**: Transform MarketPage into true discovery tool
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Top Active Tokens card (live 24h data) | P2 | ✅ DONE |
+| Emerging Signals card via /api/market/emerging-signals | P2 | ✅ DONE |
+| New Actors card via /api/market/new-actors | P2 | ✅ DONE |
+| CTA to add items to watchlist | P2 | ✅ DONE |
+| 3-column responsive grid layout | P2 | ✅ DONE |
+
 ---
 
 ## 🗓 Roadmap
