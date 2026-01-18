@@ -345,28 +345,33 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     
     const stats = transferStats[0] || { count: 0, totalAmount: 0 };
     const uniqueWallets = walletStats[0]?.count || 0;
-    const largestAmount = largestTransfer?.amount || null;
+    const largestAmount = largestTransfer[0]?.amount || null;
     
     // Calculate USD values if we have price
-    let inflow = 0;
-    let outflow = 0;
-    let netFlow = 0;
+    let totalVolume = 0;
+    let netFlowUsd = 0;
     let largestTransferUsd = null;
+    let flowDirection: 'inflow' | 'outflow' | 'neutral' = 'neutral';
     
-    if (price !== null && flowStats[0]) {
-      const incoming = flowStats[0].incoming?.[0]?.total || 0;
-      const outgoing = flowStats[0].outgoing?.[0]?.total || 0;
+    if (price !== null) {
+      // Total volume in USD
+      totalVolume = stats.totalAmount ? (stats.totalAmount / Math.pow(10, decimals)) * price : 0;
       
-      // Convert to USD (divide by decimals, multiply by price)
-      inflow = (incoming / Math.pow(10, decimals)) * price;
-      outflow = (outgoing / Math.pow(10, decimals)) * price;
+      // Net flow = accumulators inflow - distributors outflow
+      // Positive = more accumulation, Negative = more distribution
+      const accumulatorInflow = flowStats[0]?.topAccumulators?.[0]?.totalNetInflow || 0;
+      const distributorOutflow = Math.abs(flowStats[0]?.topDistributors?.[0]?.totalNetOutflow || 0);
       
-      // Net flow = sum of all transfers (in - out for entire network = 0)
-      // For a single token, we show total volume as indication of flow
-      netFlow = stats.totalAmount ? (stats.totalAmount / Math.pow(10, decimals)) * price : 0;
+      const netFlowRaw = accumulatorInflow - distributorOutflow;
+      netFlowUsd = (netFlowRaw / Math.pow(10, decimals)) * price;
       
+      // Determine direction
+      if (netFlowUsd > 1000) flowDirection = 'inflow';
+      else if (netFlowUsd < -1000) flowDirection = 'outflow';
+      
+      // Largest transfer in USD
       if (largestAmount) {
-        largestTransferUsd = (parseFloat(largestAmount) / Math.pow(10, decimals)) * price;
+        largestTransferUsd = (largestAmount / Math.pow(10, decimals)) * price;
       }
     }
     
@@ -377,14 +382,18 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
         window: `${windowHours}h`,
         activity: {
           transfers24h: stats.count,
-          activeWallets: uniqueWallets,
+          activeWallets: uniqueWallets, // unique from ∪ to
           largestTransfer: largestTransferUsd,
         },
         flows: {
-          inflow,
-          outflow,
-          netFlow,
+          totalVolume,
+          netFlow: netFlowUsd,
+          direction: flowDirection,
           hasPrice: price !== null,
+        },
+        interpretation: {
+          walletsDefinition: 'unique senders ∪ receivers',
+          netFlowDefinition: 'sum(accumulator_inflows) - sum(distributor_outflows)',
         },
         analyzedAt: new Date().toISOString(),
         dataSource: 'indexed_transfers',
