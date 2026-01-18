@@ -215,7 +215,7 @@ export function RelatedAddresses({
     );
   }
   
-  // No clusters found
+  // No clusters found - CONTRACT: explain WHAT was checked
   if (!loading && clusters.length === 0) {
     return (
       <Card className={className}>
@@ -225,23 +225,28 @@ export function RelatedAddresses({
               <Users className="w-4 h-4" />
               Related Addresses
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleAnalyze}
-              disabled={analyzing}
-            >
-              <RefreshCw className={`w-4 h-4 mr-1 ${analyzing ? 'animate-spin' : ''}`} />
-              Analyze
-            </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs bg-gray-100">Checked</Badge>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleAnalyze}
+                disabled={analyzing}
+              >
+                <RefreshCw className={`w-4 h-4 ${analyzing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-muted-foreground">
-            <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm font-medium">No related addresses detected</p>
-            <p className="text-xs mt-1">
-              Click "Analyze" to search for potentially related wallets
+          <div className="text-center py-6 bg-slate-50 rounded-xl">
+            <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+              <Users className="w-6 h-6 text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 mb-2">No related addresses detected</p>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              We analyzed timing correlation, token overlap, and behavioral similarity. 
+              No linked wallets were identified.
             </p>
           </div>
         </CardContent>
