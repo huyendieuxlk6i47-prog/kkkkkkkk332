@@ -353,8 +353,12 @@ export function TokenActivityDrivers({
     );
   }
   
-  // No data / Empty state - explain WHAT was checked (volume distribution)
+  // No data / Empty state - use API interpretation
   if (!drivers || drivers.topDrivers?.length === 0) {
+    const headline = drivers?.summary?.headline || 'No dominant wallets identified';
+    const description = drivers?.summary?.description || 
+      `We analyzed ${drivers?.totalParticipants?.toLocaleString() || 0} wallets. No single wallet exceeded influence thresholds.`;
+    
     return (
       <Card className={className}>
         <CardHeader>
@@ -363,14 +367,7 @@ export function TokenActivityDrivers({
               <Users className="w-5 h-5" />
               Who is driving this activity?
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={calculating}
-            >
-              <RefreshCw className={`w-4 h-4 ${calculating ? 'animate-spin' : ''}`} />
-            </Button>
+            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Analyzed</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -378,18 +375,10 @@ export function TokenActivityDrivers({
             <div className="p-3 bg-slate-100 rounded-xl inline-block mb-3">
               <Users className="w-8 h-8 text-slate-400" />
             </div>
-            <p className="font-medium text-slate-700 mb-2">No dominant wallets identified</p>
+            <p className="font-medium text-slate-700 mb-2">{headline}</p>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              We analyzed wallet activity and volume distribution. 
-              No single wallet or coordinated group exceeded influence thresholds.
+              {description}
             </p>
-            <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-600">
-                <span className="font-medium">Interpretation:</span>{' '}
-                Market may be moving as "crowd" without dominant actors, 
-                or activity is evenly distributed across participants.
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
