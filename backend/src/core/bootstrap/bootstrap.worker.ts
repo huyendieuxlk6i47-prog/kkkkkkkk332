@@ -391,6 +391,16 @@ async function handleFailure(taskId: string, error: string): Promise<void> {
     
     console.error(`[BOOTSTRAP] Task ${taskId} failed permanently after ${task.maxAttempts} attempts (reason: ${failureReason})`);
     
+    // P0 FIX: Update resolver cache to 'failed' status
+    if (task.address) {
+      try {
+        const { updateResolutionAfterBootstrap } = await import('../resolver/resolver.service.js');
+        await updateResolutionAfterBootstrap(task.address, 'failed');
+      } catch (err) {
+        console.error('[BOOTSTRAP] Failed to update resolution after failure:', err);
+      }
+    }
+    
     // Emit failed event (P2.3)
     eventBus.emitEvent({
       type: 'bootstrap.failed',
