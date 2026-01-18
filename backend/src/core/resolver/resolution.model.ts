@@ -130,8 +130,8 @@ const ResolutionSchema = new Schema<IResolution>(
     
     status: {
       type: String,
-      enum: ['resolved', 'pending', 'indexing', 'insufficient_data'],
-      default: 'resolved',
+      enum: ['pending', 'analyzing', 'completed', 'failed'],
+      default: 'pending',
     },
     
     available: {
