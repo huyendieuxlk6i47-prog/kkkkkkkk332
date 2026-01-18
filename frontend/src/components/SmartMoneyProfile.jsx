@@ -206,8 +206,8 @@ export function SmartMoneyProfile({
     );
   }
   
-  // No data state - CONTRACT: explain WHAT was checked
-  if (!profile) {
+  // No data or insufficient data state - CONTRACT: explain WHAT was checked
+  if (performanceLabel === 'insufficient_data' || !apiData) {
     return (
       <Card className={className}>
         <CardHeader>
@@ -217,14 +217,14 @@ export function SmartMoneyProfile({
               Historical Performance
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs bg-gray-100">Checked</Badge>
+              <Badge variant="outline" className="text-xs bg-emerald-100 text-emerald-700">Checked</Badge>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={handleRecalculate}
-                disabled={calculating}
+                onClick={fetchProfile}
+                disabled={loading}
               >
-                <RefreshCw className={`w-4 h-4 ${calculating ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </CardTitle>
@@ -234,10 +234,11 @@ export function SmartMoneyProfile({
             <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
               <BarChart3 className="w-6 h-6 text-slate-400" />
             </div>
-            <p className="text-sm font-medium text-slate-700 mb-2">Not enough data</p>
+            <p className="text-sm font-medium text-slate-700 mb-2">
+              {interpretation.headline || 'Insufficient historical data'}
+            </p>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              This wallet does not have sufficient historical activity to evaluate performance.
-              This is not a failure — it's an honest assessment.
+              {interpretation.description || 'This wallet does not have sufficient historical activity to evaluate performance. This is not a failure — it\'s an honest assessment.'}
             </p>
           </div>
         </CardContent>
@@ -245,7 +246,7 @@ export function SmartMoneyProfile({
     );
   }
   
-  const labelBadge = getLabelBadge(profile.label);
+  const labelBadge = getLabelBadge(performanceLabel);
   const LabelIcon = labelBadge.icon;
   
   return (
@@ -259,16 +260,16 @@ export function SmartMoneyProfile({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={handleRecalculate}
-            disabled={calculating}
+            onClick={fetchProfile}
+            disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 ${calculating ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Label with sample size - CRITICAL: always show together */}
+        {/* Label with interpretation */}
         <div className="flex items-center justify-between">
           <TooltipProvider>
             <Tooltip>
@@ -284,61 +285,41 @@ export function SmartMoneyProfile({
             </Tooltip>
           </TooltipProvider>
           
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{Math.round(profile.score)}</span>
-            <span className="text-xs text-muted-foreground">/ 100</span>
-            <ScoreBreakdown 
-              scoreComponents={profile.scoreComponents} 
-              score={profile.score} 
-            />
-          </div>
+          {apiData?.volumeAnalyzed > 0 && (
+            <span className="text-xs text-muted-foreground">
+              ${(apiData.volumeAnalyzed / 1e6).toFixed(1)}M analyzed
+            </span>
+          )}
         </div>
         
-        {/* Label explanation - CRITICAL: always show */}
-        <p className="text-xs text-muted-foreground">
-          {profile.labelExplanation}
-        </p>
+        {/* Interpretation - CRITICAL */}
+        <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg">
+          <p className="text-sm font-medium text-purple-800">{interpretation.headline}</p>
+          {interpretation.description && (
+            <p className="text-xs text-purple-600 mt-1">{interpretation.description}</p>
+          )}
+        </div>
         
         {/* Metrics grid */}
         <div className="grid grid-cols-2 gap-3">
           <MetricCard
-            label="Win Rate"
-            value={formatPercent(profile.performance.winRate)}
-            icon={TrendingUp}
-            tooltip="Percentage of successful outcomes"
-          />
-          <MetricCard
-            label="Sample Size"
-            value={profile.sampleSize}
+            label="Tokens Analyzed"
+            value={apiData?.tokenCount || 0}
             icon={Target}
-            tooltip="Number of events analyzed"
+            tooltip="Number of unique tokens tracked"
           />
           <MetricCard
-            label="Avg Return"
-            value={`${profile.performance.avgReturn > 0 ? '+' : ''}${profile.performance.avgReturn.toFixed(1)}%`}
+            label="Volume"
+            value={apiData?.volumeAnalyzed ? `$${(apiData.volumeAnalyzed / 1e6).toFixed(1)}M` : '$0'}
             icon={BarChart3}
-            tooltip="Average return per event"
-          />
-          <MetricCard
-            label="Hold Time"
-            value={`${Math.round(profile.performance.medianHoldTime)}h`}
-            icon={Clock}
-            tooltip="Median holding duration"
+            tooltip="Total volume analyzed"
           />
         </div>
         
-        {/* Analysis period - CRITICAL: always show */}
+        {/* Analysis status */}
         <div className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded text-xs text-muted-foreground text-center">
-          Based on {profile.sampleSize} events over {profile.analysisPeriod.daysAnalyzed} days
+          Based on 30-day historical analysis
         </div>
-        
-        {/* Confidence warning if low */}
-        {profile.confidence < 0.5 && (
-          <div className="flex items-center gap-2 text-xs text-amber-600">
-            <AlertTriangle className="w-3 h-3" />
-            Limited data - confidence may improve with more history
-          </div>
-        )}
       </CardContent>
     </Card>
   );
