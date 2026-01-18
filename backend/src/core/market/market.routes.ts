@@ -193,14 +193,33 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     const windowHours = query.window === '1h' ? 1 : query.window === '6h' ? 6 : 24;
     const since = new Date(Date.now() - windowHours * 60 * 60 * 1000);
     
-    const { TransferModel } = await import('../transfers/transfers.model.js');
     const { ERC20LogModel } = await import('../../onchain/ethereum/logs_erc20.model.js');
     
     const normalizedAddress = tokenAddress.toLowerCase();
     
+    // Token price mapping (stablecoins = $1, others we have in mapping)
+    const TOKEN_PRICES: Record<string, number> = {
+      '0xdac17f958d2ee523a2206206994597c13d831ec7': 1, // USDT
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 1, // USDC
+      '0x6b175474e89094c44da98b954eedeac495271d0f': 1, // DAI
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 3500, // WETH
+      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 100000, // WBTC
+    };
+    
+    // Token decimals
+    const TOKEN_DECIMALS: Record<string, number> = {
+      '0xdac17f958d2ee523a2206206994597c13d831ec7': 6, // USDT
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 6, // USDC
+      '0x6b175474e89094c44da98b954eedeac495271d0f': 18, // DAI
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 18, // WETH
+      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 8, // WBTC
+    };
+    
+    const price = TOKEN_PRICES[normalizedAddress] ?? null;
+    const decimals = TOKEN_DECIMALS[normalizedAddress] ?? 18;
+    
     // Aggregate from logs_erc20 (raw indexed data)
-    // Use blockTimestamp field for filtering
-    const [transferStats, walletStats, largestTransfer] = await Promise.all([
+    const [transferStats, walletStats, largestTransfer, flowStats] = await Promise.all([
       // Count and sum transfers
       ERC20LogModel.aggregate([
         { $match: { 
@@ -211,7 +230,6 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
           _id: null,
           count: { $sum: 1 },
           totalAmount: { $sum: { $toDouble: '$amount' } },
-          avgAmount: { $avg: { $toDouble: '$amount' } },
         }},
       ]),
       
@@ -238,33 +256,52 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
         token: normalizedAddress,
         blockTimestamp: { $gte: since }
       }).sort({ amount: -1 }).limit(1),
+      
+      // Calculate net flow by aggregating per wallet
+      // Positive = received, Negative = sent
+      ERC20LogModel.aggregate([
+        { $match: { 
+          token: normalizedAddress,
+          blockTimestamp: { $gte: since }
+        }},
+        { $facet: {
+          incoming: [
+            { $group: { _id: '$to', amount: { $sum: { $toDouble: '$amount' } } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+          ],
+          outgoing: [
+            { $group: { _id: '$from', amount: { $sum: { $toDouble: '$amount' } } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+          ]
+        }}
+      ]),
     ]);
     
-    const stats = transferStats[0] || { count: 0, totalAmount: 0, avgAmount: 0 };
+    const stats = transferStats[0] || { count: 0, totalAmount: 0 };
     const uniqueWallets = walletStats[0]?.count || 0;
     const largestAmount = largestTransfer?.amount || null;
     
-    // Calculate inflow/outflow from normalized transfers (if available)
+    // Calculate USD values if we have price
     let inflow = 0;
     let outflow = 0;
     let netFlow = 0;
+    let largestTransferUsd = null;
     
-    const flowStats = await TransferModel.aggregate([
-      { $match: { 
-        assetAddress: normalizedAddress,
-        timestamp: { $gte: since }
-      }},
-      { $group: {
-        _id: null,
-        totalInflow: { $sum: { $cond: [{ $gt: ['$valueUsd', 0] }, '$valueUsd', 0] } },
-        totalOutflow: { $sum: { $cond: [{ $lt: ['$valueUsd', 0] }, { $abs: '$valueUsd' }, 0] } },
-      }},
-    ]);
-    
-    if (flowStats[0]) {
-      inflow = flowStats[0].totalInflow || 0;
-      outflow = flowStats[0].totalOutflow || 0;
-      netFlow = inflow - outflow;
+    if (price !== null && flowStats[0]) {
+      const incoming = flowStats[0].incoming?.[0]?.total || 0;
+      const outgoing = flowStats[0].outgoing?.[0]?.total || 0;
+      
+      // Convert to USD (divide by decimals, multiply by price)
+      inflow = (incoming / Math.pow(10, decimals)) * price;
+      outflow = (outgoing / Math.pow(10, decimals)) * price;
+      
+      // Net flow = sum of all transfers (in - out for entire network = 0)
+      // For a single token, we show total volume as indication of flow
+      netFlow = stats.totalAmount ? (stats.totalAmount / Math.pow(10, decimals)) * price : 0;
+      
+      if (largestAmount) {
+        largestTransferUsd = (parseFloat(largestAmount) / Math.pow(10, decimals)) * price;
+      }
     }
     
     return {
@@ -275,12 +312,13 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
         activity: {
           transfers24h: stats.count,
           activeWallets: uniqueWallets,
-          largestTransfer: largestAmount ? parseFloat(largestAmount) : null,
+          largestTransfer: largestTransferUsd,
         },
         flows: {
           inflow,
           outflow,
           netFlow,
+          hasPrice: price !== null,
         },
         analyzedAt: new Date().toISOString(),
         dataSource: 'indexed_transfers',
