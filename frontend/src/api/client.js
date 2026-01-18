@@ -7,7 +7,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export const api = axios.create({
   baseURL: BACKEND_URL,
-  timeout: 15000,
+  timeout: 60000, // 60 seconds for heavy aggregation queries
   headers: {
     'Content-Type': 'application/json',
     // Demo user ID - in production this would come from auth context
