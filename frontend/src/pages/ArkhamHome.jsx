@@ -140,6 +140,232 @@ function TopActiveTokensCard({ loading, onRefresh }) {
 }
 
 // ============================================================================
+// Emerging Signals Card - Tokens with active signals
+// ============================================================================
+function EmergingSignalsCard({ loading }) {
+  const navigate = useNavigate();
+  const [tokens, setTokens] = useState([]);
+  const [loadingSignals, setLoadingSignals] = useState(true);
+  const [interpretation, setInterpretation] = useState(null);
+  
+  useEffect(() => {
+    async function loadSignals() {
+      setLoadingSignals(true);
+      try {
+        const response = await marketApi.getEmergingSignals(6);
+        if (response?.ok && response?.data) {
+          setTokens(response.data.tokens || []);
+          setInterpretation(response.data.interpretation);
+        }
+      } catch (err) {
+        console.error('Failed to load emerging signals:', err);
+      } finally {
+        setLoadingSignals(false);
+      }
+    }
+    loadSignals();
+  }, []);
+  
+  const getSeverityColor = (severity) => {
+    if (severity >= 80) return 'bg-red-100 text-red-700';
+    if (severity >= 60) return 'bg-orange-100 text-orange-700';
+    return 'bg-yellow-100 text-yellow-700';
+  };
+  
+  if (loadingSignals) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="w-5 h-5 text-purple-500" />
+          <h3 className="text-sm font-semibold text-gray-900">Emerging Signals</h3>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (!tokens || tokens.length === 0) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-gray-400" />
+            <h3 className="text-sm font-semibold text-gray-900">Emerging Signals</h3>
+          </div>
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Checked</span>
+        </div>
+        <div className="text-center py-6 bg-gray-50 rounded-xl">
+          <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+            <Activity className="w-6 h-6 text-gray-300" />
+          </div>
+          <p className="text-sm font-medium text-gray-700 mb-1">{interpretation?.headline || 'No emerging signals'}</p>
+          <p className="text-xs text-gray-500">{interpretation?.description || 'All monitored tokens are within normal activity range.'}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-purple-500" />
+          <h3 className="text-sm font-semibold text-gray-900">Emerging Signals</h3>
+        </div>
+        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-medium">
+          {tokens.length} active
+        </span>
+      </div>
+      <div className="space-y-2">
+        {tokens.slice(0, 5).map((token, i) => (
+          <div 
+            key={token.address}
+            onClick={() => navigate(`/tokens/${token.address}`)}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Coins className="w-4 h-4 text-gray-500" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">{token.symbol}</div>
+                <div className="text-xs text-gray-500">{token.signals.length} signal{token.signals.length > 1 ? 's' : ''}</div>
+              </div>
+            </div>
+            {token.topSignal && (
+              <span className={`text-xs px-2 py-1 rounded font-medium ${getSeverityColor(token.topSignal.severity)}`}>
+                {token.topSignal.type.replace('_', ' ')}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => navigate('/signals')}
+        className="w-full mt-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        View all signals →
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// New Actors Card - Recently active wallets
+// ============================================================================
+function NewActorsCard({ loading }) {
+  const navigate = useNavigate();
+  const [actors, setActors] = useState([]);
+  const [loadingActors, setLoadingActors] = useState(true);
+  const [interpretation, setInterpretation] = useState(null);
+  
+  useEffect(() => {
+    async function loadActors() {
+      setLoadingActors(true);
+      try {
+        const response = await marketApi.getNewActors(6);
+        if (response?.ok && response?.data) {
+          setActors(response.data.actors || []);
+          setInterpretation(response.data.interpretation);
+        }
+      } catch (err) {
+        console.error('Failed to load new actors:', err);
+      } finally {
+        setLoadingActors(false);
+      }
+    }
+    loadActors();
+  }, []);
+  
+  const formatAddress = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  
+  if (loadingActors) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="w-5 h-5 text-emerald-500" />
+          <h3 className="text-sm font-semibold text-gray-900">New Actors</h3>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  if (!actors || actors.length === 0) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-gray-400" />
+            <h3 className="text-sm font-semibold text-gray-900">New Actors</h3>
+          </div>
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Checked</span>
+        </div>
+        <div className="text-center py-6 bg-gray-50 rounded-xl">
+          <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+            <Users className="w-6 h-6 text-gray-300" />
+          </div>
+          <p className="text-sm font-medium text-gray-700 mb-1">{interpretation?.headline || 'No new actors detected'}</p>
+          <p className="text-xs text-gray-500">{interpretation?.description || 'No wallets with significant new activity.'}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-emerald-500" />
+          <h3 className="text-sm font-semibold text-gray-900">New Actors</h3>
+        </div>
+        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">
+          {actors.length} detected
+        </span>
+      </div>
+      <div className="space-y-2">
+        {actors.slice(0, 5).map((actor, i) => (
+          <div 
+            key={actor.address}
+            onClick={() => navigate(`/wallets/${actor.address}`)}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Wallet className="w-4 h-4 text-gray-500" />
+              </div>
+              <div>
+                <div className="text-sm font-mono font-medium text-gray-900">{formatAddress(actor.address)}</div>
+                <div className="text-xs text-gray-500">{actor.txCount} transfers • {actor.tokenCount} tokens</div>
+              </div>
+            </div>
+            {actor.topToken && (
+              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                {actor.topToken}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => navigate('/wallets')}
+        className="w-full mt-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        Explore wallets →
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
 // Tracked Items Card - Shows tokens or wallets from watchlist
 // ============================================================================
 function TrackedItemsCard({ items, type, loading, onViewAll }) {
