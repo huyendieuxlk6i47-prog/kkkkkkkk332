@@ -30,6 +30,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 // B2-B4 Components
 import RelatedAddresses from '../components/RelatedAddresses';
 import SmartMoneyProfile from '../components/SmartMoneyProfile';
+import WalletSignalsBlock from '../components/WalletSignalsBlock';
 
 // Wallet Tracking & Alerts
 import TrackWalletButton from '../components/TrackWalletButton';
