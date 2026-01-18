@@ -3,8 +3,8 @@
 ## 📋 Overview
 
 **Product**: BlockView - Blockchain Analytics Platform  
-**Version**: 3.0.0  
-**Last Updated**: 2026-01-17
+**Version**: 3.1.0  
+**Last Updated**: 2026-01-18
 
 ### Vision
 Transform on-chain data from passive reference into actionable intelligence through smart alerts and wallet behavior analysis.
@@ -15,6 +15,7 @@ Tokens without Alerts = справочник (reference)
 Tokens with Alerts = инструмент (tool)
 Smart Alerts = "не 10 спам-сообщений, а одна понятная история"
 Wallet Profiles = "кто это? Трейдер? Фонд? Кит?"
+Empty Result = "Мы проверили X, Y, Z → результат пуст" (не ошибка!)
 ```
 
 ---
@@ -52,6 +53,24 @@ Wallet Profiles = "кто это? Трейдер? Фонд? Кит?"
 ### Option B: Production Hardening
 - [x] B0-B6: Health, metrics, events, locks, heartbeats
 - [x] Honest UI states (Real/Indexing/Disabled)
+
+### P3: Interpretation & Metrics Layer ✅ (2026-01-18)
+- [x] TokensPage Activity Snapshot (Net Flow, Wallets, Transfers, Window)
+- [x] WalletsPage Activity Snapshot (Inflow, Outflow, Net Flow, Transfers, Tokens, Window)
+- [x] All blocks show "Checked" badge with what-was-analyzed explanations
+- [x] Empty states explain WHAT was checked, not just "no data"
+
+### P2: Market Wiring ✅ (2026-01-18)
+- [x] MarketPage connected to Watchlist API
+- [x] Shows Tracked Tokens, Tracked Wallets, Recent Alerts
+- [x] Empty CTA: "Track a token or wallet to see market context"
+
+### A1-A3: Alert UX Layer ✅ (2026-01-18)
+- [x] CreateAlertModal: Insight-first structure (What/Why/When)
+- [x] Sensitivity selector (Low/Medium/High) instead of thresholds
+- [x] Notification Preview before submit
+- [x] AlertsPage: Monitoring Cards with lifecycle states
+- [x] Telegram messages: Insight + Evidence + Implication + Next Action
 
 ### P0: Market Page
 - [x] Asset Selector (ETH primary)
