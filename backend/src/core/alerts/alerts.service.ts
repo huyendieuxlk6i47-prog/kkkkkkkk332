@@ -288,11 +288,31 @@ async function sendTelegramNotificationAsync(
     signalType: string;
     confidence: number;
     severity: number;
-  }
+  },
+  ruleId?: string
 ): Promise<void> {
   try {
-    const { sendAlertNotification } = await import('../notifications/telegram.service.js');
+    const { sendAlertNotification, sendFeedbackMessage } = await import('../notifications/telegram.service.js');
     await sendAlertNotification(userId, alert);
+    
+    // Check if we need to send feedback (after 3rd trigger)
+    if (ruleId) {
+      const { updateLastTriggered, markFeedbackSent } = await import('./alert_rules.model.js');
+      const { shouldSendFeedback, triggersIn24h } = await updateLastTriggered(ruleId);
+      
+      if (shouldSendFeedback) {
+        // Get token/wallet name for the message
+        const targetName = alert.targetId.slice(0, 8) + '...';
+        
+        await sendFeedbackMessage(userId, {
+          targetName,
+          triggersIn24h,
+          scope: alert.scope,
+        });
+        
+        await markFeedbackSent(ruleId);
+      }
+    }
   } catch (err) {
     // Non-critical, log and continue
     console.error('[Alerts] Telegram notification failed:', err);
