@@ -319,46 +319,12 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Section 6: Recent Signals (A-layer) */}
-          {walletData?.recentSignals && walletData.recentSignals.length > 0 ? (
-            <div className="bg-white border border-gray-200 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
-                <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                  {walletData.recentSignals.length} signal{walletData.recentSignals.length > 1 ? 's' : ''}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {walletData.recentSignals.slice(0, 5).map((signal, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Zap className="w-4 h-4 text-purple-500" />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900">{signal.type}</div>
-                      <div className="text-xs text-gray-500">{signal.timestamp}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white border border-gray-200 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
-              </div>
-              <div className="text-center py-6 bg-gray-50 rounded-xl">
-                <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
-                  <Zap className="w-6 h-6 text-gray-400" />
-                </div>
-                <p className="text-sm font-medium text-gray-700 mb-2">No signals detected</p>
-                <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                  No accumulation, distribution, or large transfers were detected.
-                </p>
-              </div>
-            </div>
+          {/* Section 6: Wallet Signals (NEW API-based) */}
+          {resolvedData?.normalizedId && (
+            <WalletSignalsBlock walletAddress={resolvedData.normalizedId} />
           )}
 
           {/* Recent Activity */}
