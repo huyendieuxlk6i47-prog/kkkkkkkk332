@@ -764,9 +764,16 @@ export default function ArkhamHome() {
           )}
 
           {/* Main Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* DISCOVERY LAYER */}
             {/* Top Active Tokens - MARKET DISCOVERY (always show) */}
             <TopActiveTokensCard loading={loading} onRefresh={handleRefresh} />
+            
+            {/* Emerging Signals - NEW */}
+            <EmergingSignalsCard loading={loading} />
+            
+            {/* New Actors - NEW */}
+            <NewActorsCard loading={loading} />
             
             {/* Recent Alerts */}
             <RecentAlertsCard 
