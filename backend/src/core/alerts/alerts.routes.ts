@@ -261,7 +261,7 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
   
   /**
    * POST /api/alerts/rules/:id/reduce-sensitivity
-   * Reduce sensitivity (increase minSeverity threshold)
+   * Reduce sensitivity (move from high→medium→low)
    */
   app.post('/rules/:id/reduce-sensitivity', async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = getUserId(request);
@@ -273,11 +273,19 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(404).send({ ok: false, error: 'Rule not found' });
     }
     
-    // Increase minSeverity by 15 (up to max 90)
-    const newSeverity = Math.min(existingRule.minSeverity + 15, 90);
+    // Map current sensitivity to next lower level
+    const { sensitivityToMinSeverity, sensitivityToThrottle } = await import('./alert_rules.model.js');
+    
+    const currentSensitivity = existingRule.sensitivity || 'medium';
+    const nextSensitivity = currentSensitivity === 'high' ? 'medium' : 'low';
+    
+    const newSeverity = sensitivityToMinSeverity(nextSensitivity);
+    const newThrottle = sensitivityToThrottle(nextSensitivity);
     
     const rule = await service.updateAlertRule(params.id, userId, { 
-      minSeverity: newSeverity 
+      minSeverity: newSeverity,
+      throttle: newThrottle,
+      sensitivity: nextSensitivity,
     });
     
     // Reset feedback status after user action
@@ -287,7 +295,90 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
     return { 
       ok: true, 
       data: rule,
-      message: `Sensitivity reduced. Now only alerts with severity >= ${newSeverity} will trigger.`,
+      previousSensitivity: currentSensitivity,
+      newSensitivity: nextSensitivity,
+      message: `Sensitivity changed from ${currentSensitivity} to ${nextSensitivity}. Expected fewer triggers.`,
+    };
+  });
+  
+  /**
+   * GET /api/alerts/sensitivity-presets
+   * Get sensitivity preset configurations for UI
+   */
+  app.get('/sensitivity-presets', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { 
+      TOKEN_SENSITIVITY_PRESETS, 
+      WALLET_SENSITIVITY_PRESETS 
+    } = await import('./alert_rules.model.js');
+    
+    return {
+      ok: true,
+      data: {
+        token: TOKEN_SENSITIVITY_PRESETS,
+        wallet: WALLET_SENSITIVITY_PRESETS,
+        levels: ['low', 'medium', 'high'],
+        descriptions: {
+          high: {
+            label: 'High',
+            description: 'Get notified about any unusual activity',
+            frequency: 'May trigger multiple times per day',
+          },
+          medium: {
+            label: 'Medium',
+            description: 'Get notified about notable activity only',
+            frequency: 'A few times per week',
+          },
+          low: {
+            label: 'Low',
+            description: 'Get notified about major movements only',
+            frequency: 'Rarely, only significant events',
+          },
+        },
+      },
+    };
+  });
+  
+  /**
+   * PUT /api/alerts/rules/:id/sensitivity
+   * Update sensitivity level for a rule
+   */
+  app.put('/rules/:id/sensitivity', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = getUserId(request);
+    const params = RuleIdParams.parse(request.params);
+    const body = request.body as { sensitivity: string };
+    
+    if (!['low', 'medium', 'high'].includes(body.sensitivity)) {
+      return reply.status(400).send({ ok: false, error: 'Invalid sensitivity level' });
+    }
+    
+    const existingRule = await rulesRepo.getAlertRuleById(params.id);
+    
+    if (!existingRule || existingRule.userId !== userId) {
+      return reply.status(404).send({ ok: false, error: 'Rule not found' });
+    }
+    
+    const { sensitivityToMinSeverity, sensitivityToThrottle, getSensitivityConfig } = await import('./alert_rules.model.js');
+    
+    const newSensitivity = body.sensitivity as 'low' | 'medium' | 'high';
+    const newSeverity = sensitivityToMinSeverity(newSensitivity);
+    const newThrottle = sensitivityToThrottle(newSensitivity);
+    const config = getSensitivityConfig(existingRule.scope, newSensitivity);
+    
+    const rule = await service.updateAlertRule(params.id, userId, { 
+      minSeverity: newSeverity,
+      throttle: newThrottle,
+      sensitivity: newSensitivity,
+    });
+    
+    // Reset feedback status after sensitivity change
+    const { resetFeedbackStatus } = await import('./alert_rules.model.js');
+    await resetFeedbackStatus(params.id);
+    
+    return { 
+      ok: true, 
+      data: rule,
+      sensitivityConfig: config,
+      message: `Sensitivity set to ${newSensitivity}. ${config.expectedFrequency}`,
     };
   });
 }
