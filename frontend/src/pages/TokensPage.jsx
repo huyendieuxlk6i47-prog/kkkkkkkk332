@@ -792,8 +792,8 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
             onWalletClick={onWalletClick}
           />
           
-          {/* Section 5: Recent Signals */}
-          <TokenSignalsBlock signals={signals} />
+          {/* Section 5: Recent Signals - Live from API */}
+          <TokenSignalsBlock tokenAddress={resolvedData.normalizedId} />
           
           {/* Section 6: Token Clusters (B3) - ALWAYS RENDER */}
           <TokenClusters 
