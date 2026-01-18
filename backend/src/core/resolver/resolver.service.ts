@@ -365,7 +365,7 @@ async function resolveAddress(address: string): Promise<ResolutionResult> {
   let confidence = 0;
   let reason = '';
   let suggestions: SuggestionType[] = [];
-  let status: ResolutionStatus = 'resolved';
+  let status: ResolutionStatus = 'completed'; // Default: analysis completed successfully
   let linkedSubject: { type: string; id: string; name?: string } | undefined;
   let bootstrapInfo: { queued: boolean; bootstrap?: { dedupKey: string; progress: number; step?: string; etaSeconds: number | null; status: string } } | undefined;
   
@@ -543,7 +543,7 @@ async function resolveTransaction(txHash: string): Promise<ResolutionResult> {
   let confidence: number;
   let reason: string;
   let suggestions: SuggestionType[] = [];
-  let status: ResolutionStatus = 'resolved';
+  let status: ResolutionStatus = 'completed'; // Default: analysis completed successfully
   
   if (signal) {
     confidence = 0.95;
