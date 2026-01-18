@@ -83,6 +83,8 @@ export async function sendTelegramMessage(
     disableNotification?: boolean;
   } = {}
 ): Promise<TelegramSendResult> {
+  console.log(`[TG] Attempting to send message to chatId: ${chatId}`);
+  
   if (!TELEGRAM_BOT_TOKEN) {
     console.error('[Telegram] Bot token not configured');
     return { ok: false, error: 'Bot token not configured' };
@@ -90,6 +92,8 @@ export async function sendTelegramMessage(
 
   try {
     const url = `${TELEGRAM_API_BASE}${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    
+    console.log(`[TG] Sending to ${url.replace(TELEGRAM_BOT_TOKEN, 'TOKEN')}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -103,6 +107,8 @@ export async function sendTelegramMessage(
     });
 
     const data = await response.json();
+    
+    console.log(`[TG] Response:`, data.ok ? 'SUCCESS' : `ERROR: ${data.description}`);
 
     if (data.ok) {
       // Update last message timestamp
