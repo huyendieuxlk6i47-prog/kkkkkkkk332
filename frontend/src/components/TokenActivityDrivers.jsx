@@ -319,7 +319,7 @@ export function TokenActivityDrivers({
     );
   }
   
-  // No data / Empty state
+  // No data / Empty state - explain WHAT was checked (volume distribution)
   if (!drivers || drivers.topDrivers?.length === 0) {
     return (
       <Card className={className}>
@@ -340,10 +340,22 @@ export function TokenActivityDrivers({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6 text-muted-foreground">
-            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No dominant wallets identified</p>
-            <p className="text-sm mt-1">Market may be moving as "crowd" without dominant actors</p>
+          <div className="text-center py-6">
+            <div className="p-3 bg-slate-100 rounded-xl inline-block mb-3">
+              <Users className="w-8 h-8 text-slate-400" />
+            </div>
+            <p className="font-medium text-slate-700 mb-2">No dominant wallets identified</p>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              We analyzed wallet activity and volume distribution. 
+              No single wallet or coordinated group exceeded influence thresholds.
+            </p>
+            <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+              <p className="text-xs text-slate-600">
+                <span className="font-medium">Interpretation:</span>{' '}
+                Market may be moving as "crowd" without dominant actors, 
+                or activity is evenly distributed across participants.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
