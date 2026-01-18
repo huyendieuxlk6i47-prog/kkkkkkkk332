@@ -358,7 +358,7 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
                 </div>
                 <p className="text-sm font-medium text-gray-700 mb-2">No recent activity</p>
                 <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                  This wallet hasn't had any recorded transactions in the analyzed period.
+                  This wallet has not had any recorded transactions in the analyzed period.
                 </p>
               </div>
             </div>

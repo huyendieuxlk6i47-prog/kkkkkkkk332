@@ -32,23 +32,20 @@ const getSeverityColor = (severity) => {
 };
 
 /**
- * Get signal icon
+ * Get signal icon based on type
  */
-const getSignalIcon = (type) => {
-  switch (type) {
-    case 'activity_spike': return Activity;
-    case 'large_move': return TrendingUp;
-    case 'accumulation': return TrendingUp;
-    case 'distribution': return TrendingDown;
-    default: return Zap;
-  }
+const SIGNAL_ICONS = {
+  activity_spike: Activity,
+  large_move: TrendingUp,
+  accumulation: TrendingUp,
+  distribution: TrendingDown,
 };
 
 /**
  * Single Signal Card
  */
 const SignalCard = ({ signal }) => {
-  const Icon = getSignalIcon(signal.type);
+  const Icon = SIGNAL_ICONS[signal.type] || Zap;
   const severityColor = getSeverityColor(signal.severity);
   
   return (
