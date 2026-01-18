@@ -64,6 +64,18 @@ export async function getKnownTokens(chain = 'ethereum') {
 }
 
 /**
+ * Get top active tokens by transfer count (Market Discovery)
+ * @param {number} limit - Number of tokens to return
+ * @param {string} window - Time window (1h, 6h, 24h)
+ */
+export async function getTopActiveTokens(limit = 10, window = '24h') {
+  const response = await api.get('/api/market/top-active-tokens', {
+    params: { limit, window }
+  });
+  return response.data;
+}
+
+/**
  * Get flow anomalies (z-score deviations) for market analysis
  * @param {string} asset - Asset address (default: ETH)
  * @param {string} chain - Chain (default: ethereum)
