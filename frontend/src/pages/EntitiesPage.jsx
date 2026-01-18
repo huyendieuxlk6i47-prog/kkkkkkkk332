@@ -265,11 +265,11 @@ function NoDataPlaceholder({ type, onSearch }) {
       <EmptyState
         type="no_data"
         title={`No ${type || 'entities'} found`}
-        description="The system hasn't indexed any entities matching your criteria yet. Try searching for a specific entity or check back later."
+        description="We don't have data on entities matching your criteria yet. Try searching for a specific entity or check back later."
         suggestions={[
           'Search by name or address',
           'Change the filter type',
-          'Wait for system indexing'
+          'Try a different search'
         ]}
         action={{
           label: 'Search Entity',
