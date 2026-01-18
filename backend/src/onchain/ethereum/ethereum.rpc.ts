@@ -1,6 +1,6 @@
 /**
- * Ethereum RPC Client
- * Communicates with Ethereum node via JSON-RPC (Infura)
+ * Ethereum RPC Client with Load Balancing
+ * Communicates with Ethereum node via JSON-RPC (Infura + Ankr)
  */
 
 export interface RpcError {
@@ -42,27 +42,76 @@ export interface GetLogsParams {
 }
 
 /**
- * Ethereum RPC Client Class
+ * Ethereum RPC Client Class with Load Balancing
  */
 export class EthereumRpc {
   private requestId = 0;
+  private urls: string[];
+  private currentIndex = 0;
+  private failureCounts: Map<string, number> = new Map();
 
-  constructor(private url: string) {
-    if (!url) {
+  constructor(primaryUrl: string, secondaryUrl?: string) {
+    if (!primaryUrl) {
       throw new Error('RPC URL is required');
     }
+    this.urls = [primaryUrl];
+    if (secondaryUrl) {
+      this.urls.push(secondaryUrl);
+    }
+    console.log(`[RPC] Initialized with ${this.urls.length} provider(s)`);
   }
 
   /**
-   * Make JSON-RPC call with retry logic
+   * Get next URL (round-robin with failure tracking)
+   */
+  private getNextUrl(): string {
+    // Skip URLs with too many failures
+    let attempts = 0;
+    while (attempts < this.urls.length) {
+      const url = this.urls[this.currentIndex];
+      const failures = this.failureCounts.get(url) || 0;
+      
+      this.currentIndex = (this.currentIndex + 1) % this.urls.length;
+      
+      // Allow URL if failures < 3 or all URLs have failures
+      if (failures < 3) {
+        return url;
+      }
+      attempts++;
+    }
+    
+    // Reset failure counts and return first URL
+    this.failureCounts.clear();
+    return this.urls[0];
+  }
+
+  /**
+   * Record failure for URL
+   */
+  private recordFailure(url: string): void {
+    const current = this.failureCounts.get(url) || 0;
+    this.failureCounts.set(url, current + 1);
+  }
+
+  /**
+   * Record success for URL (reset failures)
+   */
+  private recordSuccess(url: string): void {
+    this.failureCounts.set(url, 0);
+  }
+
+  /**
+   * Make JSON-RPC call with retry logic and load balancing
    */
   async call<T>(method: string, params: unknown[], retries = 3): Promise<T> {
     this.requestId++;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < retries; attempt++) {
+      const url = this.getNextUrl();
+      
       try {
-        const response = await fetch(this.url, {
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -77,25 +126,34 @@ export class EthereumRpc {
 
         // Handle rate limiting with exponential backoff
         if (response.status === 429) {
-          const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-          console.log(`[RPC] Rate limited, waiting ${waitTime}ms before retry...`);
+          this.recordFailure(url);
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(`[RPC] Rate limited on ${url.substring(0, 30)}..., waiting ${waitTime}ms`);
           await this.sleep(waitTime);
           continue;
         }
 
         if (!response.ok) {
+          this.recordFailure(url);
           throw new Error(`RPC HTTP error: ${response.status} ${response.statusText}`);
         }
 
         const json = (await response.json()) as RpcResponse<T>;
 
         if (json.error) {
+          // Check if it's a retriable error
+          if (json.error.code === -32602 || json.error.message.includes('max results')) {
+            throw new Error(`RPC error: ${json.error.message} (code: ${json.error.code})`);
+          }
+          this.recordFailure(url);
           throw new Error(`RPC error: ${json.error.message} (code: ${json.error.code})`);
         }
 
+        this.recordSuccess(url);
         return json.result as T;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
+        this.recordFailure(url);
         
         // Retry on network errors
         if (attempt < retries - 1) {
