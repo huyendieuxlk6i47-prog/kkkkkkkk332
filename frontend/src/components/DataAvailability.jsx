@@ -114,7 +114,8 @@ export default function DataAvailability({
   const totalCount = DATA_KEYS.length;
   const availabilityPct = Math.round((availableCount / totalCount) * 100);
 
-  // Auto-show indexing message if confidence < 0.4
+  // FIXED: Low confidence shows a different message, not "Indexing"
+  // Low confidence = "not enough activity yet", not "indexing in progress"
   const isLowConfidence = confidence !== null && confidence !== undefined && confidence < 0.4;
 
   if (compact) {
@@ -142,9 +143,8 @@ export default function DataAvailability({
           ))}
         </div>
         {isLowConfidence && (
-          <span className="flex items-center gap-1 text-xs text-blue-600">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Indexing
+          <span className="flex items-center gap-1 text-xs text-amber-600">
+            Limited activity
           </span>
         )}
       </div>
