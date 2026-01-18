@@ -375,8 +375,12 @@ export default function CreateAlertModal({
     setError(null);
 
     try {
-      // Map sensitivity to internal values
+      // A5.4: Map sensitivity to backend parameters
       const sensitivityConfig = SENSITIVITY_LEVELS.find(s => s.id === sensitivity);
+      
+      // Map sensitivity to minSeverity threshold
+      const minSeverityMap = { high: 30, medium: 50, low: 70 };
+      const throttleMap = { high: '1h', medium: '6h', low: '24h' };
       
       const payload = {
         scope: 'token',
@@ -385,17 +389,16 @@ export default function CreateAlertModal({
         trigger: {
           type: selectedInsight,
           sensitivity: sensitivity,
-          // Internal mapping (user never sees this)
-          percentile: sensitivityConfig?.percentile || 90,
           window: sensitivityConfig?.window || '6h',
         },
         channels: {
           inApp: uiEnabled,
           telegram: telegramEnabled && telegramConnected,
         },
-        minSeverity: sensitivityConfig?.percentile || 50,
+        minSeverity: minSeverityMap[sensitivity] || 50,
         minConfidence: 0.6,
-        throttle: sensitivityConfig?.window || '6h',
+        throttle: throttleMap[sensitivity] || '6h',
+        sensitivity: sensitivity,  // A5.4: Store sensitivity level
         name: `${tokenSymbol || tokenName || 'Token'} ${currentInsight.label}`,
         targetMeta: {
           symbol: tokenSymbol,
