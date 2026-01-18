@@ -21,10 +21,12 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 
-// Wallet signal types
+// Wallet signal types - IDs must match backend AlertTriggerType enum
+// Valid backend types: accumulation, distribution, large_move, smart_money_entry, 
+// smart_money_exit, net_flow_spike, activity_spike
 const WALLET_TRIGGERS = [
   { 
-    id: 'large_inflow', 
+    id: 'accumulation', 
     label: 'Large Inflow', 
     description: 'Wallet receives significant funds — may indicate preparation for activity',
     emoji: '📥',
@@ -33,7 +35,7 @@ const WALLET_TRIGGERS = [
     defaultDirection: 'in',
   },
   { 
-    id: 'large_outflow', 
+    id: 'distribution', 
     label: 'Large Outflow', 
     description: 'Wallet sends significant funds — may indicate profit-taking or distribution',
     emoji: '📤',
@@ -42,10 +44,10 @@ const WALLET_TRIGGERS = [
     defaultDirection: 'out',
   },
   { 
-    id: 'new_token_interaction', 
-    label: 'New Token Interaction', 
-    description: 'Wallet interacts with a new token — early positioning signal',
-    emoji: '🆕',
+    id: 'smart_money_entry', 
+    label: 'Smart Money Entry', 
+    description: 'Wallet shows behavior similar to profitable traders — early positioning signal',
+    emoji: '🐋',
     hasThreshold: false,
     hasWindow: true,
   },
@@ -58,11 +60,11 @@ const WALLET_TRIGGERS = [
     hasWindow: true,
   },
   { 
-    id: 'any_movement', 
-    label: 'Any Movement', 
-    description: 'Any transaction from this wallet — track all activity',
-    emoji: '👀',
-    hasThreshold: false,
+    id: 'large_move', 
+    label: 'Large Movement', 
+    description: 'Significant value transferred by this wallet — track major transactions',
+    emoji: '💰',
+    hasThreshold: true,
     hasWindow: false,
   },
 ];
