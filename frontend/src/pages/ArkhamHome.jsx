@@ -1,25 +1,22 @@
 /**
- * ArkhamHome - Market Overview (P0 Hardened Version)
+ * ArkhamHome - Market Overview (P2 Wiring - Connected to Watchlist & Alerts)
  * 
- * Principle: Each block is either:
- * - 🔵 Real Data (confirmed by backend)
- * - 🟡 Indexing / Not ready (honestly explained)
- * - ⚪ Disabled / Coming later (explicitly disabled)
+ * CONTRACT:
+ * - Market НЕ анализирует сам
+ * - Market показывает: Tracked tokens, Tracked wallets, Recent alert groups
+ * - Empty CTA: "Track a token or wallet to see market context"
  */
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, RefreshCw, Loader2, AlertCircle,
-  Activity, Info, ChevronDown, Search, Users
+  Activity, Info, ChevronDown, Search, Users, Bell,
+  Wallet, Coins, Star, ExternalLink, Plus, ArrowRight
 } from 'lucide-react';
 import Header from '../components/Header';
 import { PageHeader } from '../components/PageHeader';
 import StatusBanner from '../components/StatusBanner';
-import FlowAnomaliesChart from '../components/FlowAnomaliesChart';
-import SmartMoneySnapshot from '../components/SmartMoneySnapshot';
-import NarrativesSidebar from '../components/NarrativesSidebar';
-import QuickActions from '../components/QuickActions';
-import { marketApi, resolverApi } from '../api';
+import { watchlistApi, alertsApi } from '../api';
 import {
   Tooltip,
   TooltipContent,
