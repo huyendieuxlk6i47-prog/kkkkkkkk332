@@ -92,20 +92,32 @@ Type /help anytime for commands.`,
             { parseMode: 'HTML' }
           );
         }
-        // Handle /status
+        // P0 FIX: Handle /status with clear connection info
         else if (text === '/status') {
           const connection = await telegramService.TelegramConnectionModel.findOne({ chatId });
           
           if (connection?.isActive) {
             await telegramService.sendTelegramMessage(
               chatId,
-              `✅ <b>Connection Active</b>\n\nUser ID: ${connection.userId}\nConnected: ${connection.connectedAt.toLocaleDateString()}`,
+              `✅ <b>Connection Active</b>
+
+Connected: ${connection.connectedAt.toLocaleDateString()}
+You're receiving alerts when your monitored activity is detected.
+
+Manage alerts on the website.`,
               { parseMode: 'HTML' }
             );
           } else {
             await telegramService.sendTelegramMessage(
               chatId,
-              `❌ <b>Not Connected</b>\n\nUse /start with a connection link from BlockView to connect your account.`,
+              `❌ <b>Not Connected</b>
+
+To receive alerts, you need to connect your account:
+1. Go to crypto-insights-52.preview.emergentagent.com
+2. Click "Connect Telegram" 
+3. Use the provided link
+
+Or type /start for more info.`,
               { parseMode: 'HTML' }
             );
           }
