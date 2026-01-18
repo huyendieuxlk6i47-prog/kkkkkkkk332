@@ -18,6 +18,7 @@ import StatusBanner from '../components/StatusBanner';
 import DataAvailability, { ResolutionInfo, CONFIDENCE_THRESHOLDS } from '../components/DataAvailability';
 import CreateAlertModal from '../components/CreateAlertModal';
 import ActivitySnapshot from '../components/ActivitySnapshot';
+import ConfidenceTooltip, { ConfidenceIndicator } from '../components/ConfidenceTooltip';
 import {
   Tooltip,
   TooltipContent,
