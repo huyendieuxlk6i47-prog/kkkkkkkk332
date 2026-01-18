@@ -169,12 +169,15 @@ export default function ActivitySnapshot({
         const response = await getTokenActivity(address, timeWindow);
         
         // DEBUG: Log API response for contract verification
-        console.log('[TokenActivity API] Response for', address, ':', response?.data);
+        console.log('[TokenActivity API] Response for', address, ':', response);
         
+        // API returns { ok: true, data: {...} }
+        // market.api.js returns response.data, so we get { ok: true, data: {...} }
         if (response?.ok && response?.data) {
           setActivityData(response.data);
+          console.log('[TokenActivity API] Loaded activity:', response.data);
         } else {
-          console.warn('[TokenActivity API] Failed:', response?.error);
+          console.warn('[TokenActivity API] Failed:', response);
           setError('Failed to load activity');
         }
       } catch (err) {
