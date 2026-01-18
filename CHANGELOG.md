@@ -1,5 +1,66 @@
 # BlockView Changelog
 
+## [3.3.0] - 2026-01-18
+
+### ✅ P2: CoinGecko Price Oracle Integration
+
+**Goal**: Live prices for all tokens, not just stablecoins
+
+- **New Service**: `/app/backend/src/core/market/coingecko.service.ts`
+- **Supported Tokens**: WETH, WBTC, LINK, UNI, AAVE, SUSHI, MKR, COMP, YFI, CRV, BAL, 1INCH, SHIB, APE, LDO, rETH, cbETH, wstETH
+- **Stablecoins**: USDT, USDC, DAI, BUSD, TUSD, USDP, FEI, FRAX (fixed $1)
+- **Cache**: 5-minute TTL in-memory cache
+- **API Changes**:
+  - Added `flows.priceUsd` - live price
+  - Added `flows.priceSource` - `stablecoin` | `coingecko` | `coingecko_contract` | `unknown`
+  - Added `interpretation.priceNote` - explains price source
+
+**Live Verification**:
+| Token | Price | Source |
+|-------|-------|--------|
+| WETH | $3,351.82 | coingecko |
+| LINK | $13.83 | coingecko |
+| UNI | $5.37 | coingecko |
+| USDT | $1.00 | stablecoin |
+
+---
+
+### ✅ P2: Confidence Score Tooltip
+
+**Goal**: Users understand that Confidence = data completeness, not signal quality
+
+- **New Component**: `/app/frontend/src/components/ConfidenceTooltip.jsx`
+- **Features**:
+  - Confidence level badge (High/Medium/Low/Minimal)
+  - Percentage display
+  - "What Confidence Means" explanation
+  - Contributing factors (Transfer History, Time Coverage, Data Completeness, Price Availability)
+- **Integration**: Added to TokensPage header
+
+---
+
+### ✅ P3: Advanced Alert Parameters UI
+
+**Goal**: Power users can fine-tune alert triggers
+
+- **New Component**: `AdvancedAlertParameters` in CreateAlertModal
+- **Features**:
+  - Collapsible section (hidden by default)
+  - Time window selector (1h, 6h, 24h, 7d)
+  - Direction filter (Both, Inflow only, Outflow only)
+  - Minimum transfer size (USD)
+  - Notification cooldown (15m, 1h, 6h, 24h)
+- **UX**: Clearly marked as "optional" override, not replacement for Sensitivity
+
+---
+
+### 🧪 Testing
+
+- **Backend Tests**: 14/14 passed (100%)
+- **Test File**: `/app/tests/test_p2_coingecko_features.py`
+
+---
+
 ## [3.2.0] - 2026-01-18
 
 ### 🚀 Major Features: Live Blockchain Analytics Engine
