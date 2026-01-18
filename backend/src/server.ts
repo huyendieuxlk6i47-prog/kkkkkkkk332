@@ -6,6 +6,7 @@ import { scheduler, registerDefaultJobs } from './jobs/scheduler.js';
 import { runStartupChecks } from './core/system/startup.checks.js';
 import { startHealthMonitor, stopHealthMonitor } from './core/system/health.monitor.js';
 import * as bootstrapWorker from './core/bootstrap/bootstrap.worker.js';
+import { startTelegramPolling, stopTelegramPolling } from './telegram-polling.worker.js';
 
 async function main(): Promise<void> {
   console.log('[Server] Starting BlockView Backend...');
@@ -33,10 +34,19 @@ async function main(): Promise<void> {
   // B5: Start health monitor
   startHealthMonitor();
 
+  // TEMPORARY FIX: Start Telegram polling (until ingress routing is fixed)
+  console.log('[Server] Starting Telegram polling worker (TEMPORARY FIX)...');
+  startTelegramPolling().catch(err => {
+    console.error('[Server] Telegram polling error:', err);
+  });
+
   // Graceful shutdown
   const shutdown = async (signal: string) => {
     console.log(`[Server] Received ${signal}, shutting down...`);
 
+    // Stop Telegram polling
+    stopTelegramPolling();
+    
     // Stop monitoring first
     stopHealthMonitor();
     
