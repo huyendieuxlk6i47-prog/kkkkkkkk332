@@ -260,6 +260,8 @@ export default function ActivitySnapshot({
         <NetFlowCard 
           netFlow={netFlow}
           totalVolume={totalVolume}
+          inflowUsd={inflowUsd}
+          outflowUsd={outflowUsd}
           direction={flowDirection}
         />
         
@@ -279,12 +281,12 @@ export default function ActivitySnapshot({
           subValue="total transactions"
         />
         
-        {/* Largest Transfer */}
+        {/* Largest Transfer - Don't mask null with 0! */}
         <MetricCard
           icon={TrendingUp}
           label="Largest Transfer"
-          value={largestTransfer ? formatUSD(largestTransfer) : '—'}
-          subValue={largestTransfer ? 'single tx' : 'no large transfers'}
+          value={largestTransfer !== null ? formatUSD(largestTransfer) : '—'}
+          subValue={largestTransferTx ? `tx: ${largestTransferTx.slice(0, 10)}...` : 'no data'}
         />
         
         {/* Analyzed Window */}
