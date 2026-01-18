@@ -161,6 +161,34 @@ MarketPage = "Где прямо сейчас происходит что-то н
 | CTA to add items to watchlist | P2 | ✅ DONE |
 | 3-column responsive grid layout | P2 | ✅ DONE |
 
+### ✅ MarketPage Semantic Polish - COMPLETE (2026-01-18)
+**Goal**: Remove Watchlist duplication, improve copy, add "Why this matters"
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Remove "Tracked Tokens" from MarketPage | P2 | ✅ DONE |
+| Remove "Tracked Wallets" from MarketPage | P2 | ✅ DONE |
+| Rename cards to deviation/novelty language | P2 | ✅ DONE |
+| Add "Why this matters" to all cards | P2 | ✅ DONE |
+| CTA: View token/View wallet/Create alert only | P2 | ✅ DONE |
+
+### ✅ P3: Alert Feedback Loop (MVP) - COMPLETE (2026-01-18)
+**Goal**: Help users reduce alert fatigue with adaptive feedback
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Track recentTriggerTimestamps in AlertRule model | P3 | ✅ DONE |
+| API: GET /api/alerts/rules/:id/feedback | P3 | ✅ DONE |
+| API: POST /api/alerts/rules/:id/pause | P3 | ✅ DONE |
+| API: POST /api/alerts/rules/:id/reduce-sensitivity | P3 | ✅ DONE |
+| FeedbackHint component on AlertsPage | P3 | ✅ DONE |
+| Telegram advisory message after 3rd trigger | P3 | ✅ DONE |
+
+**Feedback Conditions:**
+- `triggersIn24h >= 3 AND minSeverity <= 75`
+- Not shown for high-severity (> 75) alerts
+- Reset after user adjusts settings
+
 ---
 
 ## 🗓 Roadmap
