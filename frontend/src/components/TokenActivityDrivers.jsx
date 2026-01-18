@@ -245,8 +245,10 @@ export function TokenActivityDrivers({
       // Request max 3 drivers (product rule)
       const response = await getTokenDrivers(tokenAddress, chain, 10);
       if (response.ok && response.data) {
-        // Transform API response to expected format
+        // Use new API structure with concentration metrics
         const apiData = response.data;
+        const concentration = apiData.concentration || {};
+        
         const transformed = {
           topDrivers: (apiData.topDrivers || []).slice(0, 3).map(d => ({
             walletAddress: d.wallet,
@@ -264,16 +266,21 @@ export function TokenActivityDrivers({
             volumeOutUsd: d.volumeOutUsd,
             netFlowUsd: d.netFlowUsd,
           })),
-          totalParticipants: apiData.topDrivers?.length || 0,
+          totalParticipants: concentration.totalWallets || apiData.topDrivers?.length || 0,
           hasConcentration: apiData.hasConcentration,
-          summary: {
-            headline: apiData.hasConcentration 
-              ? 'High concentration detected - top 3 wallets control majority of volume'
-              : 'Activity distributed across multiple participants',
-            description: apiData.totalVolumeUsd 
-              ? `Total 24h volume: $${Math.round(apiData.totalVolumeUsd).toLocaleString()}`
-              : null,
+          concentration: {
+            top1Share: concentration.top1Share,
+            top5Share: concentration.top5Share,
+            top10Share: concentration.top10Share,
+            interpretation: concentration.interpretation,
           },
+          summary: {
+            headline: concentration.headline || 'Activity analysis complete',
+            description: concentration.description || (apiData.totalVolumeUsd 
+              ? `Total 24h volume: $${Math.round(apiData.totalVolumeUsd).toLocaleString()}`
+              : null),
+          },
+          totalVolumeUsd: apiData.totalVolumeUsd,
         };
         setDrivers(transformed);
       } else if (response.ok === false) {
