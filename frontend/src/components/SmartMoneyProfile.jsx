@@ -207,7 +207,7 @@ export function SmartMoneyProfile({
     );
   }
   
-  // No data state
+  // No data state - CONTRACT: explain WHAT was checked
   if (!profile) {
     return (
       <Card className={className}>
@@ -217,23 +217,28 @@ export function SmartMoneyProfile({
               <BarChart3 className="w-4 h-4" />
               Historical Performance
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleRecalculate}
-              disabled={calculating}
-            >
-              <RefreshCw className={`w-4 h-4 mr-1 ${calculating ? 'animate-spin' : ''}`} />
-              Analyze
-            </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs bg-gray-100">Checked</Badge>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleRecalculate}
+                disabled={calculating}
+              >
+                <RefreshCw className={`w-4 h-4 ${calculating ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-muted-foreground">
-            <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm font-medium">Not enough data</p>
-            <p className="text-xs mt-1">
-              Requires activity history to analyze performance
+          <div className="text-center py-6 bg-slate-50 rounded-xl">
+            <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+              <BarChart3 className="w-6 h-6 text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 mb-2">Not enough data</p>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              This wallet does not have sufficient historical activity to evaluate performance.
+              This is not a failure — it's an honest assessment.
             </p>
           </div>
         </CardContent>
