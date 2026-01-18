@@ -2,9 +2,8 @@
  * DataAvailability Component (Phase 16 - Unified Contract)
  * Unified data availability indicator across all pages
  * 
- * CONFIDENCE THRESHOLDS (documented contract):
- * - UI_DISPLAY = 0.4 (show data in UI)
- * - ACTIONS_ENABLED = 0.6 (enable alerts, follow, copy actions)
+ * P1.1 FIX: Confidence thresholds removed from lifecycle decisions
+ * Confidence is now METADATA only, not lifecycle state
  */
 import { Info, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import {
@@ -14,12 +13,24 @@ import {
 } from "./ui/tooltip";
 
 /**
- * Confidence thresholds - documented contract for consistent behavior
- * @constant
+ * P1.1 FIX: Confidence thresholds DEPRECATED
+ * DO NOT USE for UI lifecycle decisions
+ * Use resolution.status instead
+ * 
+ * These can be used for:
+ * - Badges/indicators ("High confidence" / "Low confidence")
+ * - Tooltips showing data quality
+ * - Warning messages
+ * 
+ * NEVER use for:
+ * - Showing/hiding UI components
+ * - Determining if analysis is complete
+ * - Gating user actions
  */
 export const CONFIDENCE_THRESHOLDS = {
-  UI_DISPLAY: 0.4,      // Show data in UI
-  ACTIONS_ENABLED: 0.6, // Enable alerts, follow, copy actions
+  // DEPRECATED - DO NOT USE FOR LIFECYCLE
+  UI_DISPLAY: 0.4,      // For badges only
+  ACTIONS_ENABLED: 0.6, // For tooltips only
 };
 
 /**
