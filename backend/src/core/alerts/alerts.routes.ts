@@ -168,4 +168,96 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
       },
     };
   });
+  
+  // ========== FEEDBACK LOOP (P3) ==========
+  
+  /**
+   * GET /api/alerts/rules/:id/feedback
+   * Get feedback status for a rule
+   */
+  app.get('/rules/:id/feedback', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = getUserId(request);
+    const params = RuleIdParams.parse(request.params);
+    
+    const rule = await rulesRepo.getAlertRuleById(params.id);
+    
+    if (!rule || rule.userId !== userId) {
+      return reply.status(404).send({ ok: false, error: 'Rule not found' });
+    }
+    
+    // Calculate triggers in last 24h
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const triggersIn24h = (rule.recentTriggerTimestamps || [])
+      .filter((ts: Date) => new Date(ts) > twentyFourHoursAgo)
+      .length;
+    
+    // Determine if feedback should be shown
+    const showFeedback = triggersIn24h >= 3 && rule.minSeverity <= 75;
+    
+    return {
+      ok: true,
+      data: {
+        triggersIn24h,
+        totalTriggerCount: rule.triggerCount,
+        showFeedback,
+        feedbackSent: rule.feedbackStatus?.feedbackSent || false,
+        recommendation: showFeedback 
+          ? 'This alert has triggered frequently. Consider reducing sensitivity or pausing monitoring.'
+          : null,
+      },
+    };
+  });
+  
+  /**
+   * POST /api/alerts/rules/:id/pause
+   * Pause alert rule (from feedback action)
+   */
+  app.post('/rules/:id/pause', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = getUserId(request);
+    const params = RuleIdParams.parse(request.params);
+    
+    const rule = await service.updateAlertRule(params.id, userId, { status: 'paused' });
+    
+    if (!rule) {
+      return reply.status(404).send({ ok: false, error: 'Rule not found' });
+    }
+    
+    // Reset feedback status after user action
+    const { resetFeedbackStatus } = await import('./alert_rules.model.js');
+    await resetFeedbackStatus(params.id);
+    
+    return { ok: true, data: rule };
+  });
+  
+  /**
+   * POST /api/alerts/rules/:id/reduce-sensitivity
+   * Reduce sensitivity (increase minSeverity threshold)
+   */
+  app.post('/rules/:id/reduce-sensitivity', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = getUserId(request);
+    const params = RuleIdParams.parse(request.params);
+    
+    const existingRule = await rulesRepo.getAlertRuleById(params.id);
+    
+    if (!existingRule || existingRule.userId !== userId) {
+      return reply.status(404).send({ ok: false, error: 'Rule not found' });
+    }
+    
+    // Increase minSeverity by 15 (up to max 90)
+    const newSeverity = Math.min(existingRule.minSeverity + 15, 90);
+    
+    const rule = await service.updateAlertRule(params.id, userId, { 
+      minSeverity: newSeverity 
+    });
+    
+    // Reset feedback status after user action
+    const { resetFeedbackStatus } = await import('./alert_rules.model.js');
+    await resetFeedbackStatus(params.id);
+    
+    return { 
+      ok: true, 
+      data: rule,
+      message: `Sensitivity reduced. Now only alerts with severity >= ${newSeverity} will trigger.`,
+    };
+  });
 }
