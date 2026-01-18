@@ -540,8 +540,14 @@ export async function analyzeSmartMoney(
   // Sort by volume
   participants.sort((a, b) => b.volumeUsd - a.volumeUsd);
   
-  const totalVolumeUsd = price !== null ? (totalVolume / Math.pow(10, decimals)) * price : totalVolume;
-  const shareOfTotal = totalVolumeUsd > 0 ? totalSmartVolume / totalVolumeUsd : 0;
+  // FIX: totalVolume counts each transfer twice (once for sender, once for receiver)
+  // So we divide by 2 for accurate share calculation
+  const totalVolumeUsd = price !== null ? (totalVolume / Math.pow(10, decimals)) * price / 2 : totalVolume / 2;
+  
+  // Cap share at 100% - anything higher indicates overlap in our counting
+  const rawShare = totalVolumeUsd > 0 ? totalSmartVolume / totalVolumeUsd : 0;
+  const shareOfTotal = Math.min(rawShare, 1.0); // Never exceed 100%
+  const hasHighOverlap = rawShare > 1.0;
   
   // Generate interpretation
   let headline: string;
@@ -553,6 +559,9 @@ export async function analyzeSmartMoney(
   if (participants.length === 0) {
     headline = 'No high-volume wallet activity detected';
     description = `We analyzed ${allWallets.size.toLocaleString()} wallets. None exceeded the $1M volume threshold for "smart money" classification.`;
+  } else if (hasHighOverlap) {
+    headline = `High smart money overlap detected`;
+    description = `${participants.length} high-volume wallets show significant cross-activity. ${accumulators} accumulating, ${distributors} distributing.`;
   } else if (shareOfTotal > 0.2) {
     headline = `Strong smart money involvement — ${(shareOfTotal * 100).toFixed(0)}% of volume`;
     description = `${participants.length} high-volume wallets account for significant activity. ${accumulators} accumulating, ${distributors} distributing.`;
