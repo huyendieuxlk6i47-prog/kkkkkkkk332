@@ -174,29 +174,43 @@ Answer: "Who is this wallet?"
 
 ## 🗓 Roadmap
 
-### Phase B2 - Wallet → Token Correlation (Next)
+### Phase B2 - Wallet → Token Correlation ✅ SKELETON COMPLETE
 **Goal**: "This token moves because of WHO?"
 
-- [ ] Wallet influence scoring for tokens
-- [ ] Participation tracking (buyCount, sellCount, netVolume)
-- [ ] Timing analysis (before/after moves)
-- [ ] UI: "Who's behind the activity?" section
+- [x] Backend engine skeleton (wallet_token_correlation.engine.ts)
+- [x] API endpoint: GET /api/tokens/:address/drivers
+- [x] UI: TokenActivityDrivers component
+- [ ] Full algorithm implementation (placeholder)
 
-### Phase B3 - Wallet Clusters (Backlog)
+### Phase B3 - Wallet Clusters ✅ SKELETON COMPLETE
 **Goal**: "One actor = many addresses"
 
-- [ ] Behavioral clustering algorithm
-- [ ] Attribution confidence
-- [ ] Entity enrichment
-- [ ] Related wallets UI
+- [x] Backend schema and model (wallet_cluster.engine.ts)
+- [x] API endpoint: GET /api/wallets/:address/clusters
+- [x] UI: RelatedAddresses component
+- [ ] Full clustering algorithm (placeholder)
 
-### Phase B4 - Smart Money Patterns (Backlog)
+### Phase B4 - Smart Money Patterns ✅ SKELETON COMPLETE
 **Goal**: "Should I trust this wallet?"
 
-- [ ] Historical ROI tracking
-- [ ] Accuracy scoring
-- [ ] Pattern recognition
-- [ ] Smart money badge in UI
+- [x] Backend schema and model (smart_money_profile.engine.ts)
+- [x] API endpoint: GET /api/wallets/:address/smart-profile
+- [x] UI: SmartMoneyProfile component
+- [ ] Full pattern recognition algorithm (placeholder)
+
+### 🔧 Bug Fixes Completed (2026-01-18)
+
+**P0 - Wallet Watchlist + Alerts ✅ FIXED**
+- Fixed CreateWalletAlertModal.jsx to use correct backend trigger types
+- Valid triggers: accumulation, distribution, large_move, smart_money_entry, activity_spike
+- Integrated TrackWalletButton into WalletsPage.jsx
+- Wallet alerts can now be created from UI
+
+**P1 - Legacy Indexing Logic Cleanup ✅ FIXED**
+- Removed "confidence < 0.4 = indexing" logic
+- Low confidence now shows "Limited activity" message (not "Indexing")
+- Backend status is now the single source of truth
+- Fixed in: DataAvailability.jsx, ActorProfile.jsx
 
 ### P2 - Future Enhancements
 
