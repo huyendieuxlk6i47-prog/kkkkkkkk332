@@ -86,16 +86,10 @@ export default function TokenClusters({ tokenAddress, className = '' }) {
         </div>
       </div>
     );
-  } 
-            No coordinated activity patterns were identified.
-          </p>
-        </div>
-      </div>
-    );
   }
 
-  // Show clusters (max 3)
-  const displayClusters = clusters.slice(0, 3);
+  // Show clusters (max 3) - use interpretation headline
+  const displayClusters = clusterList.slice(0, 3);
 
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
@@ -104,15 +98,20 @@ export default function TokenClusters({ tokenAddress, className = '' }) {
         <div className="flex items-center gap-2">
           <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Live</span>
           <span className="text-xs text-gray-500">
-            {displayClusters.length} cluster{displayClusters.length > 1 ? 's' : ''}
+            {displayClusters.length} cluster{displayClusters.length !== 1 ? 's' : ''}
           </span>
         </div>
+      </div>
+      
+      {/* Interpretation headline */}
+      <div className="mb-3 p-2 bg-blue-50 rounded-lg">
+        <p className="text-xs font-medium text-blue-800">{interpretation.headline}</p>
       </div>
       
       <div className="space-y-2">
         {displayClusters.map((cluster, index) => (
           <div
-            key={cluster.clusterId || index}
+            key={cluster.id || index}
             className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center justify-between">
@@ -120,15 +119,15 @@ export default function TokenClusters({ tokenAddress, className = '' }) {
                 <div className="flex items-center gap-2 mb-1">
                   <Users className="w-4 h-4 text-blue-600" />
                   <span className="text-sm font-medium text-gray-900">
-                    {cluster.clusterId || `Cluster ${index + 1}`}
+                    {cluster.id || `Cluster ${index + 1}`}
                   </span>
                   <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                    {cluster.walletCount || 0} wallets
+                    {cluster.wallets?.length || 0} wallets
                   </span>
                 </div>
-                {cluster.behavior && (
+                {cluster.pattern && (
                   <p className="text-xs text-gray-600 ml-6">
-                    {cluster.behavior}
+                    Pattern: {cluster.pattern.replace(/_/g, ' ')}
                   </p>
                 )}
                 {cluster.confidence && (
