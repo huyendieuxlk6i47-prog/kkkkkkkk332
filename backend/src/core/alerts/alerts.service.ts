@@ -263,7 +263,7 @@ export async function dispatchAlertForSignal(
           signalType: signal.type,
           confidence: signal.confidence,
           severity: signal.severity,
-        });
+        }, rule._id.toString());
         
       } catch (err) {
         // Ignore duplicate errors
