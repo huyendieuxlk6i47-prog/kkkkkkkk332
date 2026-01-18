@@ -96,6 +96,12 @@ Answer the question: "Should I follow this wallet?"
 - **Alert lifecycle**: Pause, Resume, Delete via UI
 - **Watchlist integration**: Alerts auto-create watchlist items
 
+### 🎨 User Experience
+- **Human-friendly language**: "Analyzing wallet" instead of "Indexing"
+- **Clear status indicators**: Confidence levels, data availability
+- **Intelligent empty states**: Helpful suggestions when no data
+- **Progressive disclosure**: Show what's available, explain what's coming
+
 ### 📊 Market Intelligence
 - Real-time flow anomaly detection (z-score based)
 - Asset-specific metrics (ETH primary, others indexing)
