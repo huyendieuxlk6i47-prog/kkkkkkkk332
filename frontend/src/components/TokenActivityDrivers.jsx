@@ -243,19 +243,46 @@ export function TokenActivityDrivers({
     
     try {
       // Request max 3 drivers (product rule)
-      const response = await getTokenDrivers(tokenAddress, chain, 3);
-      if (response.ok) {
-        // data can be null (no activity data) - this is valid, not an error
-        setDrivers(response.data);
+      const response = await getTokenDrivers(tokenAddress, chain, 10);
+      if (response.ok && response.data) {
+        // Transform API response to expected format
+        const apiData = response.data;
+        const transformed = {
+          topDrivers: (apiData.topDrivers || []).slice(0, 3).map(d => ({
+            walletAddress: d.wallet,
+            role: d.role === 'accumulator' ? 'buyer' : d.role === 'distributor' ? 'seller' : 'mixed',
+            roleContext: 'net_flow',
+            influenceScore: d.influence / 100,
+            volumeShare: d.influence / 100,
+            confidence: 0.8,
+            scoreComponents: {
+              volumeShare: d.influence / 100,
+              activityFrequency: 0.5,
+              timingWeight: 0.5,
+            },
+            volumeInUsd: d.volumeInUsd,
+            volumeOutUsd: d.volumeOutUsd,
+            netFlowUsd: d.netFlowUsd,
+          })),
+          totalParticipants: apiData.topDrivers?.length || 0,
+          hasConcentration: apiData.hasConcentration,
+          summary: {
+            headline: apiData.hasConcentration 
+              ? 'High concentration detected - top 3 wallets control majority of volume'
+              : 'Activity distributed across multiple participants',
+            description: apiData.totalVolumeUsd 
+              ? `Total 24h volume: $${Math.round(apiData.totalVolumeUsd).toLocaleString()}`
+              : null,
+          },
+        };
+        setDrivers(transformed);
       } else if (response.ok === false) {
         setError(response.error || 'Failed to load drivers');
       } else {
-        // Unexpected response format
         setDrivers(null);
       }
     } catch (err) {
       console.error('Error fetching drivers:', err);
-      // Network or parsing error
       setError('Unable to connect to activity service');
     } finally {
       setLoading(false);
