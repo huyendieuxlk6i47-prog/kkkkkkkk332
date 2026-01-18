@@ -683,7 +683,7 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
                   )}
                 </>
               ) : (
-                <span className="text-gray-500">Price data indexing...</span>
+                <span className="text-gray-500">Loading price data...</span>
               )}
             </div>
           </div>
