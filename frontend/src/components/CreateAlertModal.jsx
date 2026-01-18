@@ -76,27 +76,31 @@ const ALERT_INSIGHTS = [
 ];
 
 // Sensitivity levels - PRODUCT LANGUAGE (user chooses importance, not math)
+// A5.4: Sensitivity = frequency expectation, NOT strength
 const SENSITIVITY_LEVELS = [
   { 
-    id: 'low', 
-    label: 'Low',
-    description: 'Only major activity',
-    percentile: 95,
-    window: '24h',
+    id: 'high', 
+    label: 'High',
+    description: 'Get notified about any unusual activity',
+    frequency: 'May trigger multiple times per day',
+    window: '1h',
+    color: 'purple',
   },
   { 
     id: 'medium', 
     label: 'Medium',
-    description: 'Notable activity',
-    percentile: 90,
+    description: 'Get notified about notable activity only',
+    frequency: 'A few times per week',
     window: '6h',
+    color: 'blue',
   },
   { 
-    id: 'high', 
-    label: 'High',
-    description: 'Any relevant activity',
-    percentile: 80,
-    window: '1h',
+    id: 'low', 
+    label: 'Low',
+    description: 'Get notified about major movements only',
+    frequency: 'Rarely, only significant events',
+    window: '24h',
+    color: 'green',
   },
 ];
 
