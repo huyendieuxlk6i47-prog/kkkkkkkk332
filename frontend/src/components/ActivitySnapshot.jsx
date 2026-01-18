@@ -191,14 +191,26 @@ export default function ActivitySnapshot({
   const activity = activityData?.activity || {};
   const flows = activityData?.flows || {};
   const interpretation = activityData?.interpretation || {};
-  const interpretation = activityData?.interpretation || {};
   
   const transfers24h = activity.transfers24h ?? 0;
   const activeWallets = activity.activeWallets ?? 0;
   const largestTransfer = activity.largestTransfer ?? null;
+  const largestTransferTx = activity.largestTransferTx ?? null;
   const netFlow = flows.netFlow ?? 0;
   const totalVolume = flows.totalVolume ?? 0;
+  const inflowUsd = flows.inflowUsd ?? 0;
+  const outflowUsd = flows.outflowUsd ?? 0;
   const flowDirection = flows.direction ?? 'neutral';
+  
+  // DEBUG: Log what we're rendering
+  console.log('[ActivitySnapshot] Rendering:', { 
+    transfers24h, 
+    activeWallets, 
+    largestTransfer, 
+    netFlow,
+    flowDirection,
+    dataSource: activityData?.dataSource 
+  });
   
   // Determine if we have ANY activity
   const hasAnyActivity = transfers24h > 0 || activeWallets > 0 || netFlow !== 0;
