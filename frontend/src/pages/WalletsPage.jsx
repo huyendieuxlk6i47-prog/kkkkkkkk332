@@ -335,19 +335,9 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
             />
           )}
 
-          {/* Low confidence info - human language, not "indexing" */}
-          {resolvedData?.confidence < 0.4 && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-              <div className="flex items-center gap-2 text-amber-700 font-medium text-sm mb-1">
-                <AlertCircle className="w-4 h-4" />
-                Not enough activity yet
-              </div>
-              <p className="text-xs text-amber-600">
-                This wallet doesn't have enough on-chain history to provide confident analysis.
-                Data shown may be incomplete.
-              </p>
-            </div>
-          )}
+          {/* P0 FIX: REMOVED - confidence is NOT lifecycle status
+          Low confidence is shown via ResolutionInfo and empty states, not as warning banner
+          */}
 
           {/* Resolution Info */}
           <ResolutionInfo
