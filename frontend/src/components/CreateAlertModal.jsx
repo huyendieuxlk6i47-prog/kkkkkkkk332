@@ -560,24 +560,27 @@ export default function CreateAlertModal({
                         data-testid={`sensitivity-${level.id}`}
                         className={`p-3 rounded-xl border text-center transition-all ${
                           sensitivity === level.id
-                            ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-500'
+                            ? `border-${level.color}-500 bg-${level.color}-50 ring-1 ring-${level.color}-500`
                             : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                       >
                         <div className={`text-sm font-semibold mb-0.5 ${
-                          sensitivity === level.id ? 'text-purple-700' : 'text-gray-900'
+                          sensitivity === level.id ? `text-${level.color}-700` : 'text-gray-900'
                         }`}>
                           {level.label}
                         </div>
-                        <div className="text-xs text-gray-500">{level.description}</div>
+                        <div className="text-xs text-gray-500 leading-relaxed">{level.description}</div>
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400 mt-2 text-center">
-                    {currentSensitivity.id === 'low' && 'You\'ll only be notified for significant activity'}
-                    {currentSensitivity.id === 'medium' && 'Balanced notifications for notable patterns'}
-                    {currentSensitivity.id === 'high' && 'Get notified early, even for smaller patterns'}
-                  </p>
+                  
+                  {/* A5.4: Expected frequency indicator */}
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs text-gray-600">
+                      <strong>Expected frequency:</strong> {currentSensitivity.frequency}
+                    </span>
+                  </div>
                 </div>
 
                 {/* SECTION 3: Notification Channels */}
