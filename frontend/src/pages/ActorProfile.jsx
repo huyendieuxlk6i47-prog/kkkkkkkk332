@@ -159,20 +159,20 @@ function RealActorStats({ reputation, actorData }) {
   );
 }
 
-// Indexing State Component
+// Analysis State Component
 function IndexingState({ resolvedData, onSetAlert }) {
   return (
     <div className="space-y-6">
-      {/* Indexing Banner */}
+      {/* Analysis Banner */}
       <div className="p-6 bg-blue-50 border border-blue-200 rounded-2xl">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-blue-100 rounded-xl">
             <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 mb-2">Indexing in progress</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">Analyzing on-chain behavior</h3>
             <p className="text-sm text-blue-700 mb-4">
-              We are actively collecting data for this actor. Analytics will appear once we have sufficient on-chain activity indexed.
+              We're gathering data for this actor. Analytics will appear once we have enough activity.
             </p>
             <div className="flex items-center gap-3">
               <button
