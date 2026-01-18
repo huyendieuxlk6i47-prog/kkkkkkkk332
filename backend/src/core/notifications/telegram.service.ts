@@ -162,7 +162,13 @@ ${escapeHtml(alert.message)}
 }
 
 /**
- * Format token alert for Telegram
+ * Format token alert for Telegram (A3 Contract)
+ * 
+ * CONTRACT: Each notification contains:
+ * 1. Insight - What happened
+ * 2. Evidence - Supporting data  
+ * 3. Implication - Why it matters
+ * 4. Next Action - What to do
  */
 export function formatTokenAlertMessage(alert: {
   tokenSymbol?: string;
@@ -170,23 +176,102 @@ export function formatTokenAlertMessage(alert: {
   signalType: string;
   confidence: number;
   message: string;
+  amount?: number;
+  timeframe?: string;
+  targetUrl?: string;
 }): string {
-  const emoji = getTokenSignalEmoji(alert.signalType);
-  const confidencePct = Math.round(alert.confidence * 100);
-  const symbol = alert.tokenSymbol || 'Unknown';
-  
+  const signalConfig = getSignalConfig(alert.signalType);
+  const symbol = escapeHtml(alert.tokenSymbol || 'Token');
   const addressDisplay = `${alert.tokenAddress.slice(0, 10)}...${alert.tokenAddress.slice(-6)}`;
+  const baseUrl = alert.targetUrl || `https://blockview.app/tokens/${alert.tokenAddress}`;
   
-  return `${emoji} <b>Token Alert: ${escapeHtml(symbol)}</b>
+  // Format amount if present
+  const amountStr = alert.amount 
+    ? formatAmount(alert.amount) 
+    : '';
+  
+  const timeframeStr = alert.timeframe || 'recently';
 
-${escapeHtml(alert.message)}
+  // A3 CONTRACT: Insight + Evidence + Implication + Next Action
+  return `🔔 <b>${signalConfig.title} — ${symbol}</b>
 
-📊 <b>Details:</b>
-• Signal: ${formatSignalType(alert.signalType)}
-• Confidence: ${confidencePct}%
-• Address: <code>${addressDisplay}</code>
+${signalConfig.insight}${amountStr ? ` ${amountStr}` : ''} ${timeframeStr}.
 
-<a href="https://blockview.app/tokens/${alert.tokenAddress}">View Token →</a>`;
+${signalConfig.implication}
+
+<i>Last observed: just now</i>
+
+👉 <a href="${baseUrl}">View details</a>
+👉 <a href="${baseUrl}?action=pause">Pause monitoring</a>`;
+}
+
+/**
+ * Get signal configuration with product-friendly copy
+ */
+function getSignalConfig(signalType: string): {
+  title: string;
+  insight: string;
+  implication: string;
+} {
+  const configs: Record<string, { title: string; insight: string; implication: string }> = {
+    'accumulation': {
+      title: 'Consistent Buying Observed',
+      insight: 'Large wallets accumulated funds',
+      implication: 'This behavior often signals long-term positioning.',
+    },
+    'distribution': {
+      title: 'Increasing Selling Observed',
+      insight: 'Holders distributed tokens',
+      implication: 'This pattern may indicate profit-taking or risk reduction.',
+    },
+    'large_move': {
+      title: 'Unusual Large Transfer Detected',
+      insight: 'A significant transfer was detected',
+      implication: 'This may indicate whale movement or institutional activity.',
+    },
+    'smart_money_entry': {
+      title: 'Smart Money Entry Detected',
+      insight: 'Historically profitable wallets started accumulating',
+      implication: 'This is often an early positioning signal.',
+    },
+    'smart_money_exit': {
+      title: 'Smart Money Exit Detected',
+      insight: 'Historically profitable wallets are reducing positions',
+      implication: 'This may indicate profit-taking or risk assessment.',
+    },
+    'activity_spike': {
+      title: 'Activity Spike Detected',
+      insight: 'Unusual surge in activity detected',
+      implication: 'This often precedes significant price movement.',
+    },
+    'net_flow_spike': {
+      title: 'Flow Spike Detected',
+      insight: 'Unusual flow pattern detected',
+      implication: 'This may signal changing market dynamics.',
+    },
+  };
+  
+  return configs[signalType] || {
+    title: 'Activity Detected',
+    insight: 'Notable activity was observed',
+    implication: 'Monitor for further developments.',
+  };
+}
+
+/**
+ * Format amount for display
+ */
+function formatAmount(amount: number): string {
+  if (amount >= 1_000_000_000) {
+    return `$${(amount / 1_000_000_000).toFixed(2)}B`;
+  }
+  if (amount >= 1_000_000) {
+    return `$${(amount / 1_000_000).toFixed(2)}M`;
+  }
+  if (amount >= 1_000) {
+    return `$${(amount / 1_000).toFixed(1)}K`;
+  }
+  return `$${amount.toLocaleString()}`;
 }
 
 /**
