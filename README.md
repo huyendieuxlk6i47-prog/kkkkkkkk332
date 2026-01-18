@@ -531,20 +531,28 @@ curl -X GET "https://api.blockview.com/api/alerts/rules" \
   - Activity & flow metrics
   - Confidence scoring
   - Human-readable summaries
+- **Phase B2-B4: Architecture** - Backend schemas, APIs, UI components (skeleton)
+  - B2: Wallet → Token Correlation engine & API
+  - B3: Wallet Clusters engine & API
+  - B4: Smart Money Patterns engine & API
+- **UX Polish** - Human-friendly language throughout UI
+  - Replaced "Indexing" → "Analyzing" terminology
+  - Improved empty states and loading messages
+  - Clear confidence indicators
+  - Better error and status communication
 
 ### 🔜 In Progress
 
-- **Phase B2: Wallet → Token Correlation**
-  - "This token is moving because of WHO?"
-  - Wallet influence scoring
-  - Participation tracking
+- **Phase B2-B4: Full Implementation**
+  - Complete correlation algorithms
+  - Cluster detection logic
+  - Smart money scoring
 
 ### 📋 Backlog
 
 | Feature | Phase | Priority | Description |
 |---------|-------|----------|-------------|
-| B3 - Wallet Clusters | B | P2 | Group related addresses ("one actor = many addresses") |
-| B4 - Smart Money Patterns | B | P2 | Historically profitable wallet detection |
+| B2-B4 Algorithms | B | P1 | Full implementation of wallet correlation, clustering, smart money |
 | Multi-chain | - | P2 | Arbitrum, BNB Chain support |
 | Token Tabs | - | P2 | Overview, Flows, Holders views |
 | Signal Explanations | - | P2 | "Why was this detected?" |
