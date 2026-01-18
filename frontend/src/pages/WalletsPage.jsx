@@ -579,47 +579,20 @@ export default function WalletsPage() {
           {/* Resolved Content */}
           {resolvedData && !loading && (
             <>
-              {/* ACTUALLY indexing (not just low confidence) */}
-              {isActuallyIndexing && (
+              {/* P0 FIX: Analyzing state - show progress */}
+              {isActuallyAnalyzing && (
                 <WalletIndexingState 
                   resolvedData={resolvedData}
                   onSetAlert={() => setShowAlertModal(true)}
                   onIndexingComplete={() => {
-                    // Auto-refresh resolver when indexing completes
+                    // Auto-refresh resolver when analysis completes
                     resolveWallet(searchQuery);
                   }}
                 />
               )}
 
-              {/* RESOLVED - show data even with low confidence */}
-              {isResolved && (
-                <WalletResolvedView 
-                  resolvedData={resolvedData}
-                  walletData={walletData}
-                  walletProfile={walletProfile}
-                  onCreateAlert={() => setShowAlertModal(true)}
-                />
-              )}
-
-              {/* EMPTY - no data found */}
-              {isEmpty && (
-                <EmptyState
-                  type="search"
-                  title="No data found"
-                  description="This address doesn't have enough on-chain activity to analyze."
-                  action={{
-                    label: 'Try Another',
-                    onClick: () => {
-                      setSearchQuery('');
-                      setResolvedData(null);
-                    },
-                    icon: Search,
-                  }}
-                />
-              )}
-
-              {/* Unknown state - fallback to showing data */}
-              {!isActuallyIndexing && !isResolved && !isEmpty && (
+              {/* P0 FIX: Analysis complete - show results (even if sparse/empty) */}
+              {isAnalysisComplete && (
                 <WalletResolvedView 
                   resolvedData={resolvedData}
                   walletData={walletData}
