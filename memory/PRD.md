@@ -241,6 +241,27 @@ TokensPage UI contract implementation - "ничего нет" → "мы пров
 - Removed all confidence-based UI gating
 - Added interpretation footers to all blocks
 
+**P2.2 - WalletsPage Interpretation Layer ✅ COMPLETE (2026-01-18)**
+WalletsPage UI contract implementation - same principle as TokensPage
+
+| Section | Component | Status |
+|---------|-----------|--------|
+| Section 1 | Wallet Header (B1) | ✅ Type badge (Unknown/EOA/Contract), Chain badge, Resolved badge, Tags |
+| Section 2 | Wallet Activity Snapshot | ✅ NEW - Inflow, Outflow, Net Flow, Transfers, Active Tokens, Window + interpretation |
+| Section 3 | Behavior Summary (B1) | ✅ Pattern label + "Checked" badge + explanation |
+| Section 4 | Related Addresses (B3) | ✅ "Checked" badge + timing/token/behavioral correlation explanation |
+| Section 5 | Historical Performance (B4) | ✅ "Checked" badge + "honest assessment" explanation |
+| Section 6 | Recent Signals | ✅ "Checked" badge + accumulation/distribution/transfers explanation |
+| Section 7 | Resolution Status | ✅ Removed misleading "indexing" and confidence-based messaging |
+
+**Key Changes:**
+- Created WalletActivitySnapshot.jsx component with 6-metric grid
+- Updated RelatedAddresses.jsx with proper "Checked" badge and analysis explanation
+- Updated SmartMoneyProfile.jsx with "honest assessment" messaging
+- All blocks show "Checked" badge when analysis complete
+- Empty states explain WHAT was checked using timing correlation, token overlap, behavioral similarity
+- Resolution Status shows only factual info: Type, Chain, Status
+
 ### P2 - Future Enhancements
 
 | Feature | Description | Priority |
