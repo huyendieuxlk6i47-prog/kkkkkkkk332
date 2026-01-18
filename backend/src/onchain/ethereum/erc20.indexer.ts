@@ -38,7 +38,12 @@ function parseTransferLog(log: EthLog): {
   from: string;
   to: string;
   amount: string;
-} {
+} | null {
+  // Validate log has required topics for ERC20 Transfer
+  if (!log.topics || log.topics.length < 3) {
+    return null;
+  }
+
   // Topic[0] = Transfer signature
   // Topic[1] = from address (padded to 32 bytes)
   // Topic[2] = to address (padded to 32 bytes)
