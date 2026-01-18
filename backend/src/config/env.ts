@@ -50,6 +50,7 @@ export const env: Env = EnvSchema.parse({
   WS_ENABLED: process.env.WS_ENABLED,
   CORS_ORIGINS: process.env.CORS_ORIGINS,
   INFURA_RPC_URL: process.env.INFURA_RPC_URL,
+  ANKR_RPC_URL: process.env.ANKR_RPC_URL,
   ARBITRUM_RPC_URL: process.env.ARBITRUM_RPC_URL,
   INDEXER_ENABLED: process.env.INDEXER_ENABLED,
   INDEXER_INTERVAL_MS: process.env.INDEXER_INTERVAL_MS,
