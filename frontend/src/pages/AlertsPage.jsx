@@ -25,63 +25,53 @@ import {
 import UnifiedCard, { StatusBadge, CardIcon } from '../components/UnifiedCard';
 import ContextPath from '../components/ContextPath';
 
-// Signal type emojis and product copy
+// Signal type with PRODUCT LANGUAGE
 const SIGNAL_TYPES = {
   'accumulation': {
     emoji: '📥',
-    label: 'Consistent buying',
+    label: 'Consistent Buying',
+    insight: 'Large wallets are accumulating',
     description: 'Large wallets are accumulating this token'
   },
   'distribution': {
     emoji: '📤',
-    label: 'Increasing selling',
+    label: 'Increasing Selling',
+    insight: 'Holders are distributing',
     description: 'Holders are distributing to the market'
   },
   'large_move': {
     emoji: '💰',
-    label: 'Large movement',
+    label: 'Large Movement',
+    insight: 'Significant transfer detected',
     description: 'Significant token movement detected'
   },
   'smart_money_entry': {
     emoji: '🐋',
-    label: 'Notable wallet activity',
+    label: 'Smart Money Entry',
+    insight: 'Profitable wallets entering',
     description: 'Historically profitable wallets entering'
   },
   'smart_money_exit': {
     emoji: '🏃',
-    label: 'Notable wallet activity',
+    label: 'Smart Money Exit',
+    insight: 'Profitable wallets exiting',
     description: 'Historically profitable wallets exiting'
-  },
-  'net_flow_spike': {
-    emoji: '📊',
-    label: 'Flow spike',
-    description: 'Unusual flow activity'
   },
   'activity_spike': {
     emoji: '⚡',
-    label: 'Activity spike',
+    label: 'Activity Spike',
+    insight: 'Unusual activity surge',
     description: 'Sudden increase in activity'
   },
-  'strategy_detected': {
-    emoji: '🎯',
-    label: 'Strategy detected',
-    description: 'Coordinated behavior pattern'
-  },
-  'strategy_confirmed': {
-    emoji: '✅',
-    label: 'Strategy confirmed',
-    description: 'Pattern confirmed by multiple signals'
-  },
-  'strategy_shift': {
-    emoji: '🔄',
-    label: 'Strategy shift',
-    description: 'Change in behavior pattern'
-  },
-  'strategy_risk_spike': {
-    emoji: '⚠️',
-    label: 'Risk spike',
-    description: 'Elevated risk indicators'
-  },
+};
+
+// Lifecycle states with UX LANGUAGE (not technical)
+const LIFECYCLE_STATES = {
+  active: { label: 'Monitoring', color: 'bg-emerald-100 text-emerald-700' },
+  triggered: { label: 'Observed', color: 'bg-blue-100 text-blue-700' },
+  repeating: { label: 'Ongoing', color: 'bg-purple-100 text-purple-700' },
+  paused: { label: 'Paused', color: 'bg-gray-100 text-gray-500' },
+  resolved: { label: 'Inactive', color: 'bg-gray-100 text-gray-400' },
 };
 
 // Legacy emoji map for compatibility
