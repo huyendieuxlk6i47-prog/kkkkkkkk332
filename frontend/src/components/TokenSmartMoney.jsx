@@ -101,6 +101,9 @@ export default function TokenSmartMoney({ tokenAddress, className = '' }) {
   
   // Format recent activity summary
   const recentActivity = interpretation.description || null;
+  
+  // Alias for consistent naming
+  const wallets = participants;
 
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
