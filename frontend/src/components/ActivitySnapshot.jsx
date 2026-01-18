@@ -166,13 +166,17 @@ export default function ActivitySnapshot({
         const address = tokenAddress || resolvedData?.normalizedId;
         const response = await getTokenActivity(address, timeWindow);
         
+        // DEBUG: Log API response for contract verification
+        console.log('[TokenActivity API] Response for', address, ':', response?.data);
+        
         if (response?.ok && response?.data) {
           setActivityData(response.data);
         } else {
+          console.warn('[TokenActivity API] Failed:', response?.error);
           setError('Failed to load activity');
         }
       } catch (err) {
-        console.error('Failed to load token activity:', err);
+        console.error('[TokenActivity API] Exception:', err);
         setError('Failed to load');
       } finally {
         setLoading(false);
@@ -182,9 +186,11 @@ export default function ActivitySnapshot({
     loadActivity();
   }, [tokenAddress, resolvedData?.normalizedId, timeWindow]);
   
-  // Extract metrics from loaded data or fallback to marketContext
-  const activity = activityData?.activity || marketContext?.activity || {};
-  const flows = activityData?.flows || marketContext?.flows || {};
+  // CONTRACT: Use ONLY API data. No fallback to marketContext (causes stale data bugs)
+  // If activityData is null, show loading or error state - don't mask with stale data
+  const activity = activityData?.activity || {};
+  const flows = activityData?.flows || {};
+  const interpretation = activityData?.interpretation || {};
   const interpretation = activityData?.interpretation || {};
   
   const transfers24h = activity.transfers24h ?? 0;
