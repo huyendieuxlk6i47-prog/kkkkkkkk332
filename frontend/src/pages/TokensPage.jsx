@@ -382,28 +382,29 @@ function TokenActivityBlock({ resolvedData, marketContext }) {
 }
 
 // ============================================================================
-// P2: Token Signals Block (improved empty state)
+// P2: Token Signals Block (Section 5 - Recent Signals)
+// CONTRACT: Empty state объясняет что это РЕЗУЛЬТАТ анализа, не отсутствие анализа
 // ============================================================================
 function TokenSignalsBlock({ signals }) {
   const hasSignals = signals && signals.length > 0;
 
-  // P1.1 FIX: No more confidence-based messaging
-  // Empty state is ALWAYS valid - explain behavior patterns
+  // CONTRACT: Empty state is VALID analysis result
   if (!hasSignals) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
+          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
         </div>
         <div className="text-center py-6 bg-gray-50 rounded-xl">
           <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
             <Zap className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-2">No signals detected</p>
-          <p className="text-xs text-gray-500 max-w-xs mx-auto">
-            No abnormal trading activity detected in recent history. Signals appear when smart money shows significant patterns.
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            No abnormal accumulation, distribution, or large movements were identified.
           </p>
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-400">
+          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap text-xs text-gray-400">
             <span>Signals track:</span>
             <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Accumulation</span>
             <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded">Distribution</span>
