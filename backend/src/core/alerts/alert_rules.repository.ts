@@ -46,6 +46,7 @@ export interface UpdateAlertRuleInput {
   status?: 'active' | 'paused';
   active?: boolean;
   name?: string;
+  sensitivity?: 'low' | 'medium' | 'high';
 }
 
 /**
