@@ -90,7 +90,7 @@ const MetricCard = ({ icon: Icon, label, value, subValue, iconColor = 'text-gray
 /**
  * Net Flow Card with directional indicator
  */
-const NetFlowCard = ({ netFlow, totalVolume, direction }) => {
+const NetFlowCard = ({ netFlow, totalVolume, inflowUsd, outflowUsd, direction }) => {
   const isPositive = direction === 'inflow' || (direction === 'neutral' && netFlow >= 0);
   const hasData = netFlow !== null && netFlow !== undefined;
   
@@ -122,13 +122,15 @@ const NetFlowCard = ({ netFlow, totalVolume, direction }) => {
       </div>
       <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
         <span>{directionLabel}</span>
-        {totalVolume > 0 && (
-          <>
-            <span>•</span>
-            <span>Vol: {formatUSD(totalVolume)}</span>
-          </>
-        )}
       </div>
+      {/* Inflow / Outflow breakdown */}
+      {(inflowUsd > 0 || outflowUsd > 0) && (
+        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1 pt-1 border-t border-gray-200">
+          <span className="text-emerald-600">↑ {formatUSD(inflowUsd)}</span>
+          <span>/</span>
+          <span className="text-red-500">↓ {formatUSD(outflowUsd)}</span>
+        </div>
+      )}
     </div>
   );
 };
