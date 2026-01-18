@@ -621,6 +621,7 @@ export default function AlertsPage() {
                   onResume={handleResume}
                   onDelete={handleDelete}
                   onEdit={handleEdit}
+                  onReduceSensitivity={handleReduceSensitivity}
                 />
               ))}
             </div>
