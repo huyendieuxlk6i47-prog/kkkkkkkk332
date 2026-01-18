@@ -42,6 +42,7 @@ export async function alertsRoutes(app: FastifyInstance): Promise<void> {
         minConfidence: body.minConfidence,
         minStability: body.minStability,
         throttle: body.throttle,
+        sensitivity: body.sensitivity,  // A5.4: Pass sensitivity
         name: body.name,
         targetMeta: body.targetMeta,
       }
