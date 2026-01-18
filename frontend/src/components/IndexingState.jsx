@@ -99,10 +99,10 @@ export function IndexingState({
           )}
           <div>
             <h3 className="font-semibold text-gray-900">
-              {isQueued && 'Queued for Indexing'}
-              {isRunning && 'Indexing in Progress'}
-              {isDone && 'Indexing Complete'}
-              {isFailed && 'Indexing Failed'}
+              {isQueued && 'Preparing Analysis'}
+              {isRunning && 'Analyzing Wallet'}
+              {isDone && 'Analysis Complete'}
+              {isFailed && 'Analysis Failed'}
             </h3>
             <p className="text-sm text-gray-500">{stepName}</p>
           </div>
