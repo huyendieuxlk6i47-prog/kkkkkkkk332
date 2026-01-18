@@ -31,10 +31,11 @@ def api_client():
     return session
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def test_alert_rule(api_client):
-    """Create a test alert rule for feedback loop testing"""
+    """Create a test alert rule for feedback loop testing - fresh rule per test"""
     # First, create a watchlist item and alert rule
+    import time
     payload = {
         "scope": "token",
         "targetId": "0xdac17f958d2ee523a2206206994597c13d831ec7",  # USDT
@@ -52,6 +53,7 @@ def test_alert_rule(api_client):
         yield rule_id
         # Cleanup
         if rule_id:
+            time.sleep(0.1)  # Small delay to ensure operations complete
             api_client.delete(f"{BASE_URL}/api/alerts/rules/{rule_id}")
     else:
         pytest.skip(f"Could not create test alert rule: {response.status_code} - {response.text}")
