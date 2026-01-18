@@ -212,6 +212,14 @@ Answer: "Who is this wallet?"
 - Backend status is now the single source of truth
 - Fixed in: DataAvailability.jsx, ActorProfile.jsx
 
+**UX Polish - Human-Friendly Language ✅ COMPLETE (2026-01-18)**
+- Replaced all "Indexing" terminology with "Analyzing" across UI
+- Updated empty states with clearer descriptions
+- Fixed Loading states: "Looking up wallet...", "Gathering activity data"
+- Updated hints: "You can leave this page — analysis continues in background"
+- Improved confidence messaging: "Limited on-chain activity" vs "Low confidence"
+- Files updated: IndexingState.jsx, WalletsPage.jsx, TokensPage.jsx, ActorProfile.jsx, ArkhamHome.jsx, SignalsPage.jsx, EntitiesPage.jsx, DataAvailability.jsx
+
 ### P2 - Future Enhancements
 
 | Feature | Description | Priority |
