@@ -139,31 +139,40 @@ Empty Result = "Мы проверили X, Y, Z → результат пуст"
 
 ## 🗓 Roadmap
 
-### 🟡 P2: Price Oracle Integration (Next)
+### ✅ P2: Price Oracle Integration - COMPLETE (2026-01-18)
 **Goal**: Calculate Net Flow for non-stablecoins
 
 | Task | Priority | Status |
 |------|----------|--------|
-| Integrate CoinGecko API for price data | P2 | TODO |
-| Cache prices with 5-min TTL | P2 | TODO |
-| Support WETH, WBTC, LINK, UNI, AAVE | P2 | TODO |
-| Fallback to Chainlink for critical assets | P3 | TODO |
+| CoinGecko API integration | P2 | ✅ DONE |
+| In-memory cache (5min TTL) | P2 | ✅ DONE |
+| Support WETH, WBTC, LINK, UNI, AAVE, SUSHI, MKR, CRV, etc. | P2 | ✅ DONE |
+| priceSource field in API response | P2 | ✅ DONE |
+| priceNote explanation in interpretation | P2 | ✅ DONE |
 
-### 🟠 P2: UX Improvements
+**Live Results**:
+- WETH: $3,351.82 (coingecko)
+- LINK: $13.83 (coingecko)  
+- UNI: $5.37 (coingecko)
+- USDT/USDC/DAI: $1 (stablecoin)
+
+### ✅ P2: UX Improvements - COMPLETE (2026-01-18)
 
 | Task | Priority | Status |
 |------|----------|--------|
-| Confidence Score tooltip explanation | P2 | TODO |
-| "Data reflects completeness, not signal quality" | P2 | TODO |
+| Confidence Score tooltip explanation | P2 | ✅ DONE |
+| "Data reflects completeness, not signal quality" | P2 | ✅ DONE |
+| Contributing factors list | P2 | ✅ DONE |
 
-### 🟠 P3: Advanced Alert Parameters
+### ✅ P3: Advanced Alert Parameters - COMPLETE (2026-01-18)
 
 | Task | Priority | Status |
 |------|----------|--------|
-| Custom threshold windows | P3 | TODO |
-| Direction filter (inflow/outflow only) | P3 | TODO |
-| Minimum transfer size filter | P3 | TODO |
-| Alert feedback loop ("too many alerts?") | P3 | TODO |
+| Collapsible Advanced Parameters section | P3 | ✅ DONE |
+| Custom time windows (1h/6h/24h/7d) | P3 | ✅ DONE |
+| Direction filter (inflow/outflow/both) | P3 | ✅ DONE |
+| Minimum transfer size filter (USD) | P3 | ✅ DONE |
+| Notification cooldown selector | P3 | ✅ DONE |
 
 ### 🔵 Future: Multi-Chain Support
 
