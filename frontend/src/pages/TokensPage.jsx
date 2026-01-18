@@ -628,6 +628,7 @@ function IndexingState({ resolvedData, onRefresh }) {
 
 // ============================================================================
 // Resolved State Component
+// CONTRACT: Все блоки ВСЕГДА рендерятся когда status === completed
 // ============================================================================
 function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, onWalletClick }) {
   const price = marketContext?.price?.current;
@@ -636,13 +637,12 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
   const regimeConfidence = marketContext?.regime?.confidence;
   const signals = marketContext?.recentSignals || [];
   
-  // P1.1 FIX: Actions always enabled when analysis complete
-  // Confidence can be shown as badge/tooltip, but doesn't gate actions
+  // Actions always enabled when analysis complete
   const actionsEnabled = true;
 
   return (
     <div className="space-y-4">
-      {/* Token Profile Card */}
+      {/* Section 1: Token Profile Card (Header - already OK) */}
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 text-white">
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -655,6 +655,10 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
                   VERIFIED
                 </span>
               )}
+              {/* Status: Resolved badge */}
+              <span className="px-2 py-1 rounded-lg text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                RESOLVED
+              </span>
               {regime && (
                 <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
                   regime === 'bullish' 
@@ -679,12 +683,12 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
                   )}
                 </>
               ) : (
-                <span className="text-gray-500">Loading price data...</span>
+                <span className="text-gray-400">Price data unavailable</span>
               )}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xs text-gray-400 mb-1">Address</div>
+            <div className="text-xs text-gray-400 mb-1">Chain: {resolvedData.chain || 'ethereum'}</div>
             <div className="text-xs font-mono text-gray-300">
               {resolvedData.normalizedId?.slice(0, 10)}...{resolvedData.normalizedId?.slice(-8)}
             </div>
@@ -707,47 +711,71 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
         </div>
       </div>
 
+      {/* Section 2: ACTIVITY SNAPSHOT - КРИТИЧЕСКИ ВАЖНЫЙ БЛОК */}
+      <ActivitySnapshot 
+        marketContext={marketContext}
+        resolvedData={resolvedData}
+        timeWindow="24h"
+      />
+
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left Column */}
         <div className="space-y-4">
-          {/* B2: Who is driving this activity? */}
+          {/* Section 3: B2 - Who is driving this activity? */}
           <TokenActivityDrivers 
             tokenAddress={resolvedData.normalizedId}
             chain={resolvedData.chain || 'Ethereum'}
             onWalletClick={onWalletClick}
           />
           
-          {/* Token Activity (P1) */}
-          <TokenActivityBlock resolvedData={resolvedData} marketContext={marketContext} />
+          {/* Section 5: Recent Signals */}
+          <TokenSignalsBlock signals={signals} />
           
-          {/* Token Signals (P2) */}
-          <TokenSignalsBlock signals={signals} confidence={resolvedData.confidence} />
-          
-          {/* P2.1: Token Clusters (B3) - ALWAYS RENDER */}
+          {/* Section 6: Token Clusters (B3) - ALWAYS RENDER */}
           <TokenClusters 
             tokenAddress={resolvedData.normalizedId}
             clusters={marketContext?.clusters}
           />
           
-          {/* P2.1: Smart Money Activity (B4) - ALWAYS RENDER */}
+          {/* Section 7: Smart Money Activity (B4) - ALWAYS RENDER */}
           <TokenSmartMoney 
             tokenAddress={resolvedData.normalizedId}
             smartMoneyData={marketContext?.smartMoney}
           />
         </div>
         
-        {/* Right Column */}
+        {/* Right Column - Resolution & Data Availability */}
         <div className="space-y-4">
-          {/* Resolution Info */}
-          <ResolutionInfo
-            type={resolvedData.type}
-            status={resolvedData.status}
-            confidence={resolvedData.confidence}
-            chain={resolvedData.chain}
-            reason={resolvedData.reason}
-            suggestions={resolvedData.suggestions}
-          />
+          {/* Section 4: Token Activity (Transfers) */}
+          <TokenActivityBlock resolvedData={resolvedData} marketContext={marketContext} />
+          
+          {/* Section 8: Resolution Info - убран misleading текст */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Resolution Status</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Type</span>
+                <span className="text-xs font-medium text-gray-900 capitalize">{resolvedData.type || 'token'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Chain</span>
+                <span className="text-xs font-medium text-gray-900">{resolvedData.chain || 'Ethereum'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Status</span>
+                <span className="text-xs font-medium text-emerald-600">Analysis Complete</span>
+              </div>
+              {/* Contract: убран confidence-based messaging */}
+              {marketContext?.activity?.transfers24h === 0 && (
+                <div className="p-2 bg-gray-50 rounded-lg mt-2">
+                  <p className="text-xs text-gray-600">
+                    Limited on-chain activity detected. Results may be sparse.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* Data Availability with Tooltips */}
           <DataAvailabilityEnhanced 
