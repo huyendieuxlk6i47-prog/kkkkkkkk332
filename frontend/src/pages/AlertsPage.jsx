@@ -22,7 +22,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../components/ui/tooltip";
-import UnifiedCard, { StatusBadge, CardIcon } from '../components/UnifiedCard';
 import ContextPath from '../components/ContextPath';
 
 // Signal type with PRODUCT LANGUAGE
