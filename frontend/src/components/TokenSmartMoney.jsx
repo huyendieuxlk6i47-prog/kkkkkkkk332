@@ -1,23 +1,74 @@
 /**
  * TokenSmartMoney (B4) - Token Context
  * 
- * P2.1 FIX: Always render, show empty state if no data
+ * P1 LIVE: Fetches smart money data from backend API
  * 
  * Shows smart money activity patterns for this token.
  */
-import React from 'react';
-import { TrendingUp, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, Activity, Loader2, Users } from 'lucide-react';
+
+/**
+ * Format wallet address for display
+ */
+const formatAddress = (address) => {
+  if (!address) return '';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
 
 /**
  * TokenSmartMoney Component (B4)
  */
-export default function TokenSmartMoney({ tokenAddress, smartMoneyData, className = '' }) {
+export default function TokenSmartMoney({ tokenAddress, className = '' }) {
+  const [smartMoneyData, setSmartMoneyData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSmartMoney() {
+      if (!tokenAddress) return;
+      
+      setLoading(true);
+      
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/market/token-smart-money/${tokenAddress}`
+        );
+        const data = await response.json();
+        
+        if (data?.ok && data?.data) {
+          setSmartMoneyData(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load smart money data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSmartMoney();
+  }, [tokenAddress]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-900">Smart Money Activity</h3>
+        </div>
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          <span className="ml-2 text-sm text-gray-500">Analyzing wallets...</span>
+        </div>
+      </div>
+    );
+  }
+
   const hasData = smartMoneyData && (
     smartMoneyData.count > 0 || 
     smartMoneyData.totalValue > 0
   );
 
-  // P2.1 FIX: Empty state is VALID result - explain WHAT was checked
+  // Empty state - explain WHAT was checked
   if (!hasData) {
     return (
       <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
@@ -30,11 +81,11 @@ export default function TokenSmartMoney({ tokenAddress, smartMoneyData, classNam
             <TrendingUp className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-2">
-            No smart money patterns identified
+            No significant smart money patterns
           </p>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            We checked historically profitable wallets for interaction with this token. 
-            No qualifying activity was found.
+            We analyzed high-volume wallets for consistent accumulation or distribution patterns. 
+            No qualifying activity was found in the last 24h.
           </p>
         </div>
       </div>
@@ -42,37 +93,42 @@ export default function TokenSmartMoney({ tokenAddress, smartMoneyData, classNam
   }
 
   // Show smart money data
-  const { count, totalValue, recentActivity, performance } = smartMoneyData;
+  const { count, totalValue, wallets, recentActivity } = smartMoneyData;
+  const accumulators = wallets?.filter(w => w.action === 'accumulating') || [];
+  const distributors = wallets?.filter(w => w.action === 'distributing') || [];
 
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900">Smart Money Activity</h3>
-        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-          {count} wallets
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Live</span>
+          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+            {count} wallet{count > 1 ? 's' : ''}
+          </span>
+        </div>
       </div>
       
       <div className="space-y-3">
         {/* Total Value */}
         {totalValue > 0 && (
-          <div className="p-3 bg-green-50 rounded-lg">
+          <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600">Total Volume</span>
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-xs text-gray-600">Total Smart Money Volume</span>
+              <span className="text-sm font-bold text-emerald-700">
                 ${totalValue.toLocaleString()}
               </span>
             </div>
           </div>
         )}
         
-        {/* Recent Activity */}
+        {/* Recent Activity Summary */}
         {recentActivity && (
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
-              <Activity className="w-4 h-4 text-gray-600" />
+              <Activity className="w-4 h-4 text-blue-600" />
               <span className="text-xs font-medium text-gray-700">
-                Recent Activity
+                24h Activity
               </span>
             </div>
             <p className="text-xs text-gray-600 ml-6">
@@ -81,17 +137,38 @@ export default function TokenSmartMoney({ tokenAddress, smartMoneyData, classNam
           </div>
         )}
         
-        {/* Performance */}
-        {performance && (
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600">Avg Performance</span>
-              <span className={`text-sm font-medium ${
-                performance > 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {performance > 0 ? '+' : ''}{performance}%
-              </span>
-            </div>
+        {/* Top Wallets */}
+        {wallets && wallets.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Key Wallets
+            </h4>
+            {wallets.slice(0, 3).map((wallet, index) => (
+              <div key={wallet.address || index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {wallet.action === 'accumulating' ? (
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-500" />
+                  )}
+                  <span className="font-mono text-xs text-gray-700">
+                    {formatAddress(wallet.address)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className={`text-xs font-medium ${
+                    wallet.action === 'accumulating' ? 'text-emerald-600' : 'text-red-600'
+                  }`}>
+                    {wallet.action === 'accumulating' ? 'Buying' : 'Selling'}
+                  </span>
+                  {wallet.volumeUsd && (
+                    <div className="text-xs text-gray-500">
+                      ${Math.round(wallet.volumeUsd).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
