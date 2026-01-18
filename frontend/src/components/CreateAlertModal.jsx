@@ -501,7 +501,7 @@ export default function CreateAlertModal({
                   Monitoring Active
                 </h3>
                 <p className="text-sm text-gray-500">
-                  You'll be notified when this behavior is observed
+                  You will be notified when this behavior is observed
                 </p>
               </div>
             ) : (
