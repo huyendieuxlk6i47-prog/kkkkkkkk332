@@ -194,29 +194,14 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     const since = new Date(Date.now() - windowHours * 60 * 60 * 1000);
     
     const { ERC20LogModel } = await import('../../onchain/ethereum/logs_erc20.model.js');
+    const { getTokenPriceUsd, getTokenDecimals, getTokenMetadata } = await import('./coingecko.service.js');
     
     const normalizedAddress = tokenAddress.toLowerCase();
     
-    // Token price mapping (stablecoins = $1, others we have in mapping)
-    const TOKEN_PRICES: Record<string, number> = {
-      '0xdac17f958d2ee523a2206206994597c13d831ec7': 1, // USDT
-      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 1, // USDC
-      '0x6b175474e89094c44da98b954eedeac495271d0f': 1, // DAI
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 3500, // WETH
-      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 100000, // WBTC
-    };
-    
-    // Token decimals
-    const TOKEN_DECIMALS: Record<string, number> = {
-      '0xdac17f958d2ee523a2206206994597c13d831ec7': 6, // USDT
-      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 6, // USDC
-      '0x6b175474e89094c44da98b954eedeac495271d0f': 18, // DAI
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 18, // WETH
-      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 8, // WBTC
-    };
-    
-    const price = TOKEN_PRICES[normalizedAddress] ?? null;
-    const decimals = TOKEN_DECIMALS[normalizedAddress] ?? 18;
+    // Get price from CoinGecko (with cache + stablecoin handling)
+    const price = await getTokenPriceUsd(normalizedAddress);
+    const decimals = getTokenDecimals(normalizedAddress);
+    const tokenMeta = getTokenMetadata(normalizedAddress);
     
     // Aggregate from logs_erc20 (raw indexed data)
     const [transferStats, walletStats, largestTransfer, flowStats] = await Promise.all([
