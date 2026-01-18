@@ -546,17 +546,16 @@ export default function WalletsPage() {
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Wallet className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Enter a wallet address</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Analyze any wallet</h3>
                 <p className="text-gray-500 mb-6">
-                  Type any Ethereum address or ENS name to analyze wallet behavior
+                  Enter an Ethereum address or ENS name to see behavior patterns
                 </p>
               </div>
 
               {/* Quick Select Reference Wallets */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  Try these wallets
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Popular wallets to explore
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {REFERENCE_WALLETS.map((wallet) => (
@@ -568,7 +567,7 @@ export default function WalletsPage() {
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-gray-400">
-                  These are reference wallets for exploration. Actual data depends on indexing status.
+                  Click any wallet above to start analyzing
                 </p>
               </div>
             </div>
