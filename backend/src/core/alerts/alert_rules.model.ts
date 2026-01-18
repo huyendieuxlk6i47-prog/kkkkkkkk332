@@ -181,6 +181,121 @@ export const THROTTLE_MS: Record<ThrottleInterval, number> = {
   '24h': 24 * 60 * 60 * 1000,
 };
 
+// ============================================================================
+// A5.4: SENSITIVITY PRESETS
+// Sensitivity = frequency expectation, NOT strength
+// ============================================================================
+
+/**
+ * Sensitivity preset configurations
+ * Maps abstract levels to concrete thresholds
+ */
+export interface SensitivityConfig {
+  window: '1h' | '6h' | '24h';
+  cooldown: '15m' | '1h' | '6h';
+  minTransferSizeUsd: number;
+  thresholdMultiplier: number;  // For baseline deviation
+  description: string;
+  expectedFrequency: string;
+}
+
+/**
+ * Sensitivity presets for token alerts
+ */
+export const TOKEN_SENSITIVITY_PRESETS: Record<SensitivityLevel, SensitivityConfig> = {
+  high: {
+    window: '1h',
+    cooldown: '15m',
+    minTransferSizeUsd: 10_000,
+    thresholdMultiplier: 2,  // 2x baseline = signal
+    description: 'Any unusual activity',
+    expectedFrequency: 'May trigger multiple times per day',
+  },
+  medium: {
+    window: '6h',
+    cooldown: '1h',
+    minTransferSizeUsd: 50_000,
+    thresholdMultiplier: 3,  // 3x baseline = signal
+    description: 'Notable activity only',
+    expectedFrequency: 'A few times per week',
+  },
+  low: {
+    window: '24h',
+    cooldown: '6h',
+    minTransferSizeUsd: 250_000,
+    thresholdMultiplier: 5,  // 5x baseline = signal
+    description: 'Major movements only',
+    expectedFrequency: 'Rarely, only significant events',
+  },
+};
+
+/**
+ * Sensitivity presets for wallet alerts
+ */
+export const WALLET_SENSITIVITY_PRESETS: Record<SensitivityLevel, SensitivityConfig> = {
+  high: {
+    window: '1h',
+    cooldown: '15m',
+    minTransferSizeUsd: 5_000,
+    thresholdMultiplier: 3,  // 3x activity = signal
+    description: 'Any unusual wallet activity',
+    expectedFrequency: 'May trigger multiple times per day',
+  },
+  medium: {
+    window: '6h',
+    cooldown: '1h',
+    minTransferSizeUsd: 25_000,
+    thresholdMultiplier: 5,  // 5x activity = signal
+    description: 'Significant activity changes',
+    expectedFrequency: 'A few times per week',
+  },
+  low: {
+    window: '24h',
+    cooldown: '6h',
+    minTransferSizeUsd: 100_000,
+    thresholdMultiplier: 10,  // 10x activity = signal
+    description: 'Major wallet movements only',
+    expectedFrequency: 'Rarely, only major events',
+  },
+};
+
+/**
+ * Get sensitivity config for alert type
+ */
+export function getSensitivityConfig(
+  scope: AlertScope,
+  level: SensitivityLevel
+): SensitivityConfig {
+  if (scope === 'wallet') {
+    return WALLET_SENSITIVITY_PRESETS[level];
+  }
+  return TOKEN_SENSITIVITY_PRESETS[level];
+}
+
+/**
+ * Map sensitivity to minSeverity threshold
+ */
+export function sensitivityToMinSeverity(level: SensitivityLevel): number {
+  switch (level) {
+    case 'high': return 30;    // Trigger on low severity
+    case 'medium': return 50;  // Trigger on medium severity
+    case 'low': return 70;     // Trigger only on high severity
+    default: return 50;
+  }
+}
+
+/**
+ * Map sensitivity to throttle
+ */
+export function sensitivityToThrottle(level: SensitivityLevel): ThrottleInterval {
+  switch (level) {
+    case 'high': return '1h';
+    case 'medium': return '6h';
+    case 'low': return '24h';
+    default: return '6h';
+  }
+}
+
 /**
  * Default throttle per trigger type
  */
