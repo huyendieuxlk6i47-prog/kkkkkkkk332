@@ -181,23 +181,23 @@ export async function getActivityDrivers(
   const top5Share = Math.min((top5Volume / volumeForShare) / 2, 1);
   const top10Share = Math.min((top10Volume / volumeForShare) / 2, 1);
   
-  // Determine interpretation
+  // Determine interpretation - DESCRIPTIVE ONLY, not verdict
   let interpretation: 'highly_concentrated' | 'moderately_concentrated' | 'distributed';
   let headline: string;
   let description: string;
   
   if (top5Share > CONCENTRATION.HIGH) {
     interpretation = 'highly_concentrated';
-    headline = `High concentration detected — top 5 wallets control ${(top5Share * 100).toFixed(0)}% of volume`;
-    description = `Activity is dominated by a small number of wallets. The top wallet alone accounts for ${(top1Share * 100).toFixed(1)}% of volume.`;
+    headline = `Activity concentrated among top wallets — top 5 represent ${(top5Share * 100).toFixed(0)}% of volume`;
+    description = `This describes volume structure, not intent. Top wallet: ${(top1Share * 100).toFixed(1)}% share.`;
   } else if (top5Share > CONCENTRATION.MODERATE) {
     interpretation = 'moderately_concentrated';
-    headline = `Moderate concentration — top 5 wallets represent ${(top5Share * 100).toFixed(0)}% of volume`;
-    description = `Activity shows some concentration but is not dominated by few actors.`;
+    headline = `Activity moderately concentrated — top 5 wallets represent ${(top5Share * 100).toFixed(0)}% of volume`;
+    description = `This describes volume distribution structure, not market direction.`;
   } else {
     interpretation = 'distributed';
-    headline = `Activity is distributed across ${totalWallets.toLocaleString()} wallets`;
-    description = `No dominant actors identified — this suggests organic, crowd-driven activity.`;
+    headline = `Activity distributed across ${totalWallets.toLocaleString()} wallets`;
+    description = `Volume is spread among many participants. This describes structure, not intent.`;
   }
   
   // If no data, provide explanation
