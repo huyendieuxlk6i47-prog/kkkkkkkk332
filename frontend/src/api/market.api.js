@@ -16,6 +16,19 @@ export async function getMarketContext(asset, chain = 'ethereum') {
 }
 
 /**
+ * Get token activity snapshot from indexed transfers
+ * CRITICAL: This is the source of truth for Activity Snapshot block
+ * @param {string} tokenAddress - Token contract address
+ * @param {string} window - Time window (1h, 6h, 24h)
+ */
+export async function getTokenActivity(tokenAddress, window = '24h') {
+  const response = await api.get(`/api/market/token-activity/${tokenAddress}`, {
+    params: { window }
+  });
+  return response.data;
+}
+
+/**
  * Get latest price for an asset
  * @param {string} asset - Asset address
  * @param {string} chain - Chain (default: ethereum)
