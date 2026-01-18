@@ -245,6 +245,9 @@ TokensPage UI contract implementation - "ничего нет" → "мы пров
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
+| WalletsPage Interpretation Layer | Same UI contract as TokensPage - Behavior Snapshot | P1 |
+| MarketPage Implementation | Connect to Watchlist and Alerts | P2 |
+| Confidence Score Explanation | Tooltip explaining data completeness | P3 |
 | Multi-chain | Arbitrum, BNB support | Medium |
 | Token Tabs | Overview, Flows, Holders | Medium |
 | Signal Explanations | "Why was this detected?" | Low |
