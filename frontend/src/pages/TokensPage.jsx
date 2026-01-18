@@ -384,9 +384,52 @@ function TokenActivityBlock({ resolvedData, marketContext }) {
 // ============================================================================
 // P2: Token Signals Block (Section 5 - Recent Signals)
 // CONTRACT: Empty state объясняет что это РЕЗУЛЬТАТ анализа, не отсутствие анализа
+// NOW: Loads LIVE signals from backend
 // ============================================================================
-function TokenSignalsBlock({ signals }) {
+function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
+  const [signals, setSignals] = useState(propSignals || []);
+  const [loading, setLoading] = useState(!propSignals);
+  
+  useEffect(() => {
+    async function loadSignals() {
+      if (!tokenAddress) return;
+      
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/market/token-signals/${tokenAddress}`
+        );
+        const data = await response.json();
+        if (data?.ok && data?.data?.signals) {
+          setSignals(data.data.signals);
+        }
+      } catch (err) {
+        console.error('Failed to load signals:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadSignals();
+  }, [tokenAddress]);
+  
   const hasSignals = signals && signals.length > 0;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-5 h-5 text-gray-400" />
+          <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
+        </div>
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          <span className="ml-2 text-sm text-gray-500">Analyzing patterns...</span>
+        </div>
+      </div>
+    );
+  }
 
   // CONTRACT: Empty state is VALID analysis result
   if (!hasSignals) {
@@ -415,41 +458,60 @@ function TokenSignalsBlock({ signals }) {
     );
   }
 
-  // Has signals - show them
+  // Has signals - show them with LIVE badge
+  const getSignalColor = (type) => {
+    if (type === 'accumulation' || type === 'smart_money_entry') return 'bg-emerald-500';
+    if (type === 'distribution' || type === 'smart_money_exit') return 'bg-red-500';
+    if (type === 'large_move') return 'bg-purple-500';
+    if (type === 'activity_spike') return 'bg-amber-500';
+    return 'bg-gray-400';
+  };
+  
+  const getSignalBadgeColor = (type) => {
+    if (type === 'accumulation' || type === 'smart_money_entry') return 'bg-emerald-100 text-emerald-700';
+    if (type === 'distribution' || type === 'smart_money_exit') return 'bg-red-100 text-red-700';
+    if (type === 'large_move') return 'bg-purple-100 text-purple-700';
+    if (type === 'activity_spike') return 'bg-amber-100 text-amber-700';
+    return 'bg-gray-100 text-gray-700';
+  };
+  
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
-        <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-          {signals.length} signal{signals.length > 1 ? 's' : ''}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-medium">
+            Live
+          </span>
+          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">
+            {signals.length} signal{signals.length > 1 ? 's' : ''}
+          </span>
+        </div>
       </div>
       <div className="space-y-2">
-        {signals.slice(0, 5).map((signal, i) => {
-          const isBullish = signal.type?.includes('accumulation') || signal.type?.includes('buy');
-          const isBearish = signal.type?.includes('distribution') || signal.type?.includes('sell');
-          
-          return (
-            <div key={i} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-              <div className={`w-2 h-2 rounded-full ${
-                isBullish ? 'bg-emerald-500' : isBearish ? 'bg-red-500' : 'bg-gray-400'
-              }`} />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 capitalize truncate">
-                  {signal.type || 'Signal'}
-                </div>
-                {signal.actorAddress && (
-                  <div className="text-xs text-gray-500 font-mono truncate">
-                    {signal.actorAddress.slice(0, 10)}...
-                  </div>
-                )}
+        {signals.slice(0, 5).map((signal, i) => (
+          <div key={i} className="p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${getSignalColor(signal.type)}`} />
+                <span className={`text-xs px-2 py-0.5 rounded ${getSignalBadgeColor(signal.type)}`}>
+                  {signal.title || signal.type}
+                </span>
               </div>
-              <div className="text-xs text-gray-400 flex-shrink-0">
-                {signal.timestamp ? new Date(signal.timestamp).toLocaleDateString() : '—'}
-              </div>
+              <span className="text-xs text-gray-400">
+                {signal.confidence ? `${Math.round(signal.confidence * 100)}%` : ''}
+              </span>
             </div>
-          );
-        })}
+            <p className="text-xs text-gray-600 mt-1">
+              {signal.description}
+            </p>
+            {signal.evidence && (
+              <div className="mt-2 text-xs text-gray-500">
+                Deviation: <span className="font-medium">{signal.evidence.deviation?.toFixed(1)}x</span> from baseline
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
