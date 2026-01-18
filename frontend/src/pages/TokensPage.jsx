@@ -388,7 +388,7 @@ function TokenActivityBlock({ resolvedData, marketContext }) {
 // NOW: Loads LIVE signals from backend
 // ============================================================================
 function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
-  const [signals, setSignals] = useState(propSignals || []);
+  const [signalData, setSignalData] = useState({ signals: propSignals || [], interpretation: null, checkedMetrics: [], baseline: null });
   const [loading, setLoading] = useState(!propSignals);
   
   useEffect(() => {
@@ -401,8 +401,14 @@ function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
           `${process.env.REACT_APP_BACKEND_URL}/api/market/token-signals/${tokenAddress}`
         );
         const data = await response.json();
-        if (data?.ok && data?.data?.signals) {
-          setSignals(data.data.signals);
+        if (data?.ok && data?.data) {
+          setSignalData({
+            signals: data.data.signals || [],
+            interpretation: data.data.interpretation,
+            checkedMetrics: data.data.checkedMetrics || [],
+            baseline: data.data.baseline,
+            current: data.data.current,
+          });
         }
       } catch (err) {
         console.error('Failed to load signals:', err);
@@ -414,6 +420,7 @@ function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
     loadSignals();
   }, [tokenAddress]);
   
+  const { signals, interpretation, checkedMetrics, baseline } = signalData;
   const hasSignals = signals && signals.length > 0;
 
   // Loading state
