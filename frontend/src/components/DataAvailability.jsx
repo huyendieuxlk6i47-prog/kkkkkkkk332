@@ -46,6 +46,17 @@ export function getStatusFromConfidence(confidence) {
 }
 
 /**
+ * Data keys for availability tracking
+ */
+const DATA_KEYS = [
+  { key: 'profile', label: 'Profile', description: 'Basic information and metadata' },
+  { key: 'market', label: 'Market', description: 'Price, volume, and market metrics' },
+  { key: 'signals', label: 'Signals', description: 'Trading signals and alerts' },
+  { key: 'trust', label: 'Trust', description: 'Trust and reputation scores' },
+  { key: 'transfers', label: 'Transfers', description: 'On-chain transfer history' },
+];
+
+/**
  * Get status display config
  */
 export function getStatusConfig(status, confidence) {
