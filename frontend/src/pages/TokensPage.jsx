@@ -592,7 +592,7 @@ function IndexingState({ resolvedData, onRefresh }) {
               </button>
             </TooltipTrigger>
             <TooltipContent className="bg-gray-900 text-white">
-              <p className="text-xs">Available after indexing completes</p>
+              <p className="text-xs">Available once we have more data</p>
             </TooltipContent>
           </Tooltip>
           
@@ -607,7 +607,7 @@ function IndexingState({ resolvedData, onRefresh }) {
               </button>
             </TooltipTrigger>
             <TooltipContent className="bg-gray-900 text-white">
-              <p className="text-xs">Available after indexing completes</p>
+              <p className="text-xs">Available once we have more data</p>
             </TooltipContent>
           </Tooltip>
           
