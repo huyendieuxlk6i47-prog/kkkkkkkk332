@@ -222,7 +222,12 @@ export function RelatedAddresses({
     );
   }
   
-  // No clusters found - CONTRACT: explain WHAT was checked
+  // Extract data from API response
+  const clusters = apiData?.clusters || [];
+  const interpretation = apiData?.interpretation || {};
+  const checkedCorrelations = apiData?.checkedCorrelations || 0;
+  
+  // No clusters found - CONTRACT: explain WHAT was checked using API interpretation
   if (!loading && clusters.length === 0) {
     return (
       <Card className={className}>
@@ -233,21 +238,29 @@ export function RelatedAddresses({
               Related Addresses
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs bg-gray-100">Checked</Badge>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleAnalyze}
-                disabled={analyzing}
-              >
-                <RefreshCw className={`w-4 h-4 ${analyzing ? 'animate-spin' : ''}`} />
-              </Button>
+              <Badge variant="outline" className="text-xs bg-emerald-100 text-emerald-700">Checked</Badge>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6 bg-slate-50 rounded-xl">
             <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+              <Users className="w-6 h-6 text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              {interpretation.headline || 'No related addresses detected'}
+            </p>
+            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              {interpretation.description || `We checked timing correlation across ${checkedCorrelations} wallet pairs.`}
+            </p>
+            <p className="text-xs text-gray-400 mt-3 italic">
+              Correlation based on timing, token overlap, and behavioral similarity.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
               <Users className="w-6 h-6 text-slate-400" />
             </div>
             <p className="text-sm font-medium text-slate-700 mb-2">No related addresses detected</p>
