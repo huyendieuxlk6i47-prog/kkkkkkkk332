@@ -1,210 +1,164 @@
-# Changelog
+# BlockView Changelog
 
-All notable changes to BlockView are documented in this file.
+## [3.2.0] - 2026-01-18
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### 🚀 Major Features: Live Blockchain Analytics Engine
 
----
-
-## [3.0.0] - 2026-01-17
-
-### Added
-
-#### Phase A: Alert Intelligence Layer (Complete)
-Smart alerts that group behavior, not spam events.
-
-- **A0 - Event Normalization**
-  - Standardizes all signal types to `NormalizedAlertEvent`
-  - Extracts metrics: value, threshold, baseline, deviation
-  - Calculates confidence scores
-  - Location: `/backend/src/core/alerts/normalization/`
-
-- **A1 - Deduplication Engine**
-  - Answers: "Is this new or repeated behavior?"
-  - Uses `dedupKey = hash(signalType + scope + targetId + direction + thresholdBucket)`
-  - Tracks occurrence counts and time windows
-  - Location: `/backend/src/core/alerts/deduplication/`
-
-- **A2 - Severity & Priority Engine**
-  - Answers: "How important is this event?"
-  - Formula: `severityScore = magnitudeScore * confidenceMultiplier * noveltyMultiplier + persistenceBonus`
-  - Priority levels: low, medium, high
-  - Human-readable reasons
-  - Location: `/backend/src/core/alerts/severity/`
-
-- **A3 - Grouping Engine**
-  - Answers: "Is this ongoing behavior?"
-  - GroupKey = `scope + targetId + signalType` (NOT severity, NOT time)
-  - Lifecycle: `active` → `cooling` → `resolved`
-  - Severity decay over time (1h: 0.9, 3h: 0.7, 6h: 0.4, 12h: 0.2)
-  - Evolving reasons: "started" → "continues" → "slowing" → "ended"
-  - Location: `/backend/src/core/alerts/grouping/`
-
-- **A4 - Dispatcher Engine**
-  - Answers: "When, where, and to whom to notify?"
-  - Decision matrix: new → escalation → cooling → resolved
-  - User preferences: minPriority, channels, notifyOn settings
-  - Rate limiting: per-user (10/hour), per-group (15min interval)
-  - Channels: UI + Telegram (no email)
-  - Silent updates for ongoing behavior
-  - Location: `/backend/src/core/alerts/dispatcher/`
-
-- **Unified Alert Pipeline**
-  - Single entry point: `alertPipeline.process(signal, ruleId, userId)`
-  - Returns: normalized → deduped → scored → grouped → dispatched
-  - Maintenance job for lifecycle transitions
-  - Location: `/backend/src/core/alerts/alert.pipeline.ts`
-
-#### Phase B1: Wallet Profile (Foundation)
-Answer: "Who is this wallet?"
-
-- **Wallet Profile Engine**
-  - Behavioral tags: active, dormant, new, high-volume, whale, trader, holder, flipper, degen, bridge-user, etc.
-  - Activity metrics: firstSeen, lastSeen, activeDays, txCount
-  - Flow metrics: totalIn, totalOut, netFlow, avgTxSize
-  - Behavior analysis: dominantAction, burstinessScore, diversificationScore
-  - Token interactions: top tokens by volume
-  - Confidence scoring based on data quality
-  - Human-readable summaries
-  - Location: `/backend/src/core/wallets/`
-
-- **Wallet API Endpoints**
-  - `GET /api/wallets/:address` - Get wallet profile
-  - `POST /api/wallets/profile` - Build/refresh profile
-  - `GET /api/wallets/search?tags=` - Search by tags
-  - `GET /api/wallets/high-volume` - High-volume wallets
-  - `GET /api/wallets/tags` - Available tags
-
-- **WalletProfileCard Component**
-  - Displays profile with headline, description, tags
-  - Activity metrics visualization
-  - Top tokens with buy/sell volumes
-  - Confidence indicator
-  - Tooltips explaining each tag
-  - Location: `/frontend/src/components/WalletProfileCard.jsx`
-
-### Changed
-- README.md updated with Phase A and B1 documentation
-- Architecture diagrams updated
-- API reference expanded
+This release connects the entire analytics platform to live on-chain data, transforming BlockView from a prototype into a functional blockchain intelligence tool.
 
 ---
 
-## [2.1.0] - 2026-01-17
+### ✅ P0: Signals Generation - COMPLETE
 
-### Added
-- **Alert System Complete (P0)**
-  - Full CRUD for alert rules (`POST/GET/PUT/DELETE /api/alerts/rules`)
-  - Alert-Watchlist integration: AlertRule MUST be linked to WatchlistItem
-  - Auto-creation of WatchlistItem when creating AlertRule
-  - Multi-channel notifications: In-App + Telegram
-  
-- **Telegram Integration**
-  - Bot: @FOMO_a_bot
-  - Commands: `/start`, `/status`, `/disconnect`, `/help`
-  - Webhook-based message delivery
-  - User connection flow with verification codes
+**Goal**: Generate trading signals based on deviation from baseline activity
 
-- **Alert Management UI (P1)**
-  - AlertsPage with rules list
-  - Filter tabs: All / Active / Paused
-  - Pause/Resume buttons
-  - Delete functionality
-  - Stats display: Total / Active / Paused
-
-- **CreateAlertModal Enhancements (P1)**
-  - Target Context Box: token name, chain, address, confidence
-  - Summary section before submit
-  - 5 signal types with descriptions
-  - Notification channel selection
-
-- **Backend Improvements**
-  - `targetType` field added to AlertRule model
-  - Watchlist API returns `alertCount` per item
-  - `lastTriggeredAt` tracking on rules
-
-### Fixed
-- ESM import errors for TypeScript interfaces (use `import type`)
-- MONGODB_URI pointing to wrong database (test_database → blockview)
-- `z.coerce.boolean()` parsing "false" string as true
-- AlertsPage showing empty list due to query filter bug
-
-### Changed
-- AlertRule schema now requires `watchlistItemId`
-- CreateAlertModal layout with better UX
-- AlertsPage shows rules (not events)
+- **Backend**: `token_signals.service.ts` - `generateTokenSignals()`
+- **API**: `GET /api/market/token-signals/:tokenAddress`
+- **Signal Types**:
+  - `activity_spike` - Transfer activity significantly above 7-day average
+  - `large_move` - Single transfer exceeding P99 threshold
+  - `accumulation` - High concentration of receiving (top 3 wallets > 70%)
+  - `distribution` - High concentration of sending (top 3 wallets > 70%)
+- **Baseline**: 7-day rolling average (168 hours)
+- **Evidence Structure**: `{ metric, baseline, current, deviation }`
+- **Live Result**: USDT shows "Activity Spike 104.8x from baseline"
 
 ---
 
-## [2.0.0] - 2026-01-16
+### ✅ P1: Activity Drivers (B2) - COMPLETE
 
-### Added
-- **Production Hardening (Option B)**
-  - B0-B6: Health checks, metrics, event logs, locks, heartbeats
-  - Honest UI states: Real / Indexing / Disabled
-  
-- **Market Page Hardening**
-  - Asset Selector with ETH primary support
-  - Flow Anomalies connected to real backend API
-  - Z-score based anomaly detection
+**Goal**: "This token moves because of WHO?"
 
-- **Tokens Page Complete (P0/P1/P2)**
-  - 3 states: Entry → Indexing → Resolved
-  - Universal resolver with ENS support
-  - Token Activity block
-  - Token Signals with confidence gating
-  - Token Seeds for known tokens (USDT, USDC, etc.)
-
-### Changed
-- Migrated from mock data to real blockchain data
-- Confidence threshold for data display (0.6 minimum)
+- **Backend**: `token_signals.service.ts` - `getActivityDrivers()`
+- **API**: `GET /api/market/token-drivers/:tokenAddress`
+- **Metrics**:
+  - Wallet address
+  - Role: `accumulator` | `distributor` | `mixed`
+  - Influence score (% of total volume)
+  - Volume in/out (raw + USD)
+  - Net flow (USD)
+- **UI**: `TokenActivityDrivers.jsx` - Top 3 wallets with influence breakdown
+- **Live Result**: Top wallet 33% influence, $258M+ total volume
 
 ---
 
-## [1.0.0] - 2025-06
+### ✅ P1: Wallet Clusters (B3) - COMPLETE
 
-### Added
-- Initial release
-- React frontend with Tailwind CSS
-- Fastify backend with TypeScript
-- MongoDB integration
-- WebSocket real-time updates
-- Basic wallet tracking
-- Signal detection framework
+**Goal**: "One actor = many addresses"
+
+- **API**: `GET /api/market/token-clusters/:tokenAddress`
+- **Detection**: Block co-occurrence analysis
+- **Metrics**: Cluster ID, wallet count, behavior pattern, confidence
+- **UI**: `TokenClusters.jsx` - Shows coordinated wallet groups
+- **Live Result**: 3 clusters detected with 90% confidence
 
 ---
 
-## Migration Notes
+### ✅ P1: Smart Money Patterns (B4) - COMPLETE
 
-### v2.0.0 → v2.1.0
+**Goal**: "Should I trust this wallet?"
 
-**Database Changes:**
-```javascript
-// Add targetType to existing alert_rules
-db.alert_rules.updateMany(
-  { targetType: { $exists: false } },
-  { $set: { targetType: 'token' } }
-);
+- **API**: `GET /api/market/token-smart-money/:tokenAddress`
+- **Detection**: Volume-based accumulator/distributor identification
+- **Metrics**: Wallet, action type, volume USD
+- **UI**: `TokenSmartMoney.jsx` - Accumulators vs Distributors
+- **Live Result**: $43.7B total smart money volume
 
-// Remove rules without watchlistItemId (invalid after v2.1.0)
-db.alert_rules.deleteMany({
-  watchlistItemId: { $exists: false }
-});
+---
+
+### 🔧 Critical Bug Fixes
+
+#### Largest Transfer - MongoDB Sorting Fix
+- **Problem**: Showed $10K instead of $21.9M
+- **Cause**: MongoDB sorted string field lexicographically ("10000" > "9999999")
+- **Fix**: Convert to number before sorting with `$toDouble` + aggregation pipeline
+- **Result**: Now correctly shows $21,932,420
+
+#### Net Flow - Semantic Fix
+- **Problem**: Showed $260M (total volume) with no direction
+- **Cause**: Was calculating `sum(all transfers)` instead of actual net flow
+- **Fix**: `netFlow = sum(accumulator_inflows) - sum(distributor_outflows)`
+- **Result**: Now shows `-$2.4M (outflow)` with direction indicator
+
+#### Active Wallets - Definition Clarity
+- **Problem**: Unclear what "active wallets" means
+- **Fix**: Added `interpretation.walletsDefinition: "unique senders ∪ receivers"`
+- **Result**: API now self-documents metric definitions
+
+#### ERC20 Indexer - Crash Fix
+- **Problem**: `Cannot read properties of undefined (reading 'slice')`
+- **Cause**: Some logs have missing/malformed `topics` array
+- **Fix**: Validate `log.topics?.length >= 3` before parsing
+- **Result**: Indexer continues processing without crashes
+
+---
+
+### 📊 API Response Structure Updates
+
+#### GET /api/market/token-activity/:tokenAddress
+
+```json
+{
+  "ok": true,
+  "data": {
+    "tokenAddress": "0xdac17f...",
+    "window": "24h",
+    "activity": {
+      "transfers24h": 54600,
+      "activeWallets": 26883,
+      "largestTransfer": 21932419.87
+    },
+    "flows": {
+      "totalVolume": 260789101.00,
+      "netFlow": -2409271.52,
+      "direction": "outflow",
+      "hasPrice": true
+    },
+    "interpretation": {
+      "walletsDefinition": "unique senders ∪ receivers",
+      "netFlowDefinition": "sum(accumulator_inflows) - sum(distributor_outflows)"
+    },
+    "dataSource": "indexed_transfers"
+  }
+}
 ```
 
-**Environment:**
-- Ensure `TELEGRAM_BOT_TOKEN` is set
-- Ensure `MONGODB_URI` points to `blockview` database
+---
+
+### 🧪 Testing
+
+- **Backend Tests**: 28/28 passed (100%)
+- **Test File**: `/app/tests/test_token_signals_drivers.py`
+- **Covered APIs**:
+  - Token Signals (5 tests)
+  - Token Drivers (5 tests)
+  - Token Activity (5 tests)
+  - Token Clusters (4 tests)
+  - Token Smart Money (3 tests)
+  - Top Active Tokens (4 tests)
 
 ---
 
-## Unreleased
+### 📁 Files Changed
 
-### Planned for v2.2.0
-- Advanced Alert Conditions UI
-  - Threshold input (≥ X tokens)
-  - Direction selector (in/out)
-  - Time window (1h / 6h / 24h)
-- WatchlistPage backend integration
-- Alert Edit modal
+#### Backend
+- `backend/src/core/market/market.routes.ts` - Fixed aggregation queries
+- `backend/src/core/market/token_signals.service.ts` - Signal generation logic
+- `backend/src/onchain/ethereum/erc20.indexer.ts` - Crash fix for malformed logs
+
+#### Frontend
+- `frontend/src/components/ActivitySnapshot.jsx` - Updated for new flow structure
+- `frontend/src/components/TokenActivityDrivers.jsx` - API transform for new endpoint
+- `frontend/src/pages/TokensPage.jsx` - Removed duplicate TokenActivityBlock
+- `frontend/src/api/wallets.api.js` - Updated endpoint path
+
+---
+
+## [3.1.0] - 2026-01-17
+
+### Previous Release
+- Connected ERC20 indexer to live blockchain via Infura + Ankr RPC
+- Implemented Activity Snapshot with live metrics
+- Created Market Discovery page with top active tokens
+- Redesigned Alert UX (A1-A3) with insight-first approach
+- Implemented UI Interpretation Layer for empty states
