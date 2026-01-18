@@ -17,12 +17,13 @@ export default function TokenSmartMoney({ tokenAddress, smartMoneyData, classNam
     smartMoneyData.totalValue > 0
   );
 
-  // P2.1 FIX: Empty state is VALID result
+  // P2.1 FIX: Empty state is VALID result - explain WHAT was checked
   if (!hasData) {
     return (
       <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Smart Money Activity</h3>
+          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
         </div>
         <div className="text-center py-6 bg-gray-50 rounded-xl">
           <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
@@ -31,8 +32,9 @@ export default function TokenSmartMoney({ tokenAddress, smartMoneyData, classNam
           <p className="text-sm font-medium text-gray-700 mb-2">
             No smart money patterns identified
           </p>
-          <p className="text-xs text-gray-500 max-w-xs mx-auto">
-            This token has not yet shown activity from historically profitable wallets.
+          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+            We checked historically profitable wallets for interaction with this token. 
+            No qualifying activity was found.
           </p>
         </div>
       </div>
