@@ -177,7 +177,8 @@ export function getEthereumRpc(): EthereumRpc | null {
 export function registerDefaultJobs(): void {
   // ========== ERC-20 INDEXER JOB ==========
   if (env.INDEXER_ENABLED && env.INFURA_RPC_URL) {
-    ethereumRpc = new EthereumRpc(env.INFURA_RPC_URL);
+    // Use both Infura and Ankr for load balancing
+    ethereumRpc = new EthereumRpc(env.INFURA_RPC_URL, env.ANKR_RPC_URL);
 
     scheduler.register('erc20-indexer', env.INDEXER_INTERVAL_MS, async () => {
       if (!ethereumRpc) return;
@@ -197,7 +198,7 @@ export function registerDefaultJobs(): void {
       }
     });
 
-    console.log('[Scheduler] ERC-20 Indexer job registered');
+    console.log('[Scheduler] ERC-20 Indexer job registered (Infura + Ankr load balancing)');
   } else {
     console.log('[Scheduler] ERC-20 Indexer disabled (no INFURA_RPC_URL or INDEXER_ENABLED=false)');
   }
