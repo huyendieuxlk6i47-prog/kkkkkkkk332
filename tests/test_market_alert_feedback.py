@@ -232,7 +232,7 @@ class TestAlertFeedbackLoopAPIs:
         rules_response = api_client.get(f"{BASE_URL}/api/alerts/rules")
         initial_severity = 50  # Default
         
-        response = api_client.post(f"{BASE_URL}/api/alerts/rules/{test_alert_rule}/reduce-sensitivity")
+        response = api_client.post(f"{BASE_URL}/api/alerts/rules/{test_alert_rule}/reduce-sensitivity", json={})
         assert response.status_code == 200
         
         data = response.json()
