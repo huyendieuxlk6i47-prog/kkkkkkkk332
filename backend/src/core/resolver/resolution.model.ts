@@ -7,13 +7,15 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export type ResolvedType = 'actor' | 'token' | 'entity' | 'tx' | 'signal' | 'ens' | 'unknown';
 
+// Resolution lifecycle status (NOT outcome)
 export type ResolutionStatus = 
-  | 'resolved'           // Entity found with data
   | 'pending'            // Waiting to start analysis
-  | 'analyzing'          // Analysis in progress (was 'indexing')
-  | 'completed'          // Analysis finished (TERMINAL - data may be sparse)
-  | 'failed'             // Analysis failed (TERMINAL)
-  | 'insufficient_data'; // Not enough data to resolve
+  | 'analyzing'          // Analysis in progress
+  | 'completed'          // ✅ TERMINAL - analysis finished
+  | 'failed';            // ❌ TERMINAL - analysis failed
+
+// Note: 'insufficient_data' is an OUTCOME, not a lifecycle state.
+// Use resolution.reason or resolution.available to express data quality.
 
 export type SuggestionType = 
   | 'scan_address' 
