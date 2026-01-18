@@ -240,7 +240,7 @@ function IndexerStatusBanner({ status }) {
         )}
         <div className="flex-1">
           <div className={`text-sm font-medium ${isIdle ? 'text-gray-700' : 'text-blue-900'}`}>
-            {status.status === 'indexing' ? 'System is indexing new data' : 'System is idle'}
+            {status.status === 'indexing' ? 'Gathering new data' : 'System ready'}
           </div>
           {status.pendingJobs > 0 && (
             <div className="text-xs text-blue-700">
