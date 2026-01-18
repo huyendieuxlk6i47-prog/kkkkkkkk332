@@ -733,6 +733,15 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
                   {regime.toUpperCase()} {regimeConfidence ? `(${Math.round(regimeConfidence * 100)}%)` : ''}
                 </span>
               )}
+              {/* Data Confidence with Tooltip */}
+              {resolvedData.confidence !== undefined && (
+                <ConfidenceTooltip 
+                  confidence={resolvedData.confidence} 
+                  showBadge={true}
+                  showValue={true}
+                  className="ml-2"
+                />
+              )}
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-300">
               {price ? (
