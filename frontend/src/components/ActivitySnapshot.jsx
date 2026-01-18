@@ -177,13 +177,14 @@ export default function ActivitySnapshot({
   // Extract metrics from loaded data or fallback to marketContext
   const activity = activityData?.activity || marketContext?.activity || {};
   const flows = activityData?.flows || marketContext?.flows || {};
+  const interpretation = activityData?.interpretation || {};
   
   const transfers24h = activity.transfers24h ?? 0;
   const activeWallets = activity.activeWallets ?? 0;
   const largestTransfer = activity.largestTransfer ?? null;
   const netFlow = flows.netFlow ?? 0;
-  const inflow = flows.inflow ?? 0;
-  const outflow = flows.outflow ?? 0;
+  const totalVolume = flows.totalVolume ?? 0;
+  const flowDirection = flows.direction ?? 'neutral';
   
   // Determine if we have ANY activity
   const hasAnyActivity = transfers24h > 0 || activeWallets > 0 || netFlow !== 0;
