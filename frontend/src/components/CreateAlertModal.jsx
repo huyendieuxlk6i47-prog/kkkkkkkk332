@@ -1,16 +1,20 @@
 /**
- * CreateAlertModal - Advanced Token Alert Creation (P1.2)
+ * CreateAlertModal - Insight-First Alert Creation (A1 Contract)
  * 
- * Features:
- * - Signal type selection with dynamic conditions
- * - Threshold input (≥ X tokens)
- * - Direction selector (in/out)
- * - Time window (1h / 6h / 24h)
- * - Summary preview before submit
- * - Telegram integration
+ * CONTRACT:
+ * - Alert = Answer to 3 questions: What/Why/When
+ * - No technical thresholds (netFlow, txCount)
+ * - Only product language (Sensitivity: Low/Medium/High)
+ * - Notification Preview before submit
+ * 
+ * Structure:
+ * 1. [Insight] - What behavior am I watching?
+ * 2. [Why it matters] - Why should I care?
+ * 3. [Sensitivity] - When should I be notified?
+ * 4. [Notification Preview] - What will I receive?
  */
 import { useState, useEffect, useMemo } from 'react';
-import { X, Bell, Loader2, Check, AlertCircle, ChevronDown, Settings2, Clock } from 'lucide-react';
+import { X, Bell, Loader2, Check, AlertCircle, ChevronDown, Clock, Eye, MessageSquare } from 'lucide-react';
 import { alertsApi } from '../api';
 import {
   Tooltip,
@@ -19,74 +23,82 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 
-// Token signal types with insight-first descriptions
-const TOKEN_TRIGGERS = [
+// Token signal types with PRODUCT LANGUAGE (not technical)
+const ALERT_INSIGHTS = [
   { 
     id: 'accumulation', 
-    label: 'Consistent Buying', 
-    description: 'Large wallets are accumulating this token — often seen before price expansion',
+    label: 'Consistent Buying Detected', 
+    whyMatters: 'Large wallets are accumulating this token over time — this often precedes price expansion.',
     emoji: '📥',
-    hasThreshold: true,
-    hasWindow: true,
-    defaultDirection: 'in',
+    previewTitle: 'Consistent Buying Observed',
+    previewBody: 'Large wallets accumulated funds over the last few hours. This behavior often signals long-term positioning.',
   },
   { 
     id: 'distribution', 
-    label: 'Increasing Selling', 
-    description: 'Holders are distributing to the market — can indicate profit-taking or risk reduction',
+    label: 'Increasing Selling Detected', 
+    whyMatters: 'Holders are distributing tokens to the market — can indicate profit-taking or risk reduction.',
     emoji: '📤',
-    hasThreshold: true,
-    hasWindow: true,
-    defaultDirection: 'out',
+    previewTitle: 'Increasing Selling Observed',
+    previewBody: 'Holders distributed tokens over the last few hours. This pattern may indicate profit-taking.',
   },
   { 
     id: 'large_move', 
-    label: 'Large Movement', 
-    description: 'Significant token movement detected — may signal whale activity or exchange flows',
+    label: 'Unusual Large Transfer', 
+    whyMatters: 'Significant token movement detected — may signal whale activity or exchange flows.',
     emoji: '💰',
-    hasThreshold: true,
-    hasWindow: false,
-    showDirection: true,
+    previewTitle: 'Unusual Large Transfer Detected',
+    previewBody: 'A significant transfer was detected. This may indicate whale movement or institutional activity.',
   },
   { 
     id: 'smart_money_entry', 
     label: 'Smart Money Entry', 
-    description: 'Historically profitable wallets are entering — early positioning signal',
+    whyMatters: 'Historically profitable wallets are entering — early positioning signal.',
     emoji: '🐋',
-    hasThreshold: true,
-    hasWindow: true,
-    defaultDirection: 'in',
+    previewTitle: 'Smart Money Entry Detected',
+    previewBody: 'Historically profitable wallets started accumulating. This is often an early positioning signal.',
   },
   { 
     id: 'smart_money_exit', 
     label: 'Smart Money Exit', 
-    description: 'Historically profitable wallets are exiting — potential profit-taking or risk reduction',
+    whyMatters: 'Historically profitable wallets are exiting — potential profit-taking or risk reduction.',
     emoji: '🏃',
-    hasThreshold: true,
-    hasWindow: true,
-    defaultDirection: 'out',
+    previewTitle: 'Smart Money Exit Detected',
+    previewBody: 'Historically profitable wallets are reducing positions. This may indicate profit-taking.',
+  },
+  { 
+    id: 'activity_spike', 
+    label: 'Activity Spike', 
+    whyMatters: 'Sudden surge in activity — could signal news, listings, or coordinated action.',
+    emoji: '⚡',
+    previewTitle: 'Activity Spike Detected',
+    previewBody: 'Unusual surge in activity detected. This often precedes significant price movement.',
   },
 ];
 
-// Time window options
-const WINDOW_OPTIONS = [
-  { value: '1h', label: '1 hour' },
-  { value: '6h', label: '6 hours' },
-  { value: '24h', label: '24 hours' },
+// Sensitivity levels - PRODUCT LANGUAGE (user chooses importance, not math)
+const SENSITIVITY_LEVELS = [
+  { 
+    id: 'low', 
+    label: 'Low',
+    description: 'Only major activity',
+    percentile: 95,
+    window: '24h',
+  },
+  { 
+    id: 'medium', 
+    label: 'Medium',
+    description: 'Notable activity',
+    percentile: 90,
+    window: '6h',
+  },
+  { 
+    id: 'high', 
+    label: 'High',
+    description: 'Any relevant activity',
+    percentile: 80,
+    window: '1h',
+  },
 ];
-
-// Format number with commas
-function formatNumber(num) {
-  if (!num) return '';
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-
-// Parse formatted number
-function parseFormattedNumber(str) {
-  if (!str) return null;
-  const num = parseFloat(str.replace(/,/g, ''));
-  return isNaN(num) ? null : num;
-}
 
 export default function CreateAlertModal({ 
   isOpen, 
@@ -95,38 +107,23 @@ export default function CreateAlertModal({
   tokenSymbol,
   tokenName,
   chain = 'Ethereum',
-  confidence,
   onSuccess,
-  // Edit mode props
   editMode = false,
   existingRule = null,
 }) {
-  // Selected trigger type (single selection for advanced conditions)
-  const [selectedTrigger, setSelectedTrigger] = useState(
+  // Selected insight (what behavior)
+  const [selectedInsight, setSelectedInsight] = useState(
     editMode && existingRule?.triggerTypes?.[0] 
       ? existingRule.triggerTypes[0] 
       : 'accumulation'
   );
   
-  // Advanced conditions
-  const [threshold, setThreshold] = useState(
-    editMode && existingRule?.trigger?.threshold 
-      ? formatNumber(existingRule.trigger.threshold) 
-      : ''
+  // Sensitivity level (when to notify)
+  const [sensitivity, setSensitivity] = useState(
+    editMode && existingRule?.trigger?.sensitivity
+      ? existingRule.trigger.sensitivity
+      : 'medium'
   );
-  const [direction, setDirection] = useState(
-    editMode && existingRule?.trigger?.direction
-      ? existingRule.trigger.direction
-      : 'in'
-  );
-  const [window, setWindow] = useState(
-    editMode && existingRule?.trigger?.window
-      ? existingRule.trigger.window
-      : '6h'
-  );
-  
-  // Show advanced options
-  const [showAdvanced, setShowAdvanced] = useState(editMode || false);
   
   // Notification channels
   const [telegramEnabled, setTelegramEnabled] = useState(
@@ -143,25 +140,24 @@ export default function CreateAlertModal({
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [checkingTelegram, setCheckingTelegram] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
-  // Get current trigger config
-  const currentTrigger = useMemo(() => 
-    TOKEN_TRIGGERS.find(t => t.id === selectedTrigger) || TOKEN_TRIGGERS[0],
-    [selectedTrigger]
+  // Get current insight config
+  const currentInsight = useMemo(() => 
+    ALERT_INSIGHTS.find(i => i.id === selectedInsight) || ALERT_INSIGHTS[0],
+    [selectedInsight]
   );
 
-  // Update direction when trigger changes
-  useEffect(() => {
-    if (currentTrigger.defaultDirection) {
-      setDirection(currentTrigger.defaultDirection);
-    }
-  }, [currentTrigger]);
+  // Get current sensitivity config
+  const currentSensitivity = useMemo(() => 
+    SENSITIVITY_LEVELS.find(s => s.id === sensitivity) || SENSITIVITY_LEVELS[1],
+    [sensitivity]
+  );
 
   // Check Telegram connection on mount
   useEffect(() => {
     if (isOpen) {
       checkTelegramStatus();
-      // Reset state when opening (unless edit mode)
       if (!editMode) {
         setSuccess(false);
         setError(null);
@@ -197,40 +193,28 @@ export default function CreateAlertModal({
     setError(null);
 
     try {
-      // Build trigger config
-      const triggerConfig = {
-        type: selectedTrigger,
-      };
+      // Map sensitivity to internal values
+      const sensitivityConfig = SENSITIVITY_LEVELS.find(s => s.id === sensitivity);
       
-      // Add threshold if provided
-      const thresholdValue = parseFormattedNumber(threshold);
-      if (thresholdValue && currentTrigger.hasThreshold) {
-        triggerConfig.threshold = thresholdValue;
-      }
-      
-      // Add direction
-      if (currentTrigger.showDirection || currentTrigger.defaultDirection) {
-        triggerConfig.direction = direction;
-      }
-      
-      // Add window
-      if (currentTrigger.hasWindow) {
-        triggerConfig.window = window;
-      }
-
       const payload = {
         scope: 'token',
         targetId: tokenAddress,
-        triggerTypes: [selectedTrigger],
-        trigger: triggerConfig,
+        triggerTypes: [selectedInsight],
+        trigger: {
+          type: selectedInsight,
+          sensitivity: sensitivity,
+          // Internal mapping (user never sees this)
+          percentile: sensitivityConfig?.percentile || 90,
+          window: sensitivityConfig?.window || '6h',
+        },
         channels: {
           inApp: uiEnabled,
           telegram: telegramEnabled && telegramConnected,
         },
-        minSeverity: 50,
+        minSeverity: sensitivityConfig?.percentile || 50,
         minConfidence: 0.6,
-        throttle: window || '6h',
-        name: `${tokenSymbol || tokenName || 'Token'} ${currentTrigger.label} Alert`,
+        throttle: sensitivityConfig?.window || '6h',
+        name: `${tokenSymbol || tokenName || 'Token'} ${currentInsight.label}`,
         targetMeta: {
           symbol: tokenSymbol,
           name: tokenName,
@@ -262,24 +246,6 @@ export default function CreateAlertModal({
     }
   };
 
-  // Build summary text
-  const summaryText = useMemo(() => {
-    const parts = [];
-    parts.push(`${currentTrigger.emoji} ${currentTrigger.label}`);
-    
-    const thresholdValue = parseFormattedNumber(threshold);
-    if (thresholdValue && currentTrigger.hasThreshold) {
-      parts.push(`≥ ${formatNumber(thresholdValue)} ${tokenSymbol || 'tokens'}`);
-    }
-    
-    if (currentTrigger.hasWindow) {
-      const windowLabel = WINDOW_OPTIONS.find(w => w.value === window)?.label || window;
-      parts.push(`in ${windowLabel}`);
-    }
-    
-    return parts.join(' • ');
-  }, [selectedTrigger, threshold, window, tokenSymbol, currentTrigger]);
-
   if (!isOpen) return null;
 
   return (
@@ -292,17 +258,20 @@ export default function CreateAlertModal({
         />
         
         {/* Modal */}
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
-          {/* Header with Target Context */}
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+          {/* Header */}
           <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 rounded-xl">
                   <Bell className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">
-                  {editMode ? 'Edit Alert' : 'Create Alert'}
-                </h2>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {editMode ? 'Edit Monitoring' : 'Monitor Behavior'}
+                  </h2>
+                  <p className="text-xs text-gray-500">Get notified when specific activity occurs</p>
+                </div>
               </div>
               <button
                 onClick={onClose}
@@ -313,57 +282,29 @@ export default function CreateAlertModal({
               </button>
             </div>
             
-            {/* Target Context Box */}
-            <div className={`bg-white border rounded-xl p-3 ${editMode ? 'border-gray-300 bg-gray-50' : 'border-gray-200'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Target</span>
+            {/* Target Token */}
+            <div className="bg-white border border-gray-200 rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-lg font-bold text-gray-900">
+                    {tokenSymbol || tokenName || 'Token'}
+                  </span>
+                  <span className="ml-2 text-sm text-gray-500">{chain}</span>
+                </div>
                 {editMode && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">
-                    Cannot be changed
-                  </span>
-                )}
-                {confidence && !editMode && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${
-                    confidence >= 0.8 ? 'bg-emerald-100 text-emerald-700' :
-                    confidence >= 0.6 ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {Math.round(confidence * 100)}% confidence
+                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded">
+                    Target locked
                   </span>
                 )}
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-lg font-bold ${editMode ? 'text-gray-600' : 'text-gray-900'}`}>
-                  {tokenSymbol || tokenName || 'Token'}
-                </span>
-                <span className={`text-sm ${editMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  {chain}
-                </span>
+              <div className="text-xs font-mono text-gray-400 mt-1">
+                {tokenAddress?.slice(0, 12)}...{tokenAddress?.slice(-8)}
               </div>
-              <div className={`text-xs font-mono mt-1 ${editMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                {tokenAddress}
-              </div>
-              {editMode && existingRule?.lastTriggeredAt && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    <span>Last observed: {new Date(existingRule.lastTriggeredAt).toLocaleString()}</span>
-                  </div>
-                </div>
-              )}
-              {editMode && !existingRule?.lastTriggeredAt && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    <span>No activity yet</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Scrollable Content */}
-          <div className="p-4 space-y-4 overflow-y-auto flex-1">
+          <div className="p-4 space-y-5 overflow-y-auto flex-1">
             {/* Success State */}
             {success ? (
               <div className="text-center py-8">
@@ -371,172 +312,116 @@ export default function CreateAlertModal({
                   <Check className="w-8 h-8 text-emerald-600" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">
-                  {editMode ? 'Monitoring Updated' : 'Monitoring Active'}
+                  Monitoring Active
                 </h3>
                 <p className="text-sm text-gray-500">
-                  You'll be notified when this behavior is observed on-chain
+                  You'll be notified when this behavior is observed
                 </p>
               </div>
             ) : (
               <>
-                {/* Signal Type Selection */}
+                {/* SECTION 1: What behavior am I watching? */}
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Alert Type
-                  </label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {TOKEN_TRIGGERS.map((trigger) => (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                    <label className="text-sm font-semibold text-gray-700">
+                      What behavior do you want to monitor?
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    {ALERT_INSIGHTS.map((insight) => (
                       <button
-                        key={trigger.id}
-                        onClick={() => setSelectedTrigger(trigger.id)}
-                        data-testid={`trigger-${trigger.id}`}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                          selectedTrigger === trigger.id
+                        key={insight.id}
+                        onClick={() => setSelectedInsight(insight.id)}
+                        data-testid={`insight-${insight.id}`}
+                        className={`w-full text-left p-4 rounded-xl border transition-all ${
+                          selectedInsight === insight.id
                             ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-500'
-                            : 'border-gray-200 hover:border-gray-300'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                       >
-                        <span className="text-xl">{trigger.emoji}</span>
-                        <div className="flex-1 text-left">
-                          <div className="text-sm font-medium text-gray-900">{trigger.label}</div>
-                          <div className="text-xs text-gray-500">{trigger.description}</div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">{insight.emoji}</span>
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-gray-900 mb-1">
+                              {insight.label}
+                            </div>
+                            <div className="text-xs text-gray-500 leading-relaxed">
+                              {insight.whyMatters}
+                            </div>
+                          </div>
+                          {selectedInsight === insight.id && (
+                            <Check className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                          )}
                         </div>
-                        {selectedTrigger === trigger.id && (
-                          <Check className="w-5 h-5 text-purple-600" />
-                        )}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Advanced Conditions Toggle */}
-                <button
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium"
-                  data-testid="toggle-advanced-btn"
-                >
-                  <Settings2 className="w-4 h-4" />
-                  {showAdvanced ? 'Hide' : 'Show'} Advanced Conditions
-                  <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Advanced Conditions Panel */}
-                {showAdvanced && (
-                  <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                    {/* Threshold */}
-                    {currentTrigger.hasThreshold && (
-                      <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5 block uppercase tracking-wide">
-                          Minimum Amount
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500">≥</span>
-                          <input
-                            type="text"
-                            value={threshold}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/[^0-9,]/g, '');
-                              const num = parseFormattedNumber(val);
-                              setThreshold(num ? formatNumber(num) : val);
-                            }}
-                            placeholder="1,000,000"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            data-testid="threshold-input"
-                          />
-                          <span className="text-sm text-gray-500 font-medium">
-                            {tokenSymbol || 'tokens'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Leave empty for any amount
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Direction (only for large_move) */}
-                    {currentTrigger.showDirection && (
-                      <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5 block uppercase tracking-wide">
-                          Direction
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setDirection('in')}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                              direction === 'in'
-                                ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-500'
-                                : 'bg-white border border-gray-300 text-gray-600 hover:border-gray-400'
-                            }`}
-                            data-testid="direction-in-btn"
-                          >
-                            📥 Inflow
-                          </button>
-                          <button
-                            onClick={() => setDirection('out')}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                              direction === 'out'
-                                ? 'bg-red-100 text-red-700 border-2 border-red-500'
-                                : 'bg-white border border-gray-300 text-gray-600 hover:border-gray-400'
-                            }`}
-                            data-testid="direction-out-btn"
-                          >
-                            📤 Outflow
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Time Window */}
-                    {currentTrigger.hasWindow && (
-                      <div>
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5 block uppercase tracking-wide">
-                          Time Window
-                        </label>
-                        <div className="flex gap-2">
-                          {WINDOW_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() => setWindow(opt.value)}
-                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                                window === opt.value
-                                  ? 'bg-purple-100 text-purple-700 border-2 border-purple-500'
-                                  : 'bg-white border border-gray-300 text-gray-600 hover:border-gray-400'
-                              }`}
-                              data-testid={`window-${opt.value}-btn`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Alert once per window when condition is met
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Notification Channels */}
+                {/* SECTION 2: Sensitivity (When should I be notified?) */}
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Notification Channels
-                  </label>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                    <label className="text-sm font-semibold text-gray-700">
+                      How sensitive should alerts be?
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {SENSITIVITY_LEVELS.map((level) => (
+                      <button
+                        key={level.id}
+                        onClick={() => setSensitivity(level.id)}
+                        data-testid={`sensitivity-${level.id}`}
+                        className={`p-3 rounded-xl border text-center transition-all ${
+                          sensitivity === level.id
+                            ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-500'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className={`text-sm font-semibold mb-0.5 ${
+                          sensitivity === level.id ? 'text-purple-700' : 'text-gray-900'
+                        }`}>
+                          {level.label}
+                        </div>
+                        <div className="text-xs text-gray-500">{level.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 text-center">
+                    {currentSensitivity.id === 'low' && 'You\'ll only be notified for significant activity'}
+                    {currentSensitivity.id === 'medium' && 'Balanced notifications for notable patterns'}
+                    {currentSensitivity.id === 'high' && 'Get notified early, even for smaller patterns'}
+                  </p>
+                </div>
+
+                {/* SECTION 3: Notification Channels */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                    <label className="text-sm font-semibold text-gray-700">
+                      How do you want to be notified?
+                    </label>
+                  </div>
                   <div className="space-y-2">
-                    {/* UI Notifications */}
+                    {/* In-App */}
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                      <div className="flex items-center gap-2">
-                        <Bell className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-700">In-App</span>
+                      <div className="flex items-center gap-3">
+                        <Bell className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-700">In-App</div>
+                          <div className="text-xs text-gray-500">Notifications in this dashboard</div>
+                        </div>
                       </div>
                       <button
                         onClick={() => setUiEnabled(!uiEnabled)}
-                        className={`w-10 h-6 rounded-full transition-colors ${
+                        className={`w-11 h-6 rounded-full transition-colors ${
                           uiEnabled ? 'bg-purple-600' : 'bg-gray-300'
                         }`}
                         data-testid="toggle-inapp-btn"
                       >
-                        <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                          uiEnabled ? 'translate-x-5' : 'translate-x-1'
+                        <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                          uiEnabled ? 'translate-x-5' : 'translate-x-0.5'
                         }`} />
                       </button>
                     </div>
@@ -544,37 +429,39 @@ export default function CreateAlertModal({
                     {/* Telegram */}
                     <div className="p-3 bg-gray-50 rounded-xl">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
+                        <div className="flex items-center gap-3">
+                          <svg className="w-5 h-5 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
                           </svg>
-                          <span className="text-sm font-medium text-gray-700">Telegram</span>
-                          {checkingTelegram ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-                          ) : telegramConnected ? (
-                            <span className="text-xs px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded">
-                              Connected
-                            </span>
-                          ) : null}
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">Telegram</div>
+                            <div className="text-xs text-gray-500">Instant mobile alerts</div>
+                          </div>
                         </div>
-                        {telegramConnected && (
+                        {checkingTelegram ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                        ) : telegramConnected ? (
                           <button
                             onClick={() => setTelegramEnabled(!telegramEnabled)}
-                            className={`w-10 h-6 rounded-full transition-colors ${
+                            className={`w-11 h-6 rounded-full transition-colors ${
                               telegramEnabled ? 'bg-[#0088cc]' : 'bg-gray-300'
                             }`}
                             data-testid="toggle-telegram-btn"
                           >
-                            <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                              telegramEnabled ? 'translate-x-5' : 'translate-x-1'
+                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                              telegramEnabled ? 'translate-x-5' : 'translate-x-0.5'
                             }`} />
                           </button>
+                        ) : (
+                          <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">
+                            Not connected
+                          </span>
                         )}
                       </div>
                       
                       {/* Connect Telegram CTA */}
                       {!checkingTelegram && !telegramConnected && (
-                        <div className="mt-2 pt-2 border-t border-gray-200">
+                        <div className="mt-3 pt-3 border-t border-gray-200">
                           {telegramLink ? (
                             <div className="text-xs">
                               <p className="text-gray-500 mb-1">Click to connect:</p>
@@ -590,16 +477,59 @@ export default function CreateAlertModal({
                           ) : (
                             <button
                               onClick={generateTelegramLink}
-                              className="text-xs text-[#0088cc] hover:underline"
+                              className="text-sm text-[#0088cc] hover:underline font-medium"
                               data-testid="connect-telegram-btn"
                             >
-                              Connect Telegram to receive alerts →
+                              Connect Telegram →
                             </button>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* SECTION 4: Notification Preview - CRITICAL FOR TRUST */}
+                <div>
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    data-testid="toggle-preview-btn"
+                  >
+                    <Eye className="w-4 h-4" />
+                    {showPreview ? 'Hide' : 'Preview'} notification example
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showPreview ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showPreview && (
+                    <div className="mt-3 p-4 bg-gray-900 rounded-xl text-white">
+                      <div className="flex items-start gap-3">
+                        <div className="p-1.5 bg-purple-500 rounded-lg flex-shrink-0">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold mb-1">
+                            🔔 {currentInsight.previewTitle} — {tokenSymbol || 'TOKEN'}
+                          </div>
+                          <p className="text-xs text-gray-300 leading-relaxed mb-3">
+                            {currentInsight.previewBody}
+                          </p>
+                          <div className="text-xs text-gray-400 mb-3">
+                            Last observed: 2 minutes ago
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-blue-400 cursor-pointer hover:underline">
+                              👉 View details
+                            </span>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
+                              👉 Pause monitoring
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Error */}
@@ -609,30 +539,6 @@ export default function CreateAlertModal({
                     {error}
                   </div>
                 )}
-
-                {/* Summary */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    Summary
-                  </div>
-                  <div className="space-y-1.5 text-sm text-gray-700">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>{summaryText}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>Target: {tokenSymbol || tokenName || 'Token'} ({chain})</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>Notifications: {[
-                        uiEnabled && 'In-App',
-                        telegramEnabled && telegramConnected && 'Telegram'
-                      ].filter(Boolean).join(', ') || 'None'}</span>
-                    </div>
-                  </div>
-                </div>
               </>
             )}
           </div>
@@ -649,12 +555,12 @@ export default function CreateAlertModal({
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {editMode ? 'Saving...' : 'Creating...'}
+                    {editMode ? 'Saving...' : 'Starting...'}
                   </>
                 ) : (
                   <>
                     <Bell className="w-4 h-4" />
-                    {editMode ? 'Save Changes' : 'Create Alert'}
+                    {editMode ? 'Save Changes' : 'Start Monitoring'}
                   </>
                 )}
               </button>
