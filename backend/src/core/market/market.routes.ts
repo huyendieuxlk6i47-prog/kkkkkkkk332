@@ -199,12 +199,13 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     const normalizedAddress = tokenAddress.toLowerCase();
     
     // Aggregate from logs_erc20 (raw indexed data)
+    // Use blockTimestamp field for filtering
     const [transferStats, walletStats, largestTransfer] = await Promise.all([
       // Count and sum transfers
       ERC20LogModel.aggregate([
         { $match: { 
           token: normalizedAddress,
-          timestamp: { $gte: since }
+          blockTimestamp: { $gte: since }
         }},
         { $group: {
           _id: null,
@@ -218,7 +219,7 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
       ERC20LogModel.aggregate([
         { $match: { 
           token: normalizedAddress,
-          timestamp: { $gte: since }
+          blockTimestamp: { $gte: since }
         }},
         { $group: { _id: null, 
           senders: { $addToSet: '$from' },
@@ -235,7 +236,7 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
       // Find largest transfer
       ERC20LogModel.findOne({ 
         token: normalizedAddress,
-        timestamp: { $gte: since }
+        blockTimestamp: { $gte: since }
       }).sort({ amount: -1 }).limit(1),
     ]);
     
