@@ -285,8 +285,9 @@ WalletsPage UI contract implementation - same principle as TokensPage
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| Confidence Score Explanation | Tooltip explaining data completeness | P2 |
-| Advanced Alert Parameters UI | Tuning thresholds for alerts | P3 |
+| Confidence Score Tooltip | "Confidence reflects data completeness, not signal strength" | P2 |
+| Alert Feedback Loop (A4) | "This alert triggered 3 times in 24h" + reduce sensitivity CTA | P3 |
+| Advanced Alert Parameters | Threshold window, direction, sensitivity tuning | P3 |
 
 **P2 - MarketPage Wiring ✅ COMPLETE (2026-01-18)**
 Market connected to Watchlist & Alerts - no longer shows empty analytics
