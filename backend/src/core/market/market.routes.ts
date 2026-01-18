@@ -233,7 +233,7 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
         }},
       ]),
       
-      // Count unique wallets (senders + receivers)
+      // Count unique wallets (senders ∪ receivers)
       ERC20LogModel.aggregate([
         { $match: { 
           token: normalizedAddress,
@@ -251,27 +251,93 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
         }}
       ]),
       
-      // Find largest transfer
-      ERC20LogModel.findOne({ 
-        token: normalizedAddress,
-        blockTimestamp: { $gte: since }
-      }).sort({ amount: -1 }).limit(1),
+      // Find largest transfer - FIXED: convert to number for proper sorting
+      ERC20LogModel.aggregate([
+        { $match: { 
+          token: normalizedAddress,
+          blockTimestamp: { $gte: since }
+        }},
+        { $addFields: { amountNum: { $toDouble: '$amount' } }},
+        { $sort: { amountNum: -1 }},
+        { $limit: 1 },
+        { $project: { amount: '$amountNum', from: 1, to: 1, txHash: 1 }}
+      ]),
       
-      // Calculate net flow by aggregating per wallet
-      // Positive = received, Negative = sent
+      // Calculate net flow: sum of (received - sent) per external wallet
+      // Exclude known DEX/exchange addresses for cleaner signal
       ERC20LogModel.aggregate([
         { $match: { 
           token: normalizedAddress,
           blockTimestamp: { $gte: since }
         }},
         { $facet: {
-          incoming: [
-            { $group: { _id: '$to', amount: { $sum: { $toDouble: '$amount' } } } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
+          // Total inflow (sum of all received)
+          totalIn: [
+            { $group: { _id: null, total: { $sum: { $toDouble: '$amount' } } } }
           ],
-          outgoing: [
-            { $group: { _id: '$from', amount: { $sum: { $toDouble: '$amount' } } } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
+          // Top accumulators (wallets with net positive flow)
+          topAccumulators: [
+            { $group: { 
+              _id: '$to', 
+              received: { $sum: { $toDouble: '$amount' } }
+            }},
+            { $lookup: {
+              from: 'logs_erc20',
+              let: { wallet: '$_id', tkn: normalizedAddress, since: since },
+              pipeline: [
+                { $match: { 
+                  $expr: { 
+                    $and: [
+                      { $eq: ['$from', '$$wallet'] },
+                      { $eq: ['$token', '$$tkn'] },
+                      { $gte: ['$blockTimestamp', '$$since'] }
+                    ]
+                  }
+                }},
+                { $group: { _id: null, sent: { $sum: { $toDouble: '$amount' } } }}
+              ],
+              as: 'outgoing'
+            }},
+            { $addFields: { 
+              sent: { $ifNull: [{ $arrayElemAt: ['$outgoing.sent', 0] }, 0] },
+              netFlow: { $subtract: ['$received', { $ifNull: [{ $arrayElemAt: ['$outgoing.sent', 0] }, 0] }] }
+            }},
+            { $match: { netFlow: { $gt: 0 } }},
+            { $sort: { netFlow: -1 }},
+            { $limit: 10 },
+            { $group: { _id: null, totalNetInflow: { $sum: '$netFlow' } }}
+          ],
+          // Top distributors (wallets with net negative flow)  
+          topDistributors: [
+            { $group: { 
+              _id: '$from', 
+              sent: { $sum: { $toDouble: '$amount' } }
+            }},
+            { $lookup: {
+              from: 'logs_erc20',
+              let: { wallet: '$_id', tkn: normalizedAddress, since: since },
+              pipeline: [
+                { $match: { 
+                  $expr: { 
+                    $and: [
+                      { $eq: ['$to', '$$wallet'] },
+                      { $eq: ['$token', '$$tkn'] },
+                      { $gte: ['$blockTimestamp', '$$since'] }
+                    ]
+                  }
+                }},
+                { $group: { _id: null, received: { $sum: { $toDouble: '$amount' } } }}
+              ],
+              as: 'incoming'
+            }},
+            { $addFields: { 
+              received: { $ifNull: [{ $arrayElemAt: ['$incoming.received', 0] }, 0] },
+              netFlow: { $subtract: [{ $ifNull: [{ $arrayElemAt: ['$incoming.received', 0] }, 0] }, '$sent'] }
+            }},
+            { $match: { netFlow: { $lt: 0 } }},
+            { $sort: { netFlow: 1 }},
+            { $limit: 10 },
+            { $group: { _id: null, totalNetOutflow: { $sum: '$netFlow' } }}
           ]
         }}
       ]),
