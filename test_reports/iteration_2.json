@@ -34,7 +34,7 @@
   },
   "test_credentials": {
     "test_user_id": "anonymous",
-    "backend_url": "https://chain-insights-3.preview.emergentagent.com"
+    "backend_url": "https://tokentrack-2.preview.emergentagent.com"
   },
   "seed_data_creation": "Test alert rules created during testing were cleaned up via TestCleanup class",
   "retest_needed": false,
