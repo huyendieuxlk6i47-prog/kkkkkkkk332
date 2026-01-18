@@ -130,16 +130,53 @@ const NetFlowCard = ({ netFlow, inflow, outflow }) => {
  * 
  * ALWAYS renders when status === 'completed'
  * Shows what the system checked, even if results are empty
+ * LOADS REAL DATA from indexed transfers
  */
 export default function ActivitySnapshot({ 
+  tokenAddress,
   marketContext, 
   resolvedData,
   timeWindow = '24h',
   className = '' 
 }) {
-  // Extract metrics from marketContext
-  const activity = marketContext?.activity || {};
-  const flows = marketContext?.flows || {};
+  const [loading, setLoading] = useState(true);
+  const [activityData, setActivityData] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Load real activity data from backend
+  useEffect(() => {
+    async function loadActivity() {
+      if (!tokenAddress && !resolvedData?.normalizedId) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const address = tokenAddress || resolvedData?.normalizedId;
+        const response = await getTokenActivity(address, timeWindow);
+        
+        if (response?.ok && response?.data) {
+          setActivityData(response.data);
+        } else {
+          setError('Failed to load activity');
+        }
+      } catch (err) {
+        console.error('Failed to load token activity:', err);
+        setError('Failed to load');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadActivity();
+  }, [tokenAddress, resolvedData?.normalizedId, timeWindow]);
+  
+  // Extract metrics from loaded data or fallback to marketContext
+  const activity = activityData?.activity || marketContext?.activity || {};
+  const flows = activityData?.flows || marketContext?.flows || {};
   
   const transfers24h = activity.transfers24h ?? 0;
   const activeWallets = activity.activeWallets ?? 0;
@@ -150,6 +187,22 @@ export default function ActivitySnapshot({
   
   // Determine if we have ANY activity
   const hasAnyActivity = transfers24h > 0 || activeWallets > 0 || netFlow !== 0;
+  
+  // Loading state
+  if (loading) {
+    return (
+      <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="w-5 h-5 text-blue-500" />
+          <h3 className="text-sm font-semibold text-gray-900">Activity Snapshot</h3>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <span className="ml-2 text-sm text-gray-500">Loading activity data...</span>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div 
@@ -162,9 +215,16 @@ export default function ActivitySnapshot({
           <Activity className="w-5 h-5 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-900">Activity Snapshot</h3>
         </div>
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-          {timeWindow} window
-        </span>
+        <div className="flex items-center gap-2">
+          {activityData?.dataSource === 'indexed_transfers' && (
+            <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+              Live Data
+            </span>
+          )}
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+            {timeWindow} window
+          </span>
+        </div>
       </div>
       
       {/* Metrics Grid - ALWAYS shown */}
@@ -220,6 +280,7 @@ export default function ActivitySnapshot({
             <span className="font-medium">Analysis complete.</span>{' '}
             We analyzed on-chain transfers for this token and detected activity in the selected time window.
             {activeWallets > 0 && ` ${formatNumber(activeWallets)} unique wallets participated.`}
+            {transfers24h > 0 && ` ${formatNumber(transfers24h)} transfers recorded.`}
           </p>
         ) : (
           <p className="text-xs text-gray-600">
