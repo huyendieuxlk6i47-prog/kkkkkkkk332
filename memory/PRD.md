@@ -266,9 +266,9 @@ WalletsPage UI contract implementation - same principle as TokensPage
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| WalletsPage Interpretation Layer | Same UI contract as TokensPage - Behavior Snapshot | P1 |
-| MarketPage Implementation | Connect to Watchlist and Alerts | P2 |
-| Confidence Score Explanation | Tooltip explaining data completeness | P3 |
+| MarketPage Implementation | Connect to Watchlist and Alerts | P1 |
+| Confidence Score Explanation | Tooltip explaining data completeness | P2 |
+| Advanced Alert Parameters UI | Tuning thresholds for alerts | P3 |
 | Multi-chain | Arbitrum, BNB support | Medium |
 | Token Tabs | Overview, Flows, Holders | Medium |
 | Signal Explanations | "Why was this detected?" | Low |
