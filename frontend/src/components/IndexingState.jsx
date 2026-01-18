@@ -129,11 +129,11 @@ export function IndexingState({
           {isRunning && (
             <>
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              <span>Processing...</span>
+              <span>Gathering on-chain data...</span>
             </>
           )}
-          {isQueued && <span>Waiting in queue...</span>}
-          {isDone && <span>All steps completed</span>}
+          {isQueued && <span>Waiting to start...</span>}
+          {isDone && <span>All data collected</span>}
           {isFailed && attempts > 0 && (
             <span>Failed after {attempts} attempt{attempts > 1 ? 's' : ''}</span>
           )}
