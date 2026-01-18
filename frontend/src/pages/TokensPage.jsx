@@ -479,21 +479,31 @@ function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
     );
   }
 
-  // Has signals - show them with LIVE badge
-  const getSignalColor = (type) => {
-    if (type === 'accumulation' || type === 'smart_money_entry') return 'bg-emerald-500';
-    if (type === 'distribution' || type === 'smart_money_exit') return 'bg-red-500';
-    if (type === 'large_move') return 'bg-purple-500';
-    if (type === 'activity_spike') return 'bg-amber-500';
-    return 'bg-gray-400';
-  };
-  
-  const getSignalBadgeColor = (type) => {
-    if (type === 'accumulation' || type === 'smart_money_entry') return 'bg-emerald-100 text-emerald-700';
-    if (type === 'distribution' || type === 'smart_money_exit') return 'bg-red-100 text-red-700';
-    if (type === 'large_move') return 'bg-purple-100 text-purple-700';
-    if (type === 'activity_spike') return 'bg-amber-100 text-amber-700';
-    return 'bg-gray-100 text-gray-700';
+  // Has signals - show NARRATIVE format, not list
+  // Build narrative from signals
+  const buildNarrative = () => {
+    const parts = [];
+    const spike = signals.find(s => s.type === 'activity_spike');
+    const large = signals.find(s => s.type === 'large_move');
+    const wallets = signals.find(s => s.title?.includes('Wallet'));
+    
+    if (spike?.evidence?.deviation) {
+      parts.push(`a ${spike.evidence.deviation.toFixed(0)}× increase in transfer activity`);
+    }
+    if (large?.evidence?.deviation) {
+      parts.push(`a ${large.evidence.deviation.toFixed(0)}× large transfer`);
+    }
+    if (wallets?.evidence?.deviation) {
+      parts.push(`${wallets.evidence.deviation.toFixed(0)}× more active wallets`);
+    }
+    
+    if (parts.length === 0) {
+      return signals.map(s => s.title || s.type).join(', ');
+    }
+    
+    if (parts.length === 1) return parts[0];
+    if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+    return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
   };
   
   return (
@@ -504,36 +514,39 @@ function TokenSignalsBlock({ tokenAddress, signals: propSignals }) {
           <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-medium">
             Live
           </span>
-          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">
-            {signals.length} signal{signals.length > 1 ? 's' : ''}
+          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+            {signals.length} deviation{signals.length !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
-      <div className="space-y-2">
-        {signals.slice(0, 5).map((signal, i) => (
-          <div key={i} className="p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-start justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${getSignalColor(signal.type)}`} />
-                <span className={`text-xs px-2 py-0.5 rounded ${getSignalBadgeColor(signal.type)}`}>
-                  {signal.title || signal.type}
-                </span>
-              </div>
-              <span className="text-xs text-gray-400">
-                {signal.confidence ? `${Math.round(signal.confidence * 100)}%` : ''}
+      
+      {/* NARRATIVE FORMAT - headline first */}
+      <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl mb-3">
+        <p className="text-sm font-semibold text-amber-900 mb-2">
+          {interpretation?.headline || 'Unusual activity detected'}
+        </p>
+        <p className="text-xs text-amber-800">
+          We observed {signals.length} deviation{signals.length !== 1 ? 's' : ''} from the {baseline?.periodHours || 168}-hour baseline, 
+          including {buildNarrative()}.
+        </p>
+      </div>
+      
+      {/* Supporting evidence - collapsed by default */}
+      <details className="text-xs">
+        <summary className="text-gray-500 cursor-pointer hover:text-gray-700">
+          View signal details ({signals.length})
+        </summary>
+        <div className="mt-2 space-y-2">
+          {signals.slice(0, 5).map((signal, i) => (
+            <div key={i} className="p-2 bg-gray-50 rounded-lg flex items-center justify-between">
+              <span className="text-gray-700">{signal.title}</span>
+              <span className="text-gray-500">
+                {signal.evidence?.deviation ? `${signal.evidence.deviation.toFixed(1)}×` : ''}
               </span>
             </div>
-            <p className="text-xs text-gray-600 mt-1">
-              {signal.description}
-            </p>
-            {signal.evidence && (
-              <div className="mt-2 text-xs text-gray-500">
-                Deviation: <span className="font-medium">{signal.evidence.deviation?.toFixed(1)}x</span> from baseline
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }
