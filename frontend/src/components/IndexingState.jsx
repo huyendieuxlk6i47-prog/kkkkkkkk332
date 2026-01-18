@@ -150,7 +150,7 @@ export function IndexingState({
       {showHint && (isRunning || isQueued) && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="text-xs text-gray-400 text-center">
-            💡 You can leave this page. We'll continue indexing in the background.
+            You can leave this page — analysis continues in the background
           </p>
         </div>
       )}
