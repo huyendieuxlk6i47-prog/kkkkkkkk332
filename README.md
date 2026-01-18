@@ -561,6 +561,29 @@ curl -X GET "https://api.blockview.com/api/alerts/rules" \
 
 ---
 
+## 📝 Recent Changes (v3.1.0)
+
+### January 2026
+
+#### 🔧 Bug Fixes
+- **Wallet Alerts**: Fixed `CreateWalletAlertModal` to use correct backend trigger types (`accumulation`, `distribution`, `large_move`, `smart_money_entry`, `activity_spike`)
+- **Legacy Indexing Logic**: Removed `confidence < 0.4 = indexing` logic - backend status is now single source of truth
+- **Search Stability**: Improved resolver integration on Wallets and Tokens pages
+
+#### ✨ UX Improvements
+- Replaced all "Indexing" terminology with "Analyzing" across UI
+- Updated empty states with clearer, actionable descriptions
+- Improved loading messages: "Looking up wallet...", "Gathering activity data"
+- Better confidence messaging: "Limited on-chain activity" instead of technical terms
+- Enhanced hints: "You can leave this page — analysis continues in background"
+
+#### 🏗 Architecture
+- Phase B2-B4 backend schemas, models, and API endpoints implemented (skeleton)
+- `TrackWalletButton` component integrated into WalletsPage
+- Unified alert creation flow for both tokens and wallets
+
+---
+
 ## 🛠 Development
 
 ### Running Tests
