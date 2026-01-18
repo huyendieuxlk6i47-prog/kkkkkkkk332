@@ -633,7 +633,9 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
   const regimeConfidence = marketContext?.regime?.confidence;
   const signals = marketContext?.recentSignals || [];
   
-  const actionsEnabled = resolvedData.confidence >= CONFIDENCE_THRESHOLDS.ACTIONS_ENABLED;
+  // P1.1 FIX: Actions always enabled when analysis complete
+  // Confidence can be shown as badge/tooltip, but doesn't gate actions
+  const actionsEnabled = true;
 
   return (
     <div className="space-y-4">
