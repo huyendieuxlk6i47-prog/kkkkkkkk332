@@ -539,13 +539,18 @@ export default function ArkhamHome() {
 
           {/* Main Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Empty State - if no tracked items */}
-            {!loading && !hasAnyTrackedItems && (
-              <EmptyMarketState />
-            )}
+            {/* Top Active Tokens - MARKET DISCOVERY (always show) */}
+            <TopActiveTokensCard loading={loading} onRefresh={handleRefresh} />
             
-            {/* Tracked Tokens */}
-            {(loading || trackedTokens.length > 0) && (
+            {/* Recent Alerts */}
+            <RecentAlertsCard 
+              alerts={recentAlerts}
+              loading={loading}
+              onViewAll={() => navigate('/alerts')}
+            />
+            
+            {/* Tracked Tokens - if any */}
+            {trackedTokens.length > 0 && (
               <TrackedItemsCard 
                 items={trackedTokens}
                 type="token"
@@ -554,8 +559,8 @@ export default function ArkhamHome() {
               />
             )}
             
-            {/* Tracked Wallets */}
-            {(loading || trackedWallets.length > 0) && (
+            {/* Tracked Wallets - if any */}
+            {trackedWallets.length > 0 && (
               <TrackedItemsCard 
                 items={trackedWallets}
                 type="wallet"
@@ -563,15 +568,6 @@ export default function ArkhamHome() {
                 onViewAll={() => navigate('/watchlist')}
               />
             )}
-            
-            {/* Recent Alerts - full width */}
-            <div className="lg:col-span-2">
-              <RecentAlertsCard 
-                alerts={recentAlerts}
-                loading={loading}
-                onViewAll={() => navigate('/alerts')}
-              />
-            </div>
           </div>
         </div>
       </div>
