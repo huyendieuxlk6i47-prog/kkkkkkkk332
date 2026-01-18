@@ -98,6 +98,9 @@ export default function TokenSmartMoney({ tokenAddress, className = '' }) {
   const { participants, totalSmartVolume, shareOfTotalVolume, checkedWallets } = smartMoneyData;
   const accumulators = participants?.filter(w => w.action === 'accumulating') || [];
   const distributors = participants?.filter(w => w.action === 'distributing') || [];
+  
+  // Format recent activity summary
+  const recentActivity = interpretation.description || null;
 
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
