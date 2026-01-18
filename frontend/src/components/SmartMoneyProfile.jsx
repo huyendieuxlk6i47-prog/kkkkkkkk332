@@ -136,15 +136,16 @@ const MetricCard = ({ label, value, icon: Icon, tooltip }) => {
 
 /**
  * Main SmartMoneyProfile Component
+ * 
+ * NEW: Uses /api/wallets/:address/performance API
  */
 export function SmartMoneyProfile({ 
   walletAddress, 
   chain = 'Ethereum',
   className = '',
 }) {
-  const [profile, setProfile] = useState(null);
+  const [apiData, setApiData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState(null);
   
   const fetchProfile = useCallback(async () => {
@@ -154,35 +155,33 @@ export function SmartMoneyProfile({
     setError(null);
     
     try {
-      const response = await getWalletSmartProfile(walletAddress, chain);
-      if (response.ok) {
-        setProfile(response.data);
+      // Use new API endpoint
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/wallets/${walletAddress}/performance`
+      );
+      const data = await response.json();
+      
+      if (data?.ok && data?.data) {
+        setApiData(data.data);
       } else {
-        setError(response.error || 'Failed to load profile');
+        setError(data?.error || 'Failed to load profile');
       }
     } catch (err) {
-      console.error('Error fetching smart money profile:', err);
+      console.error('Error fetching performance:', err);
       setError('Unable to load historical performance');
     } finally {
       setLoading(false);
     }
-  }, [walletAddress, chain]);
+  }, [walletAddress]);
   
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
   
-  const handleRecalculate = async () => {
-    setCalculating(true);
-    try {
-      await calculateWalletSmartProfile(walletAddress, chain);
-      await fetchProfile();
-    } catch (err) {
-      console.error('Error calculating profile:', err);
-    } finally {
-      setCalculating(false);
-    }
-  };
+  // Extract data
+  const performanceLabel = apiData?.performanceLabel || 'insufficient_data';
+  const interpretation = apiData?.interpretation || {};
+  const analysisStatus = apiData?.analysisStatus;
   
   // Loading state
   if (loading) {
