@@ -307,6 +307,8 @@ async function updateProgress(taskId: string, progress: number, step: string): P
  * Mark task as done
  */
 async function markDone(taskId: string): Promise<void> {
+  const task = await BootstrapTaskModel.findById(taskId);
+  
   await BootstrapTaskModel.updateOne(
     { _id: taskId },
     {
@@ -318,6 +320,16 @@ async function markDone(taskId: string): Promise<void> {
       },
     }
   );
+  
+  // P0 FIX: Update resolver cache to 'completed' status
+  if (task?.address) {
+    try {
+      const { updateResolutionAfterBootstrap } = await import('../resolver/resolver.service.js');
+      await updateResolutionAfterBootstrap(task.address, 'done');
+    } catch (err) {
+      console.error('[BOOTSTRAP] Failed to update resolution after completion:', err);
+    }
+  }
   
   // Emit stats update when task done (P2.3.B)
   emitStatsUpdate();
