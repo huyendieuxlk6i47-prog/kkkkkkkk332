@@ -241,8 +241,8 @@ export default function ActivitySnapshot({
         {/* Net Flow */}
         <NetFlowCard 
           netFlow={netFlow}
-          inflow={inflow}
-          outflow={outflow}
+          totalVolume={totalVolume}
+          direction={flowDirection}
         />
         
         {/* Active Wallets */}
