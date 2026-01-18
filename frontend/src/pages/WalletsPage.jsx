@@ -578,7 +578,7 @@ export default function WalletsPage() {
             <div className="flex items-center justify-center py-16">
               <div className="text-center">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Resolving wallet...</p>
+                <p className="text-gray-500">Looking up wallet...</p>
               </div>
             </div>
           )}
