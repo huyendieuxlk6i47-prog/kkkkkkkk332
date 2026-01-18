@@ -713,6 +713,7 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
 
       {/* Section 2: ACTIVITY SNAPSHOT - КРИТИЧЕСКИ ВАЖНЫЙ БЛОК */}
       <ActivitySnapshot 
+        tokenAddress={resolvedData.normalizedId}
         marketContext={marketContext}
         resolvedData={resolvedData}
         timeWindow="24h"
