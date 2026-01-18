@@ -16,11 +16,11 @@ const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a
 // Sync key for ERC-20 transfers
 const SYNC_KEY = 'erc20_transfers';
 
-// Maximum blocks to fetch per batch (reduced for Infura free tier - 10k log limit)
-const MAX_BLOCKS_PER_BATCH = 100;
+// Maximum blocks to fetch per batch (reduced for public RPC limits)
+const MAX_BLOCKS_PER_BATCH = 10;
 
 // Default start block (recent blocks to avoid huge initial sync)
-const DEFAULT_START_OFFSET = 100; // Start 100 blocks behind current
+const DEFAULT_START_OFFSET = 50; // Start 50 blocks behind current
 
 export interface SyncResult {
   fromBlock: number;
