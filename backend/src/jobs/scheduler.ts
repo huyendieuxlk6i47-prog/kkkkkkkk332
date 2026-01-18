@@ -35,6 +35,9 @@ import { dispatchActions, getDispatchActionsStatus } from './dispatch_actions.jo
 import { buildActionSuggestions, getBuildActionSuggestionsStatus } from './build_action_suggestions.job.js';
 import { simulateCopy, getSimulateCopyStatus } from './simulate_copy.job.js';
 
+// P0 FIX - Alert Evaluation Job
+import { evaluateAlertRules, getEvaluateAlertRulesStatus } from './evaluate_alert_rules.job.js';
+
 // Phase 14A - Market Reality Layer Jobs
 import { buildPricePoints, getBuildPricePointsStatus } from './build_price_points.job.js';
 import { buildMarketMetrics, getBuildMarketMetricsStatus } from './build_market_metrics.job.js';
