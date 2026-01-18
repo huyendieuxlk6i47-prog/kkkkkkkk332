@@ -22,6 +22,7 @@ import DataAvailability, { ResolutionInfo, StatusBadge } from '../components/Dat
 import BehaviorFingerprint from '../components/BehaviorFingerprint';
 import ReputationCard from '../components/ReputationCard';
 import WalletProfileCard from '../components/WalletProfileCard';
+import WalletActivitySnapshot from '../components/WalletActivitySnapshot';
 import { IndexingState } from '../components/IndexingState';
 import { useBootstrapProgress, formatStepName } from '../hooks/useBootstrapProgress';
 import { useWebSocket } from '../hooks/useWebSocket';
