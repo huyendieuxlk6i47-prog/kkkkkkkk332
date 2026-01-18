@@ -234,6 +234,13 @@ Answer: "Who is this wallet?"
 
 ### 🔧 Bug Fixes Completed (2026-01-18)
 
+**Critical Data Fixes (2026-01-18) ✅ FIXED**
+- **Largest Transfer**: Fixed MongoDB string sorting → numeric sorting. Now shows $21.9M (was $10K)
+- **Net Flow**: Changed from total volume to actual net flow (accumulators - distributors). Shows direction (inflow/outflow)
+- **Active Wallets**: Added definition "unique senders ∪ receivers" in API response
+- **Indexer crash**: Fixed parseTransferLog to handle missing topics array
+- **API interpretation**: Added `interpretation` object with metric definitions
+
 **P0 - Wallet Watchlist + Alerts ✅ FIXED**
 - Fixed CreateWalletAlertModal.jsx to use correct backend trigger types
 - Valid triggers: accumulation, distribution, large_move, smart_money_entry, activity_spike
