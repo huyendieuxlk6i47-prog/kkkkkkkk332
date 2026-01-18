@@ -275,6 +275,7 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
 
       {/* Section 2: WALLET ACTIVITY SNAPSHOT - КЛЮЧЕВОЙ УТЕРЯННЫЙ БЛОК */}
       <WalletActivitySnapshot 
+        walletAddress={resolvedData.normalizedId}
         walletData={walletData}
         walletProfile={walletProfile}
         timeWindow="24h"

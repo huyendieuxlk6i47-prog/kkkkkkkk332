@@ -261,18 +261,6 @@ export function RelatedAddresses({
       </Card>
     );
   }
-              <Users className="w-6 h-6 text-slate-400" />
-            </div>
-            <p className="text-sm font-medium text-slate-700 mb-2">No related addresses detected</p>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              We analyzed timing correlation, token overlap, and behavioral similarity. 
-              No linked wallets were identified.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
   
   return (
     <Card className={className} data-testid="related-addresses">
