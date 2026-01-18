@@ -65,6 +65,30 @@ Answer the question: "Who is this wallet?"
 - **Confidence Score**: based on data quality
 - **Human-readable Summaries**: "Active high-volume trader"
 
+### 🔗 Wallet → Token Correlation (Phase B2 - Skeleton)
+Answer the question: "Who is driving this token's activity?"
+
+- **Driver Analysis**: Identify wallets influencing token price
+- **Role Classification**: Accumulator, Distributor, Market Maker
+- **Influence Scoring**: Quantify wallet impact on token
+- **Participation Metrics**: buy/sell count, volume, timing
+
+### 🕸 Wallet Clusters (Phase B3 - Skeleton)
+Answer the question: "Is this one person with many wallets?"
+
+- **Behavioral Clustering**: Group wallets by similar patterns
+- **Entity Attribution**: Link addresses to single actor
+- **Confidence Scoring**: Reliability of cluster assignment
+- **Evidence Tracking**: Why wallets are grouped together
+
+### 🧠 Smart Money Patterns (Phase B4 - Skeleton)
+Answer the question: "Should I follow this wallet?"
+
+- **Performance Tracking**: Historical ROI analysis
+- **Accuracy Scoring**: Entry/exit timing quality
+- **Pattern Recognition**: Accumulation/distribution detection
+- **Smart Money Labels**: Whale, Insider, Bot, etc.
+
 ### 🔔 Alert Management
 - **Create alerts** for tokens, wallets, and actors
 - **Signal types**: Accumulation, Distribution, Large Move, Smart Money Entry/Exit
