@@ -87,3 +87,25 @@ export async function getFlowAnomalies(asset = '0x000000000000000000000000000000
   });
   return response.data;
 }
+
+/**
+ * Get tokens with emerging signals (Discovery Layer)
+ * @param {number} limit - Number of tokens to return
+ */
+export async function getEmergingSignals(limit = 10) {
+  const response = await api.get('/api/market/emerging-signals', {
+    params: { limit }
+  });
+  return response.data;
+}
+
+/**
+ * Get new active actors/wallets (Discovery Layer)
+ * @param {number} limit - Number of actors to return
+ */
+export async function getNewActors(limit = 10) {
+  const response = await api.get('/api/market/new-actors', {
+    params: { limit }
+  });
+  return response.data;
+}
