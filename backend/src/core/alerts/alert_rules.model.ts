@@ -78,6 +78,38 @@ export interface LastTriggeredMeta {
 export type AlertTargetType = 'token' | 'wallet' | 'actor';
 
 /**
+ * Sensitivity presets for alerts
+ * Maps to concrete threshold parameters
+ */
+export type SensitivityLevel = 'low' | 'medium' | 'high';
+
+/**
+ * Alert priority levels
+ */
+export type AlertPriority = 'low' | 'medium' | 'high';
+
+/**
+ * Alert Stats - 24h rolling window statistics
+ * This is the SEMANTIC BACKBONE for Adaptive Alerts
+ */
+export interface AlertStats24h {
+  // Core counts
+  triggers24h: number;
+  suppressedCount24h: number;  // Rate-limited / silent updates
+  
+  // Quality indicators
+  highestPriority24h: AlertPriority;
+  dominantReason24h?: string;  // Most common trigger reason
+  
+  // Computed
+  noiseScore: number;  // triggers24h + suppressedCount24h * 0.5
+  
+  // Window tracking
+  windowStart: Date;
+  lastUpdated: Date;
+}
+
+/**
  * Feedback status for alert fatigue detection
  */
 export interface AlertFeedbackStatus {
@@ -107,6 +139,9 @@ export interface IAlertRule extends Document {
   minConfidence: number;
   minStability?: number;
   
+  // Sensitivity preset (A5.4)
+  sensitivity: SensitivityLevel;
+  
   // Notification channels
   channels: AlertChannels;
   
@@ -125,6 +160,9 @@ export interface IAlertRule extends Document {
   // Alert Feedback Loop (P3)
   recentTriggerTimestamps: Date[];  // Rolling window of trigger times
   feedbackStatus?: AlertFeedbackStatus;
+  
+  // A5.1: Alert Stats - 24h rolling window
+  stats24h?: AlertStats24h;
   
   // Metadata
   name?: string;
