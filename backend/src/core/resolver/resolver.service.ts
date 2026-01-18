@@ -416,12 +416,27 @@ async function resolveAddress(address: string): Promise<ResolutionResult> {
     confidence = 0.42;
     reason = `Address detected with ${transfersCount} transfers and ${relationsCount} relations, but not yet fully indexed.`;
     suggestions = ['scan_address', 'view_as_raw_wallet'];
-    status = 'indexing';
     
-    // Trigger lazy bootstrap (P2.1)
+    // P0 FIX: Check bootstrap status first
     bootstrapInfo = await enqueueBootstrap(addr, 'address');
-    if (bootstrapInfo.bootstrap?.etaSeconds) {
-      reason += ` Estimated indexing time: ~${bootstrapInfo.bootstrap.etaSeconds}s.`;
+    
+    // Set status based on bootstrap state
+    if (bootstrapInfo.bootstrap?.status === 'done') {
+      status = 'completed'; // Analysis finished, even if sparse data
+      reason += ' Analysis completed.';
+    } else if (bootstrapInfo.bootstrap?.status === 'failed') {
+      status = 'failed';
+      reason += ' Analysis failed after multiple attempts.';
+    } else if (bootstrapInfo.bootstrap?.status === 'running') {
+      status = 'analyzing';
+      if (bootstrapInfo.bootstrap.etaSeconds) {
+        reason += ` Analysis in progress. ETA: ~${bootstrapInfo.bootstrap.etaSeconds}s.`;
+      }
+    } else {
+      status = 'analyzing'; // queued or starting
+      if (bootstrapInfo.bootstrap?.etaSeconds) {
+        reason += ` Queued for analysis. Estimated time: ~${bootstrapInfo.bootstrap.etaSeconds}s.`;
+      }
     }
   } else {
     // Valid address but no data
@@ -429,12 +444,27 @@ async function resolveAddress(address: string): Promise<ResolutionResult> {
     confidence = 0.20;
     reason = 'Valid Ethereum address with no recorded activity in our database. May be new or inactive.';
     suggestions = ['scan_address', 'view_on_etherscan', 'wait_for_indexing'];
-    status = 'pending';
     
-    // Trigger lazy bootstrap (P2.1)
+    // P0 FIX: Check bootstrap status first
     bootstrapInfo = await enqueueBootstrap(addr, 'address');
-    if (bootstrapInfo.bootstrap?.etaSeconds) {
-      reason += ` Queued for indexing. Estimated time: ~${bootstrapInfo.bootstrap.etaSeconds}s.`;
+    
+    // Set status based on bootstrap state
+    if (bootstrapInfo.bootstrap?.status === 'done') {
+      status = 'completed'; // Analysis finished, confirmed no data
+      reason += ' Analysis completed - no on-chain activity found.';
+    } else if (bootstrapInfo.bootstrap?.status === 'failed') {
+      status = 'failed';
+      reason += ' Analysis failed after multiple attempts.';
+    } else if (bootstrapInfo.bootstrap?.status === 'running') {
+      status = 'analyzing';
+      if (bootstrapInfo.bootstrap.etaSeconds) {
+        reason += ` Analysis in progress. ETA: ~${bootstrapInfo.bootstrap.etaSeconds}s.`;
+      }
+    } else {
+      status = 'pending';
+      if (bootstrapInfo.bootstrap?.etaSeconds) {
+        reason += ` Queued for analysis. Estimated time: ~${bootstrapInfo.bootstrap.etaSeconds}s.`;
+      }
     }
   }
   
