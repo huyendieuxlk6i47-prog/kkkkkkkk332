@@ -3,8 +3,8 @@
 ## 📋 Overview
 
 **Product**: BlockView - Blockchain Analytics Platform  
-**Version**: 3.4.0  
-**Last Updated**: 2026-01-18 (P0-P2 Complete)
+**Version**: 3.5.0  
+**Last Updated**: 2026-01-18 (MarketPage Polish + Alert Feedback Loop Complete)
 
 ### Vision
 Transform on-chain data from passive reference into actionable intelligence through smart alerts and wallet behavior analysis.
@@ -16,6 +16,9 @@ Tokens with Alerts = инструмент (tool)
 Smart Alerts = "не 10 спам-сообщений, а одна понятная история"
 Wallet Profiles = "кто это? Трейдер? Фонд? Кит?"
 Empty Result = "Мы проверили X, Y, Z → результат пуст" (не ошибка!)
+
+❗ MarketPage ≠ Watchlist
+MarketPage = "Где прямо сейчас происходит что-то нетипичное и потенциально важное"
 ```
 
 ---
