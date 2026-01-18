@@ -43,6 +43,9 @@ export const TargetMetaSchema = z.object({
   chain: z.string().optional(),
 }).optional();
 
+// A5.4: Sensitivity level enum
+export const SensitivityEnum = z.enum(['low', 'medium', 'high']);
+
 export const CreateAlertRuleBody = z.object({
   scope: AlertScopeEnum,
   targetId: z.string().min(1),
@@ -53,6 +56,7 @@ export const CreateAlertRuleBody = z.object({
   minConfidence: z.number().min(0).max(1).optional(),
   minStability: z.number().min(0).max(1).optional(),
   throttle: ThrottleEnum.optional(),
+  sensitivity: SensitivityEnum.optional(),  // A5.4: Sensitivity level
   name: z.string().optional(),
   targetMeta: TargetMetaSchema,
 });
@@ -65,6 +69,7 @@ export const UpdateAlertRuleBody = z.object({
   minConfidence: z.number().min(0).max(1).optional(),
   minStability: z.number().min(0).max(1).optional(),
   throttle: ThrottleEnum.optional(),
+  sensitivity: SensitivityEnum.optional(),  // A5.4: Sensitivity level
   status: z.enum(['active', 'paused']).optional(),
   active: z.boolean().optional(),
   name: z.string().optional(),
