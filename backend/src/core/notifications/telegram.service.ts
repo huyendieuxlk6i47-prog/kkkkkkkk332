@@ -333,7 +333,11 @@ export async function sendTokenAlertNotification(
  * Send feedback message when alert triggers too frequently
  * This is NOT an alert - it's an advisory message to reduce noise
  * 
- * Condition: triggerCount >= 3 in 24h AND minSeverity <= 75
+ * A5.3: Telegram Noise Nudge
+ * Rules:
+ * - Only 1 nudge per 24h
+ * - Not for high-priority alerts
+ * - Advisory tone, not warning
  */
 export async function sendFeedbackMessage(
   userId: string,
@@ -341,6 +345,8 @@ export async function sendFeedbackMessage(
     targetName: string;
     triggersIn24h: number;
     scope: string;
+    dominantReason?: string;
+    currentSensitivity?: string;
   }
 ): Promise<TelegramSendResult> {
   const connection = await TelegramConnectionModel.findOne({
@@ -354,18 +360,22 @@ export async function sendFeedbackMessage(
 
   const scopeLabel = data.scope === 'token' ? 'token' : 'wallet';
   const targetDisplay = escapeHtml(data.targetName);
+  const reasonText = data.dominantReason 
+    ? `\nMost common trigger: <b>${escapeHtml(data.dominantReason.replace('_', ' '))}</b>` 
+    : '';
+  const sensitivityText = data.currentSensitivity 
+    ? `\nCurrent sensitivity: <b>${data.currentSensitivity}</b>` 
+    : '';
 
-  // Advisory message - NOT an alert
+  // A5.3: Advisory message - NOT an alert
   const text = `🔔 <b>Monitoring Update — ${targetDisplay}</b>
 
 This behavior was observed ${data.triggersIn24h} times today.
-The pattern is now consistent rather than unusual.
+The pattern is now consistent rather than unusual.${reasonText}${sensitivityText}
 
 👉 You may want to <b>reduce sensitivity</b> or <b>pause monitoring</b> if this is expected behavior.
 
-<i>This is not an alert. It's a suggestion to help reduce noise.</i>
-
-<a href="https://blockview.app/${scopeLabel}s/${targetDisplay}?action=settings">Adjust settings</a>`;
+<i>This is not an alert. It's a suggestion to help reduce noise.</i>`;
 
   return sendTelegramMessage(connection.chatId, text, { disableNotification: true });
 }
