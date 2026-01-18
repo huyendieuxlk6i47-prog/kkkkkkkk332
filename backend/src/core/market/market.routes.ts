@@ -289,6 +289,75 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
   });
   
   /**
+   * GET /api/market/top-active-tokens
+   * Get top active tokens by transfer count (Market Discovery)
+   */
+  app.get('/top-active-tokens', async (request: FastifyRequest) => {
+    const query = request.query as { limit?: string; window?: string };
+    const limit = Math.min(parseInt(query.limit || '10'), 50);
+    const windowHours = query.window === '1h' ? 1 : query.window === '6h' ? 6 : 24;
+    const since = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+    
+    const { ERC20LogModel } = await import('../../onchain/ethereum/logs_erc20.model.js');
+    
+    // Known token metadata
+    const KNOWN_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {
+      '0xdac17f958d2ee523a2206206994597c13d831ec7': { symbol: 'USDT', name: 'Tether USD', decimals: 6 },
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': { symbol: 'USDC', name: 'USD Coin', decimals: 6 },
+      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': { symbol: 'WETH', name: 'Wrapped Ether', decimals: 18 },
+      '0x6b175474e89094c44da98b954eedeac495271d0f': { symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18 },
+      '0x514910771af9ca656af840dff83e8264ecf986ca': { symbol: 'LINK', name: 'Chainlink', decimals: 18 },
+      '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984': { symbol: 'UNI', name: 'Uniswap', decimals: 18 },
+      '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9': { symbol: 'AAVE', name: 'Aave', decimals: 18 },
+      '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': { symbol: 'WBTC', name: 'Wrapped BTC', decimals: 8 },
+    };
+    
+    // Aggregate top tokens
+    const pipeline = [
+      { $match: { blockTimestamp: { $gte: since } } },
+      { $group: {
+        _id: '$token',
+        transferCount: { $sum: 1 },
+        senders: { $addToSet: '$from' },
+        receivers: { $addToSet: '$to' },
+        latestBlock: { $max: '$blockNumber' },
+      }},
+      { $project: {
+        token: '$_id',
+        transferCount: 1,
+        walletCount: { $size: { $setUnion: ['$senders', '$receivers'] } },
+        latestBlock: 1,
+      }},
+      { $sort: { transferCount: -1 } },
+      { $limit: limit },
+    ];
+    
+    const results = await ERC20LogModel.aggregate(pipeline);
+    
+    // Enrich with metadata
+    const enrichedTokens = results.map((r: any) => {
+      const meta = KNOWN_TOKENS[r.token] || null;
+      return {
+        address: r.token,
+        symbol: meta?.symbol || null,
+        name: meta?.name || null,
+        transferCount: r.transferCount,
+        activeWallets: r.walletCount,
+        isKnown: !!meta,
+      };
+    });
+    
+    return {
+      ok: true,
+      data: {
+        tokens: enrichedTokens,
+        window: `${windowHours}h`,
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
+  /**
    * GET /api/market/flow-anomalies
    * Get flow anomalies (z-score deviations) for an asset
    */
