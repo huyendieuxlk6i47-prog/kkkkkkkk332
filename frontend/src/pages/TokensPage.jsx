@@ -274,24 +274,20 @@ function TokenActivityBlock({ resolvedData, marketContext }) {
 
   const hasActivityData = transfers24h !== undefined || activeWallets !== undefined || netFlow !== undefined;
 
-  // If no data, show placeholder state
+  // P1.3 FIX: Empty state is VALID result, not "analyzing"
   if (!hasActivityData) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Token Activity</h3>
-          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex items-center gap-1">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Analyzing
-          </span>
         </div>
-        <div className="text-center py-6">
-          <div className="p-3 bg-gray-100 rounded-xl inline-block mb-3">
+        <div className="text-center py-6 bg-gray-50 rounded-xl">
+          <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
             <Activity className="w-6 h-6 text-gray-400" />
           </div>
-          <p className="text-sm text-gray-600 mb-1">Gathering activity data</p>
-          <p className="text-xs text-gray-500">
-            Transfer history and wallet activity will appear shortly
+          <p className="text-sm font-medium text-gray-700 mb-2">No recent activity</p>
+          <p className="text-xs text-gray-500 max-w-xs mx-auto">
+            No transfers or wallet interactions detected in recent history. Activity will appear when transactions occur.
           </p>
         </div>
       </div>
