@@ -251,68 +251,71 @@ function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit }) {
         </div>
       </div>
       
-      {/* Actions Row */}
-      <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-gray-100">
-        {/* Edit */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => onEdit(rule)}
-              disabled={loading}
-              className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors"
-              data-testid={`edit-alert-${rule._id}`}
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent className="bg-gray-900 text-white">
-            <p className="text-xs">Adjust monitoring</p>
-          </TooltipContent>
-        </Tooltip>
-        
-        {/* Pause/Resume */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleToggleStatus}
-              disabled={loading}
-              className={`p-2 rounded-lg transition-colors ${
-                isActive 
-                  ? 'hover:bg-amber-50 text-amber-600' 
-                  : 'hover:bg-emerald-50 text-emerald-600'
-              }`}
-              data-testid={`toggle-alert-${rule._id}`}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isActive ? (
-                <Pause className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent className="bg-gray-900 text-white">
-            <p className="text-xs">{isActive ? 'Pause monitoring' : 'Resume monitoring'}</p>
-          </TooltipContent>
-        </Tooltip>
-        
-        {/* Delete */}
+      {/* Actions Row - Delete скрыт, не на первом месте */}
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+        {/* Secondary action - Delete (скрыт в меню) */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={handleDelete}
               disabled={loading}
-              className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 text-gray-400 rounded-lg transition-colors text-xs"
               data-testid={`delete-alert-${rule._id}`}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent className="bg-gray-900 text-white">
-            <p className="text-xs">Stop monitoring</p>
+            <p className="text-xs">Stop and remove</p>
           </TooltipContent>
         </Tooltip>
+        
+        {/* Primary actions */}
+        <div className="flex items-center gap-1">
+          {/* Edit */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onEdit(rule)}
+                disabled={loading}
+                className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors"
+                data-testid={`edit-alert-${rule._id}`}
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-900 text-white">
+              <p className="text-xs">Change sensitivity</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Pause/Resume - Primary */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleToggleStatus}
+                disabled={loading}
+                className={`p-2 rounded-lg transition-colors ${
+                  isActive 
+                    ? 'hover:bg-amber-50 text-amber-600' 
+                    : 'hover:bg-emerald-50 text-emerald-600'
+                }`}
+                data-testid={`toggle-alert-${rule._id}`}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isActive ? (
+                  <Pause className="w-4 h-4" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-900 text-white">
+              <p className="text-xs">{isActive ? 'Pause monitoring' : 'Resume monitoring'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </div>
   );
