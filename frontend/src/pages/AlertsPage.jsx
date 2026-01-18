@@ -98,33 +98,35 @@ function timeAgo(date) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-// Alert Rule Card - Refactored using UnifiedCard
+// Alert = Monitoring Card (A2 Contract)
+// Каждая карточка отвечает: Что я отслеживаю, Почему это важно, Что происходило последний раз
 function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit }) {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   
   const ScopeIcon = SCOPE_ICONS[rule.scope] || Activity;
   const isActive = rule.status === 'active';
   
   // Get target display name
-  const targetDisplay = rule.watchlistItemId?.target?.symbol 
+  const targetDisplay = rule.targetMeta?.symbol 
+    || rule.watchlistItemId?.target?.symbol 
     || rule.watchlistItemId?.target?.name
     || rule.targetId?.slice(0, 10) + '...' + rule.targetId?.slice(-6);
   
-  // Get trigger types display
-  const triggers = rule.triggerTypes || [rule.trigger?.type];
+  // Get chain
+  const chain = rule.targetMeta?.chain || rule.watchlistItemId?.target?.chain || 'Ethereum';
   
-  // Get condition summary
-  const getConditionSummary = () => {
-    const parts = [];
-    if (rule.trigger?.threshold) {
-      parts.push(`≥${rule.trigger.threshold.toLocaleString()}`);
-    }
-    if (rule.trigger?.window) {
-      parts.push(`per ${rule.trigger.window}`);
-    }
-    return parts.length > 0 ? parts.join(' ') : null;
-  };
-  const conditionSummary = getConditionSummary();
+  // Get trigger type
+  const triggerType = rule.triggerTypes?.[0] || rule.trigger?.type || 'accumulation';
+  const signalType = SIGNAL_TYPES[triggerType] || SIGNAL_TYPES.accumulation;
+  
+  // Get lifecycle state
+  const lifecycleState = LIFECYCLE_STATES[rule.status] || LIFECYCLE_STATES.active;
+  
+  // Get sensitivity display
+  const sensitivityDisplay = rule.trigger?.sensitivity 
+    ? rule.trigger.sensitivity.charAt(0).toUpperCase() + rule.trigger.sensitivity.slice(1)
+    : 'Medium';
   
   const handleToggleStatus = async () => {
     setLoading(true);
@@ -140,7 +142,7 @@ function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit }) {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Delete this alert rule?')) {
+    if (window.confirm('Stop monitoring this behavior?')) {
       setLoading(true);
       try {
         await onDelete(rule._id);
@@ -150,181 +152,170 @@ function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit }) {
     }
   };
 
-  // Render triggers badges with product copy
-  const triggerBadges = (
-    <div className="flex flex-wrap gap-1">
-      {triggers.filter(Boolean).map((trigger, i) => {
-        const signalType = SIGNAL_TYPES[trigger];
-        return (
-          <Tooltip key={i}>
-            <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs cursor-help">
-                <span>{signalType?.emoji || '🔔'}</span>
-                <span>{signalType?.label || trigger.replace(/_/g, ' ')}</span>
-              </span>
-            </TooltipTrigger>
-            {signalType?.description && (
-              <TooltipContent className="bg-gray-900 text-white">
-                <p className="text-xs">{signalType.description}</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        );
-      })}
-    </div>
-  );
-
-  // Render meta information (channels + last triggered)
-  const metaInfo = (
-    <div className="flex items-center gap-3 text-xs text-gray-500 mt-2">
-      {/* Channels */}
-      <div className="flex items-center gap-1">
-        {rule.channels?.inApp && (
-          <Tooltip>
-            <TooltipTrigger>
-              <Bell className="w-3.5 h-3.5 text-gray-400" />
-            </TooltipTrigger>
-            <TooltipContent className="bg-gray-900 text-white">
-              <p className="text-xs">In-App notifications</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        {rule.channels?.telegram && (
-          <Tooltip>
-            <TooltipTrigger>
-              <svg className="w-3.5 h-3.5 text-[#229ED9]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-              </svg>
-            </TooltipTrigger>
-            <TooltipContent className="bg-gray-900 text-white">
-              <p className="text-xs">Telegram notifications</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      
-      {/* Last Triggered */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-1 cursor-help">
-            <Clock className="w-3 h-3" />
-            <span>
-              {rule.lastTriggeredAt 
-                ? `Last observed ${timeAgo(rule.lastTriggeredAt)}`
-                : 'No activity yet'}
-            </span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="bg-gray-900 text-white">
-          <p className="text-xs">
-            {rule.lastTriggeredAt 
-              ? new Date(rule.lastTriggeredAt).toLocaleString()
-              : 'No matching on-chain activity observed yet'}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-      
-      {/* Trigger Count */}
-      {rule.triggerCount > 0 && (
-        <span className="text-purple-600 font-medium">
-          {rule.triggerCount} total
-        </span>
-      )}
-    </div>
-  );
-
-  // Render actions with product copy
-  const actions = [
-    // Edit Button
-    <Tooltip key="edit">
-      <TooltipTrigger asChild>
-        <button
-          onClick={() => onEdit(rule)}
-          disabled={loading}
-          className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors"
-          data-testid={`edit-alert-${rule._id}`}
-        >
-          <Settings className="w-4 h-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="bg-gray-900 text-white">
-        <p className="text-xs">Adjust monitoring</p>
-      </TooltipContent>
-    </Tooltip>,
-    
-    // Pause/Resume Button
-    <Tooltip key="toggle">
-      <TooltipTrigger asChild>
-        <button
-          onClick={handleToggleStatus}
-          disabled={loading}
-          className={`p-2 rounded-lg transition-colors ${
-            isActive 
-              ? 'hover:bg-amber-50 text-amber-600' 
-              : 'hover:bg-emerald-50 text-emerald-600'
-          }`}
-          data-testid={`toggle-alert-${rule._id}`}
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : isActive ? (
-            <Pause className="w-4 h-4" />
-          ) : (
-            <Play className="w-4 h-4" />
-          )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="bg-gray-900 text-white">
-        <p className="text-xs">{isActive ? 'Pause monitoring' : 'Resume monitoring'}</p>
-      </TooltipContent>
-    </Tooltip>,
-    
-    // Delete Button
-    <Tooltip key="delete">
-      <TooltipTrigger asChild>
-        <button
-          onClick={handleDelete}
-          disabled={loading}
-          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-          data-testid={`delete-alert-${rule._id}`}
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="bg-gray-900 text-white">
-        <p className="text-xs">Stop monitoring</p>
-      </TooltipContent>
-    </Tooltip>,
-  ];
+  const handleNavigateToTarget = () => {
+    navigate(`/${rule.scope}s/${rule.targetId}`);
+  };
 
   return (
-    <UnifiedCard
-      testId={`alert-rule-${rule._id}`}
-      className={!isActive ? 'opacity-60' : ''}
-      icon={<CardIcon icon={ScopeIcon} className={
-        rule.scope === 'token' ? 'bg-purple-100 text-purple-600' :
-        rule.scope === 'wallet' ? 'bg-blue-100 text-blue-600' :
-        rule.scope === 'actor' ? 'bg-emerald-100 text-emerald-600' :
-        'bg-gray-100 text-gray-600'
-      } />}
-      header={{
-        title: targetDisplay,
-        badge: <StatusBadge className={isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}>
-          {isActive ? 'Active' : 'Paused'}
-        </StatusBadge>,
-        subtitle: triggerBadges,
-        link: {
-          href: `/${rule.scope}s/${rule.targetId}`,
-        },
-      }}
-      insight={conditionSummary ? (
-        <div className="text-xs text-purple-600 font-medium">
-          {conditionSummary}
+    <div 
+      className={`bg-white border border-gray-200 rounded-xl p-4 transition-opacity ${!isActive ? 'opacity-60' : ''}`}
+      data-testid={`monitoring-card-${rule._id}`}
+    >
+      {/* Header Row */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          {/* Icon */}
+          <div className={`p-2.5 rounded-xl ${
+            rule.scope === 'token' ? 'bg-purple-100' : 
+            rule.scope === 'wallet' ? 'bg-blue-100' : 'bg-gray-100'
+          }`}>
+            <ScopeIcon className={`w-5 h-5 ${
+              rule.scope === 'token' ? 'text-purple-600' : 
+              rule.scope === 'wallet' ? 'text-blue-600' : 'text-gray-600'
+            }`} />
+          </div>
+          
+          {/* Target + Insight */}
+          <div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleNavigateToTarget}
+                className="text-base font-bold text-gray-900 hover:text-purple-600 transition-colors"
+              >
+                {targetDisplay}
+              </button>
+              <span className="text-xs text-gray-400">{chain}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-lg">{signalType.emoji}</span>
+              <span className="text-sm text-gray-600">{signalType.label}</span>
+            </div>
+          </div>
         </div>
-      ) : null}
-      meta={metaInfo}
-      actions={actions}
-    />
+        
+        {/* Status Badge */}
+        <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${lifecycleState.color}`}>
+          {lifecycleState.label}
+        </span>
+      </div>
+      
+      {/* Insight Summary */}
+      <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+        <p className="text-sm text-gray-700">
+          {signalType.insight}
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          Sensitivity: {sensitivityDisplay}
+        </p>
+      </div>
+      
+      {/* Last Observed + Channels */}
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center gap-2">
+          <Clock className="w-3.5 h-3.5" />
+          <span>
+            {rule.lastTriggeredAt 
+              ? `Last observed: ${timeAgo(rule.lastTriggeredAt)}`
+              : 'No activity observed yet'}
+          </span>
+          {rule.triggerCount > 0 && (
+            <span className="text-purple-600 font-medium">
+              · {rule.triggerCount} total
+            </span>
+          )}
+        </div>
+        
+        {/* Channels */}
+        <div className="flex items-center gap-1.5">
+          {rule.channels?.inApp && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Bell className="w-4 h-4 text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 text-white">
+                <p className="text-xs">In-App</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {rule.channels?.telegram && (
+            <Tooltip>
+              <TooltipTrigger>
+                <svg className="w-4 h-4 text-[#229ED9]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                </svg>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 text-white">
+                <p className="text-xs">Telegram</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </div>
+      
+      {/* Actions Row */}
+      <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-gray-100">
+        {/* Edit */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onEdit(rule)}
+              disabled={loading}
+              className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors"
+              data-testid={`edit-alert-${rule._id}`}
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-gray-900 text-white">
+            <p className="text-xs">Adjust monitoring</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        {/* Pause/Resume */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleToggleStatus}
+              disabled={loading}
+              className={`p-2 rounded-lg transition-colors ${
+                isActive 
+                  ? 'hover:bg-amber-50 text-amber-600' 
+                  : 'hover:bg-emerald-50 text-emerald-600'
+              }`}
+              data-testid={`toggle-alert-${rule._id}`}
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isActive ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-gray-900 text-white">
+            <p className="text-xs">{isActive ? 'Pause monitoring' : 'Resume monitoring'}</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        {/* Delete */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleDelete}
+              disabled={loading}
+              className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+              data-testid={`delete-alert-${rule._id}`}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-gray-900 text-white">
+            <p className="text-xs">Stop monitoring</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
   );
 }
 
