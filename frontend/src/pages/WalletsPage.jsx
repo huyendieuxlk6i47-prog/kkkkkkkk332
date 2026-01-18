@@ -391,7 +391,6 @@ export default function WalletsPage() {
     resolvedData.status === 'completed' ||
     resolvedData.status === 'failed'
   );
-  );
   
   // Empty state - address exists but no useful data
   const isEmpty = resolvedData && (
