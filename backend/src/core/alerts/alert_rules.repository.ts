@@ -65,6 +65,7 @@ export async function createAlertRule(input: CreateAlertRuleInput): Promise<IAle
     throttle: input.throttle,
     name: input.name,
     targetMeta: input.targetMeta,
+    sensitivity: input.sensitivity,  // A5.4: Pass sensitivity to model
   });
 }
 
