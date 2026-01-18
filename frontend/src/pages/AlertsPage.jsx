@@ -97,6 +97,75 @@ function timeAgo(date) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
+// Calculate triggers in last 24h from recentTriggerTimestamps
+function getTriggersIn24h(timestamps) {
+  if (!timestamps || !Array.isArray(timestamps)) return 0;
+  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+  return timestamps.filter(ts => new Date(ts).getTime() > twentyFourHoursAgo).length;
+}
+
+// Feedback Hint Component (P3 - Alert Feedback Loop)
+function FeedbackHint({ rule, onPause, onReduceSensitivity }) {
+  const [loading, setLoading] = useState(false);
+  
+  const triggersIn24h = getTriggersIn24h(rule.recentTriggerTimestamps);
+  
+  // Show feedback only if: 3+ triggers in 24h AND minSeverity <= 75
+  const shouldShowFeedback = triggersIn24h >= 3 && (rule.minSeverity || 50) <= 75;
+  
+  if (!shouldShowFeedback) return null;
+  
+  const handlePause = async () => {
+    setLoading(true);
+    try {
+      await onPause(rule._id);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleReduceSensitivity = async () => {
+    setLoading(true);
+    try {
+      await onReduceSensitivity(rule._id);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid="feedback-hint">
+      <div className="flex items-start gap-2">
+        <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-amber-800">
+            This alert was triggered {triggersIn24h} times in the last 24 hours.
+          </p>
+          <p className="text-xs text-amber-700 mt-1">
+            This behavior may no longer be unusual.
+          </p>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={handleReduceSensitivity}
+              disabled={loading}
+              className="px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Updating...' : 'Reduce sensitivity'}
+            </button>
+            <button
+              onClick={handlePause}
+              disabled={loading}
+              className="px-3 py-1.5 bg-white border border-amber-300 text-amber-700 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
+            >
+              Pause monitoring
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Alert = Monitoring Card (A2 Contract)
 // Каждая карточка отвечает: Что я отслеживаю, Почему это важно, Что происходило последний раз
 function AlertRuleCard({ rule, onPause, onResume, onDelete, onEdit }) {
