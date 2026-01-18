@@ -1,0 +1,81 @@
+{
+  "summary": "MarketPage Semantic Polish + Alert Feedback Loop (P3) testing complete. Backend: 14/14 tests passed (100%). Frontend: All features working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "WebSocket /ws", "issue": "WebSocket connections unstable with frequent reconnects - non-blocking for core functionality", "priority": "LOW"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_market_alert_feedback.py",
+    "/app/test_reports/pytest/pytest_market_alert_feedback.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MarketPage correctly shows discovery-only content (NO Watchlist/Tracked elements)",
+    "All 4 discovery cards present: 'Highest On-Chain Activity', 'Unusual On-Chain Behavior Detected', 'New Wallets Showing Abnormal Activity', 'Recent Market Deviations'",
+    "All cards have 'Why this matters' descriptions",
+    "All CTA buttons working: 'View all tokens', 'View all signals', 'Explore wallets', 'Create Alert'",
+    "FeedbackHint component correctly renders when triggerCount >= 3 in 24h AND minSeverity <= 75",
+    "FeedbackHint correctly hides when minSeverity > 75 after 'Reduce sensitivity' action",
+    "Alert Feedback Loop APIs working: GET /feedback, POST /pause, POST /reduce-sensitivity"
+  ],
+  "updated_files": [
+    "/app/tests/test_market_alert_feedback.py",
+    "/app/frontend/src/pages/AlertsPage.jsx"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all features working)"
+  },
+  "test_credentials": {
+    "frontend_user_id": "anonymous",
+    "backend_url": "https://blockchain-radar.preview.emergentagent.com"
+  },
+  "seed_data_creation": "Created test alert rule with simulated 4 triggers in 24h to test FeedbackHint component",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "MarketPage Semantic Polish complete: 1) Discovery-only content with no Watchlist duplication. 2) All 4 cards have 'Why this matters' descriptions. 3) All CTA buttons navigate correctly. Alert Feedback Loop (P3) complete: 1) FeedbackHint shows when triggerCount >= 3 in 24h AND minSeverity <= 75. 2) 'Reduce sensitivity' increases minSeverity by 15 (up to max 90). 3) FeedbackHint hides when minSeverity > 75. Fixed bug: AlertsPage.jsx handleReduceSensitivity was using wrong user ID ('demo-user' instead of 'anonymous').",
+  "features_tested": {
+    "backend_api": [
+      "GET /api/health ✓",
+      "GET /api/market/top-active-tokens - returns tokens with transferCount/activeWallets ✓",
+      "GET /api/market/emerging-signals - returns tokens with signals and interpretation ✓",
+      "GET /api/market/new-actors - returns actors with txCount/tokenCount ✓",
+      "POST /api/alerts/rules - creates alert rule ✓",
+      "GET /api/alerts/rules - lists alert rules ✓",
+      "PUT /api/alerts/rules/:id - updates alert rule ✓",
+      "DELETE /api/alerts/rules/:id - deletes alert rule ✓",
+      "GET /api/alerts/rules/:id/feedback - returns feedback status ✓",
+      "POST /api/alerts/rules/:id/pause - pauses rule ✓",
+      "POST /api/alerts/rules/:id/reduce-sensitivity - increases minSeverity ✓"
+    ],
+    "frontend_ui": [
+      "MarketPage loads with discovery-only content ✓",
+      "NO Watchlist/Tracked elements on MarketPage ✓",
+      "'Highest On-Chain Activity' card with 'Why this matters' description ✓",
+      "'Unusual On-Chain Behavior Detected' card with 'Why this matters' description ✓",
+      "'New Wallets Showing Abnormal Activity' card with 'Why this matters' description ✓",
+      "'Recent Market Deviations' card with Create Alert CTA ✓",
+      "'View all tokens' CTA navigates to /tokens ✓",
+      "'View all signals' CTA navigates to /signals ✓",
+      "'Explore wallets' CTA navigates to /wallets ✓",
+      "'Create Alert' CTA navigates to /alerts ✓",
+      "AlertsPage shows alert rules with FeedbackHint when conditions met ✓",
+      "FeedbackHint shows 'Reduce sensitivity' and 'Pause monitoring' buttons ✓",
+      "'Reduce sensitivity' button increases minSeverity and hides FeedbackHint when > 75 ✓"
+    ]
+  },
+  "bugs_fixed": [
+    {
+      "file": "/app/frontend/src/pages/AlertsPage.jsx",
+      "issue": "handleReduceSensitivity was using wrong user ID ('demo-user' instead of 'anonymous')",
+      "fix": "Changed x-user-id header to 'anonymous' and added Content-Type header with empty JSON body"
+    }
+  ]
+}
