@@ -810,10 +810,7 @@ function ResolvedState({ resolvedData, marketContext, onRefresh, onCreateAlert, 
         
         {/* Right Column - Resolution & Data Availability */}
         <div className="space-y-4">
-          {/* Section 4: Token Activity (Transfers) */}
-          <TokenActivityBlock resolvedData={resolvedData} marketContext={marketContext} />
-          
-          {/* Section 8: Resolution Info - убран misleading текст */}
+          {/* Section 8: Resolution Info */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Resolution Status</h3>
             <div className="space-y-3">
