@@ -532,6 +532,12 @@ export default function CreateAlertModal({
                   )}
                 </div>
 
+                {/* SECTION 5: Advanced Parameters (Collapsible) */}
+                <AdvancedAlertParameters 
+                  sensitivity={sensitivity}
+                  onSensitivityChange={setSensitivity}
+                />
+
                 {/* Error */}
                 {error && (
                   <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
