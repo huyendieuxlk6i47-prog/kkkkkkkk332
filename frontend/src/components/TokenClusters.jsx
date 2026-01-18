@@ -31,7 +31,7 @@ export default function TokenClusters({ tokenAddress, className = '' }) {
         const data = await response.json();
         
         if (data?.ok && data?.data) {
-          setClusters(data.data.clusters || []);
+          setClusters(data.data);
         }
       } catch (err) {
         console.error('Failed to load clusters:', err);
@@ -59,25 +59,34 @@ export default function TokenClusters({ tokenAddress, className = '' }) {
     );
   }
 
-  const hasClusters = clusters && clusters.length > 0;
+  // Use new API structure with interpretation
+  const clusterList = clusters?.clusters || [];
+  const interpretation = clusters?.interpretation || {};
+  const checkedCorrelations = clusters?.checkedCorrelations || 0;
+  const hasClusters = clusterList.length > 0;
 
-  // Empty state - explain WHAT was checked
+  // Empty state - explain WHAT was checked using API interpretation
   if (!hasClusters) {
     return (
       <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-900">Related Wallet Clusters</h3>
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Analyzed</span>
         </div>
         <div className="text-center py-6 bg-gray-50 rounded-xl">
           <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
             <Users className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-2">
-            No coordinated clusters detected
+            {interpretation.headline || 'No coordinated clusters detected'}
           </p>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            We analyzed timing correlation and block co-occurrence across active wallets. 
+            {interpretation.description || `We checked timing correlation across ${checkedCorrelations.toLocaleString()} wallet pairs.`}
+          </p>
+        </div>
+      </div>
+    );
+  } 
             No coordinated activity patterns were identified.
           </p>
         </div>
