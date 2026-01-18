@@ -127,23 +127,24 @@ async function evaluateTokenRules(
       const shouldTrigger = checkRuleCondition(rule, metrics);
       
       if (shouldTrigger) {
-        // Create normalized event and send through A0-A4 pipeline
-        await processEvent({
+        // Create raw signal for pipeline
+        const rawSignal = {
           type: rule.trigger.type || 'accumulation',
           scope: 'token',
-          targetType: 'token',
+          targetType: 'token' as const,
           targetId: tokenAddress,
           chain: 'ethereum',
+          value: metrics.netFlow,
+          window: rule.trigger.params?.window || '1h',
+          direction: metrics.netFlow > 0 ? 'in' : 'out',
           metadata: {
-            value: metrics.netFlow,
-            window: rule.trigger.params?.window || '1h',
-            direction: metrics.netFlow > 0 ? 'in' : 'out',
             txCount: metrics.txCount,
             uniqueWallets: metrics.uniqueWallets,
           },
-          userId: rule.userId,
-          ruleId: rule._id.toString(),
-        });
+        };
+        
+        // Send through A0-A4 pipeline
+        await alertPipeline.process(rawSignal, rule._id.toString(), rule.userId);
         
         // Update rule trigger tracking
         await AlertRuleModel.updateOne(
