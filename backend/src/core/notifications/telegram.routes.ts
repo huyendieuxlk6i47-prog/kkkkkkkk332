@@ -41,10 +41,19 @@ export async function telegramRoutes(app: FastifyInstance): Promise<void> {
             await telegramService.saveTelegramConnection(userId, chatId, username, firstName);
             telegramService.completePendingConnection(code);
             
-            // Send success message
+            // P0 FIX: Send proper success message
             await telegramService.sendTelegramMessage(
               chatId,
-              `✅ <b>Connected successfully!</b>\n\nYou will now receive BlockView alerts here.\n\nManage your alerts at blockview.app/alerts`,
+              `✅ <b>Telegram connected successfully</b>
+
+You'll now receive alerts here when your monitored tokens or wallets show important activity.
+
+ℹ️ <b>What happens next:</b>
+• Create alert rules on the website
+• I'll notify you when conditions are met
+• You can mute or adjust alerts anytime
+
+Type /help for available commands.`,
               { parseMode: 'HTML' }
             );
           } else {
