@@ -406,18 +406,34 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
   /**
    * GET /api/market/token-signals/:tokenAddress
    * Get generated signals for a token based on baseline deviation
+   * 
+   * CRITICAL: Always returns what was checked, even if no signals
    */
   app.get('/token-signals/:tokenAddress', async (request: FastifyRequest) => {
     const { tokenAddress } = request.params as { tokenAddress: string };
     
     const { generateTokenSignals } = await import('./token_signals.service.js');
-    const signals = await generateTokenSignals(tokenAddress);
+    const result = await generateTokenSignals(tokenAddress.toLowerCase());
     
     return {
       ok: true,
       data: {
         tokenAddress: tokenAddress.toLowerCase(),
-        signals,
+        signals: result.signals,
+        baseline: result.baseline,
+        current: result.current,
+        checkedMetrics: result.checkedMetrics,
+        analysisStatus: result.analysisStatus,
+        // CRITICAL: Empty state explanation
+        interpretation: result.signals.length === 0 
+          ? {
+              headline: 'Current activity is within normal range',
+              description: `We compared the last ${result.current.windowHours}h against a ${result.baseline.periodHours}h baseline. No significant deviations detected.`,
+            }
+          : {
+              headline: `${result.signals.length} signal${result.signals.length > 1 ? 's' : ''} detected`,
+              description: result.signals.map(s => s.title).join(', '),
+            },
         analyzedAt: new Date().toISOString(),
       },
     };
@@ -426,6 +442,8 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
   /**
    * GET /api/market/token-drivers/:tokenAddress
    * Get top wallets driving activity for a token (B2 block)
+   * 
+   * CRITICAL: Returns concentration metrics and interpretation
    */
   app.get('/token-drivers/:tokenAddress', async (request: FastifyRequest) => {
     const { tokenAddress } = request.params as { tokenAddress: string };
@@ -433,26 +451,14 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
     const limit = Math.min(parseInt(query.limit || '10'), 50);
     
     const { getActivityDrivers } = await import('./token_signals.service.js');
-    const drivers = await getActivityDrivers(tokenAddress, limit);
-    
-    // Token decimals for USD conversion
-    const TOKEN_DECIMALS: Record<string, number> = {
-      '0xdac17f958d2ee523a2206206994597c13d831ec7': 6, // USDT
-      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 6, // USDC
-      '0x6b175474e89094c44da98b954eedeac495271d0f': 18, // DAI
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 18, // WETH
-    };
-    
-    const TOKEN_PRICES: Record<string, number> = {
-      '0xdac17f958d2ee523a2206206994597c13d831ec7': 1, // USDT
-      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 1, // USDC
-      '0x6b175474e89094c44da98b954eedeac495271d0f': 1, // DAI
-      '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 3500, // WETH
-    };
+    const { getTokenPriceUsd, getTokenDecimals } = await import('./coingecko.service.js');
     
     const normalized = tokenAddress.toLowerCase();
-    const decimals = TOKEN_DECIMALS[normalized] ?? 18;
-    const price = TOKEN_PRICES[normalized] ?? null;
+    const drivers = await getActivityDrivers(normalized, limit);
+    
+    // Get price from CoinGecko
+    const price = await getTokenPriceUsd(normalized);
+    const decimals = getTokenDecimals(normalized);
     
     // Convert to USD if we have price
     const convertedDrivers = drivers.topDrivers.map(d => ({
@@ -470,6 +476,56 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
         totalVolume: drivers.totalVolume,
         totalVolumeUsd: price ? (drivers.totalVolume / Math.pow(10, decimals)) * price : null,
         hasConcentration: drivers.hasConcentration,
+        concentration: drivers.concentration, // NEW: Full concentration metrics
+        analysisStatus: drivers.analysisStatus,
+        window: '24h',
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
+  /**
+   * GET /api/market/token-smart-money/:tokenAddress
+   * Analyze smart money activity (B4 block)
+   */
+  app.get('/token-smart-money/:tokenAddress', async (request: FastifyRequest) => {
+    const { tokenAddress } = request.params as { tokenAddress: string };
+    
+    const { analyzeSmartMoney } = await import('./token_signals.service.js');
+    const { getTokenPriceUsd, getTokenDecimals } = await import('./coingecko.service.js');
+    
+    const normalized = tokenAddress.toLowerCase();
+    const price = await getTokenPriceUsd(normalized);
+    const decimals = getTokenDecimals(normalized);
+    
+    const result = await analyzeSmartMoney(normalized, price, decimals);
+    
+    return {
+      ok: true,
+      data: {
+        tokenAddress: normalized,
+        ...result,
+        window: '24h',
+        analyzedAt: new Date().toISOString(),
+      },
+    };
+  });
+  
+  /**
+   * GET /api/market/token-clusters/:tokenAddress
+   * Analyze wallet clusters (B3 block)
+   */
+  app.get('/token-clusters/:tokenAddress', async (request: FastifyRequest) => {
+    const { tokenAddress } = request.params as { tokenAddress: string };
+    
+    const { analyzeClusters } = await import('./token_signals.service.js');
+    const result = await analyzeClusters(tokenAddress.toLowerCase());
+    
+    return {
+      ok: true,
+      data: {
+        tokenAddress: tokenAddress.toLowerCase(),
+        ...result,
         window: '24h',
         analyzedAt: new Date().toISOString(),
       },
