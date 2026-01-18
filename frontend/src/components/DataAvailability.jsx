@@ -236,8 +236,8 @@ export function ResolutionInfo({
   className = '',
 }) {
   const config = getStatusConfig(status, confidence);
+  // FIXED: Low confidence is NOT indexing - show actual status
   const isLowConfidence = confidence !== null && confidence !== undefined && confidence < 0.4;
-  const effectiveStatus = isLowConfidence ? 'indexing' : status;
 
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-4 ${className}`}>
@@ -251,7 +251,7 @@ export function ResolutionInfo({
         
         <div className="flex justify-between">
           <span className="text-gray-500">Status</span>
-          <StatusBadge status={effectiveStatus} confidence={confidence} />
+          <StatusBadge status={status} confidence={confidence} />
         </div>
         
         <div className="flex justify-between">
