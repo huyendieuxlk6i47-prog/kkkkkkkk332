@@ -376,9 +376,12 @@ export async function marketRoutes(app: FastifyInstance): Promise<void> {
           transfers24h: stats.count,
           activeWallets: uniqueWallets, // unique from ∪ to
           largestTransfer: largestTransferUsd,
+          largestTransferTx: largestTxHash,
         },
         flows: {
           totalVolume,
+          inflowUsd,
+          outflowUsd,
           netFlow: netFlowUsd,
           direction: flowDirection,
           hasPrice: price !== null,
