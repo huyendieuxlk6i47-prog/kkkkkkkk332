@@ -77,6 +77,15 @@ export interface LastTriggeredMeta {
  */
 export type AlertTargetType = 'token' | 'wallet' | 'actor';
 
+/**
+ * Feedback status for alert fatigue detection
+ */
+export interface AlertFeedbackStatus {
+  triggersIn24h: number;
+  lastFeedbackSentAt?: Date;
+  feedbackSent: boolean;
+}
+
 export interface IAlertRule extends Document {
   _id: Types.ObjectId;
   
@@ -112,6 +121,10 @@ export interface IAlertRule extends Document {
   lastTriggeredAt?: Date;
   lastTriggeredMeta?: LastTriggeredMeta;
   triggerCount: number;
+  
+  // Alert Feedback Loop (P3)
+  recentTriggerTimestamps: Date[];  // Rolling window of trigger times
+  feedbackStatus?: AlertFeedbackStatus;
   
   // Metadata
   name?: string;
