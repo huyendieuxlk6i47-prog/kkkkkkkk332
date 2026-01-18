@@ -435,15 +435,18 @@ interface WatchlistItem {
 | `GET` | `/api/preferences` | Get user alert preferences |
 | `PUT` | `/api/preferences` | Update alert preferences |
 
-### Wallet Intelligence (Phase B1)
+### Wallet Intelligence (Phase B1-B4)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/wallets/:address` | Get wallet profile |
+| `GET` | `/api/wallets/:address` | Get wallet profile (B1) |
 | `POST` | `/api/wallets/profile` | Build/refresh wallet profile |
 | `GET` | `/api/wallets/search?tags=` | Search wallets by tags |
 | `GET` | `/api/wallets/high-volume` | Get high-volume wallets |
 | `GET` | `/api/wallets/tags` | Get available wallet tags |
+| `GET` | `/api/wallets/:address/clusters` | Get wallet clusters (B3) |
+| `GET` | `/api/wallets/:address/smart-profile` | Get smart money profile (B4) |
+| `GET` | `/api/tokens/:address/drivers` | Get activity drivers (B2) |
 
 ### Watchlist
 
