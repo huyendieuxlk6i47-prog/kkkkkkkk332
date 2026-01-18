@@ -370,24 +370,27 @@ export default function WalletsPage() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [walletProfile, setWalletProfile] = useState(null);
 
-  // Determine state - FIXED: 4 states instead of 2
-  // 'idle' - nothing entered
-  // 'indexing' - backend ACTUALLY indexing (status === 'indexing' OR 'pending')
-  // 'resolved' - data ready (even partial!) - status === 'resolved'
-  // 'empty' - no data, but that's a result
+  // ========================================
+  // FRONTEND CONTRACT (P0 FIX)
+  // ========================================
+  // ❌ ЗАПРЕЩЕНО НАВСЕГДА:
+  //    if (confidence < X) showAnalyzing()
+  //
+  // ✅ ЕДИНСТВЕННОЕ ПРАВИЛО:
+  //    if (status === 'analyzing' || status === 'pending') showAnalyzing()
+  //    else showResult() // даже если данных нет
+  // ========================================
   
-  // CRITICAL FIX: low confidence is NOT indexing!
-  // low confidence = "not enough activity yet" (valid resolved state)
-  const isActuallyIndexing = resolvedData && (
-    resolvedData.status === 'indexing' || 
+  const isActuallyAnalyzing = resolvedData && (
+    resolvedData.status === 'analyzing' || 
     resolvedData.status === 'pending'
   );
   
-  // FIXED: resolved means data is ready, even with low confidence
-  const isResolved = resolvedData && (
-    resolvedData.status === 'resolved' ||
-    resolvedData.status === 'ready' ||
-    resolvedData.status === 'partial'
+  // Terminal states - analysis finished (show results, even if empty)
+  const isAnalysisComplete = resolvedData && (
+    resolvedData.status === 'completed' ||
+    resolvedData.status === 'failed'
+  );
   );
   
   // Empty state - address exists but no useful data
