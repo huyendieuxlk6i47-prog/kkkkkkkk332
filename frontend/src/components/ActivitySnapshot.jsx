@@ -6,6 +6,7 @@
  * - Показывает ЧТО было проверено системой
  * - Даже если всё = 0, это ВАЛИДНЫЙ результат
  * - Никаких spinner'ов после completed
+ * - Загружает РЕАЛЬНЫЕ данные из indexed transfers
  * 
  * Метрики:
  * - Net Flow (24h)
@@ -15,7 +16,7 @@
  * - Largest Transfer
  * - Time Range analyzed
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -23,8 +24,10 @@ import {
   ArrowLeftRight,
   Clock,
   TrendingUp,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
+import { getTokenActivity } from '../api/market.api';
 
 /**
  * Format large numbers for display
