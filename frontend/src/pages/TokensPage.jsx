@@ -30,6 +30,8 @@ import TokenActivityDrivers from '../components/TokenActivityDrivers';
 
 // Token Watchlist
 import TrackTokenButton from '../components/TrackTokenButton';
+import TokenClusters from '../components/TokenClusters';
+import TokenSmartMoney from '../components/TokenSmartMoney';
 
 // ============================================================================
 // P0: Fixed Token Search - No icon, plain input
