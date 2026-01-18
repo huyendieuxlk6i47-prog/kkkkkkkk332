@@ -737,6 +737,59 @@ async function cacheResolution(resolution: ResolutionResult): Promise<void> {
 }
 
 /**
+ * Update resolution status after bootstrap completes (P0 FIX)
+ * 
+ * This is called by bootstrap worker when task finishes.
+ * Updates resolution from 'analyzing'/'pending' → 'completed'
+ */
+export async function updateResolutionAfterBootstrap(
+  address: string,
+  status: 'done' | 'failed'
+): Promise<void> {
+  try {
+    const normalizedAddr = address.toLowerCase();
+    
+    // Find resolution by address (might be cached under different inputs)
+    const resolution = await ResolutionModel.findOne({
+      $or: [
+        { input: normalizedAddr },
+        { normalizedId: normalizedAddr },
+        { resolvedAddress: normalizedAddr },
+      ],
+    });
+    
+    if (!resolution) {
+      console.log(`[Resolver] No cached resolution found for ${normalizedAddr}, skipping update`);
+      return;
+    }
+    
+    const newStatus: ResolutionStatus = status === 'done' ? 'completed' : 'failed';
+    
+    console.log(`[Resolver] Updating resolution ${normalizedAddr}: ${resolution.status} → ${newStatus}`);
+    
+    // Update status to terminal state
+    await ResolutionModel.updateOne(
+      { _id: resolution._id },
+      {
+        $set: {
+          status: newStatus,
+          updatedAt: new Date(),
+          // If failed, reduce confidence
+          ...(status === 'failed' && {
+            confidence: Math.max(0.2, resolution.confidence * 0.5),
+            reason: `${resolution.reason} Analysis failed after multiple attempts.`,
+          }),
+        },
+      }
+    );
+    
+    console.log(`[Resolver] Resolution updated successfully for ${normalizedAddr}`);
+  } catch (error) {
+    console.error('[Resolver] Failed to update resolution after bootstrap:', error);
+  }
+}
+
+/**
  * Clear expired cache
  */
 export async function clearExpiredResolutions(): Promise<number> {
