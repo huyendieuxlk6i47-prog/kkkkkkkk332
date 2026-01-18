@@ -135,13 +135,14 @@ function AdvancedAlertParameters({ sensitivity, onSensitivityChange }) {
   const [minTransferUsd, setMinTransferUsd] = useState('');
   const [cooldownPeriod, setCooldownPeriod] = useState('1h');
   
-  // Sync with sensitivity changes
-  useEffect(() => {
-    const config = SENSITIVITY_LEVELS.find(s => s.id === sensitivity);
-    if (config) {
-      setCustomWindow(config.window);
-    }
-  }, [sensitivity]);
+  // Initialize customWindow based on sensitivity
+  const sensitivityConfig = SENSITIVITY_LEVELS.find(s => s.id === sensitivity);
+  const defaultWindow = sensitivityConfig?.window || '6h';
+  
+  // Only update if different (avoids infinite loop)
+  if (customWindow !== defaultWindow && !isExpanded) {
+    setCustomWindow(defaultWindow);
+  }
   
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
