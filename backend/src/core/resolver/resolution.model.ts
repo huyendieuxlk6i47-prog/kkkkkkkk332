@@ -7,7 +7,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export type ResolvedType = 'actor' | 'token' | 'entity' | 'tx' | 'signal' | 'ens' | 'unknown';
 
-export type ResolutionStatus = 'resolved' | 'pending' | 'indexing' | 'insufficient_data';
+export type ResolutionStatus = 
+  | 'resolved'           // Entity found with data
+  | 'pending'            // Waiting to start analysis
+  | 'analyzing'          // Analysis in progress (was 'indexing')
+  | 'completed'          // Analysis finished (TERMINAL - data may be sparse)
+  | 'failed'             // Analysis failed (TERMINAL)
+  | 'insufficient_data'; // Not enough data to resolve
 
 export type SuggestionType = 
   | 'scan_address' 
