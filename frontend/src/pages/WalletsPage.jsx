@@ -191,7 +191,7 @@ function WalletIndexingState({ resolvedData, onSetAlert, onIndexingComplete }) {
   );
 }
 
-// Resolved Wallet View - Real Data Only (with B1-B4 components)
+// Resolved Wallet View - CONTRACT: All blocks ALWAYS render when status === completed
 function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateAlert }) {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [showClusterModal, setShowClusterModal] = useState(false);
@@ -213,9 +213,12 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
     setShowClusterModal(true);
   };
 
+  // Determine wallet type for header
+  const walletType = walletProfile?.classification?.type || resolvedData.type || 'Unknown';
+
   return (
     <div className="space-y-6">
-      {/* Wallet Header */}
+      {/* Section 1: Wallet Header (B1 - Identification) */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
@@ -227,14 +230,29 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
                 <h1 className="text-xl font-bold text-gray-900">
                   {walletProfile?.summary?.headline || resolvedData.label || 'Wallet'}
                 </h1>
+                {/* Wallet Type Badge */}
                 <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600 capitalize">
-                  {resolvedData.type || 'Address'}
+                  {walletType}
                 </span>
-                <StatusBadge 
-                  status={resolvedData.status} 
-                  confidence={resolvedData.confidence} 
-                />
+                {/* Chain Badge */}
+                <span className="px-2 py-0.5 bg-blue-50 rounded text-xs font-medium text-blue-600">
+                  {resolvedData.chain || 'Ethereum'}
+                </span>
+                {/* Status Badge */}
+                <span className="px-2 py-0.5 bg-emerald-50 rounded text-xs font-medium text-emerald-600">
+                  Resolved
+                </span>
               </div>
+              {/* Wallet Tags/Badges if any */}
+              {walletProfile?.tags && walletProfile.tags.length > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                  {walletProfile.tags.slice(0, 4).map((tag, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-purple-50 rounded text-xs font-medium text-purple-600">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-2">
                 <code className="text-xs font-mono text-gray-500">
                   {resolvedData.normalizedId?.slice(0, 10)}...{resolvedData.normalizedId?.slice(-8)}
@@ -255,23 +273,89 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
         </div>
       </div>
 
-      {/* Wallet Profile Card (B1) - if profile exists */}
-      {walletProfile && (
-        <WalletProfileCard profile={walletProfile} />
+      {/* Section 2: WALLET ACTIVITY SNAPSHOT - КЛЮЧЕВОЙ УТЕРЯННЫЙ БЛОК */}
+      <WalletActivitySnapshot 
+        walletData={walletData}
+        walletProfile={walletProfile}
+        timeWindow="24h"
+      />
+
+      {/* Section 3: Behavior Summary (B1 - Profile) */}
+      {walletProfile?.behavior ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">Behavior Summary</h3>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+              walletProfile.behavior.label === 'Accumulator' ? 'bg-emerald-50 text-emerald-700' :
+              walletProfile.behavior.label === 'Distributor' ? 'bg-red-50 text-red-700' :
+              walletProfile.behavior.label === 'Passive' ? 'bg-blue-50 text-blue-700' :
+              'bg-gray-50 text-gray-700'
+            }`}>
+              {walletProfile.behavior.label || 'Unknown Pattern'}
+            </div>
+            <p className="text-sm text-gray-600">{walletProfile.behavior.description}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">Behavior Summary</h3>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+          </div>
+          <div className="text-center py-6 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+              <Activity className="w-6 h-6 text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-700 mb-2">No behavioral pattern identified</p>
+            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              This wallet does not show consistent accumulation or distribution behavior.
+            </p>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Stats - Only if we have real data */}
-          {walletData?.stats && (
-            <div className="grid grid-cols-4 gap-4">
-              {Object.entries(walletData.stats).map(([key, value]) => (
-                <div key={key} className="bg-white border border-gray-200 rounded-xl p-4">
-                  <div className="text-xs text-gray-500 uppercase mb-1">{key.replace(/_/g, ' ')}</div>
-                  <div className="text-lg font-bold text-gray-900">{value}</div>
+          {/* Section 6: Recent Signals (A-layer) */}
+          {walletData?.recentSignals && walletData.recentSignals.length > 0 ? (
+            <div className="bg-white border border-gray-200 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                  {walletData.recentSignals.length} signal{walletData.recentSignals.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {walletData.recentSignals.slice(0, 5).map((signal, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Zap className="w-4 h-4 text-purple-500" />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">{signal.type}</div>
+                      <div className="text-xs text-gray-500">{signal.timestamp}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">Recent Signals</h3>
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+              </div>
+              <div className="text-center py-6 bg-gray-50 rounded-xl">
+                <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+                  <Zap className="w-6 h-6 text-gray-400" />
                 </div>
-              ))}
+                <p className="text-sm font-medium text-gray-700 mb-2">No signals detected</p>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  No accumulation, distribution, or large transfers were detected.
+                </p>
+              </div>
             </div>
           )}
 
@@ -295,11 +379,21 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
               </div>
             </div>
           ) : (
-            <EmptyState
-              type="no_data"
-              title="No recent activity"
-              description="This wallet hasn't had any recorded transactions recently."
-            />
+            <div className="bg-white border border-gray-200 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Checked</span>
+              </div>
+              <div className="text-center py-6 bg-gray-50 rounded-xl">
+                <div className="p-3 bg-white rounded-xl inline-block mb-3 shadow-sm">
+                  <Activity className="w-6 h-6 text-gray-400" />
+                </div>
+                <p className="text-sm font-medium text-gray-700 mb-2">No recent activity</p>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  This wallet hasn't had any recorded transactions in the analyzed period.
+                </p>
+              </div>
+            </div>
           )}
 
           {/* Behavior Fingerprint - only with real data */}
@@ -310,7 +404,7 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* B4: Smart Money Profile - Historical Performance */}
+          {/* Section 5: B4 - Historical Performance (Smart Money Profile) */}
           {resolvedData?.normalizedId && (
             <SmartMoneyProfile 
               walletAddress={resolvedData.normalizedId}
@@ -318,7 +412,7 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
             />
           )}
 
-          {/* B3: Related Addresses (Clusters) */}
+          {/* Section 4: B3 - Related Addresses (Clusters) */}
           {resolvedData?.normalizedId && (
             <RelatedAddresses 
               walletAddress={resolvedData.normalizedId}
@@ -328,7 +422,7 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
             />
           )}
 
-          {/* Data Availability */}
+          {/* Section 7.1: Data Availability */}
           {resolvedData?.available && (
             <DataAvailability 
               available={resolvedData.available}
@@ -336,18 +430,32 @@ function WalletResolvedView({ resolvedData, walletData, walletProfile, onCreateA
             />
           )}
 
-          {/* P0 FIX: REMOVED - confidence is NOT lifecycle status
-          Low confidence is shown via ResolutionInfo and empty states, not as warning banner
-          */}
-
-          {/* Resolution Info */}
-          <ResolutionInfo
-            type={resolvedData.type}
-            status={resolvedData.status}
-            confidence={resolvedData.confidence}
-            chain={resolvedData.chain}
-            reason={resolvedData.reason}
-          />
+          {/* Section 7.2: Resolution Status - убран misleading текст */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Resolution Status</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Type</span>
+                <span className="text-xs font-medium text-gray-900 capitalize">{walletType}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Chain</span>
+                <span className="text-xs font-medium text-gray-900">{resolvedData.chain || 'Ethereum'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Status</span>
+                <span className="text-xs font-medium text-emerald-600">Analysis Complete</span>
+              </div>
+              {/* CONTRACT: убран confidence-based messaging, показываем result reason */}
+              {resolvedData.reason && (
+                <div className="p-2 bg-gray-50 rounded-lg mt-2">
+                  <p className="text-xs text-gray-600">
+                    {resolvedData.reason}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Reputation Card */}
           {resolvedData?.normalizedId && (
